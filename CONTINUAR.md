@@ -72,7 +72,7 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
 
 ## 4. Siguientes pasos (cada uno se muestra y espera visto bueno)
 
-1. **Persistencia real**: Room + SQLCipher para actividades, series, excepciones, lugares, semestres; migraciones no destructivas.
+1. ~~**Persistencia real**~~ Hecho 2026-09-24 (rama `persistencia`): Room + SQLCipher v1 (actividad, lugar, serie, puntual, excepción, semestre + días sin clase con `festivosPropuestos`, trayecto, traslado), `AgendaRoom` en Hilt, `AgendaEnMemoria` solo en pruebas, semilla en `src/debug`; 99 pruebas (4 de Room con Robolectric). Pendiente: prueba de migración al crear v2, y verificar en emulador que la semilla aparece y que release arranca en «primer uso».
 2. **Notificaciones y alarmas**: `AlarmManager.setExactAndAllowWhileIdle` + `USE_EXACT_ALARM`; canales; reprogramar en
    `BOOT_COMPLETED`, `TIME_SET`, `TIMEZONE_CHANGED`; permisos explicados antes de pedirlos (C10).
 3. **Ubicación + Google Routes API** (TRANSIT, DRIVE con tráfico, TWO_WHEELER, WALK) y Places (New) para el mapa.
