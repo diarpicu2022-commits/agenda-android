@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Solo para el fondo de ventana antes de que Compose dibuje. Fuente de verdad: ui/theme/Color.kt -->
+    <color name="papel">#F2EFE6</color>
+</resources>

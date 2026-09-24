@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo de ventana = token papel (C3). Evita el destello #FFFFFF al abrir (C3.4). -->
+    <style name="Theme.Agenda" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/papel</item>
+    </style>
+</resources>

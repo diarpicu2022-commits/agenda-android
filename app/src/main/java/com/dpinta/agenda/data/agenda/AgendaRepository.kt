@@ -1,0 +1,97 @@
+package com.dpinta.agenda.data.agenda
+
+import com.dpinta.agenda.domain.ActivityKind
+import com.dpinta.agenda.domain.Occurrence
+import com.dpinta.agenda.domain.Semester
+import com.dpinta.agenda.domain.TransportMode
+import com.dpinta.agenda.domain.TravelEstimate
+import com.dpinta.agenda.domain.WeeklyRule
+import kotlinx.coroutines.flow.Flow
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalTime
+
+/** Lo que el usuario ve de una actividad. El «dónde» es Lugar (mapa) + salón (texto libre). */
+data class Actividad(
+    val id: Long,
+    val titulo: String,
+    val tipo: ActivityKind,
+    val salon: String,
+    val lugarId: Long?,
+    val margen: Duration,
+    val modo: TransportMode,
+    /** Cuánto antes de empezar se avisa «empieza X» (C10). */
+    val aviso: Duration = Duration.ofMinutes(15),
+)
+
+data class Lugar(val id: Long, val nombre: String)
+
+/** Cuándo ocurre una actividad: serie semanal o una sola vez. */
+sealed interface Cuando {
+    data class Semanal(
+        val dias: Set<DayOfWeek>,
+        val inicio: LocalTime,
+        val fin: LocalTime,
+        val desde: LocalDate,
+        val hasta: LocalDate,
+    ) : Cuando
+
+    data class Puntual(val fecha: LocalDate, val inicio: LocalTime, val fin: LocalTime) : Cuando
+}
+
+/** Lo que el formulario entrega para guardar. [id] nulo = nueva. */
+data class ActividadAGuardar(
+    val id: Long?,
+    val titulo: String,
+    val tipo: ActivityKind,
+    val cuando: Cuando,
+    /** Nombre del lugar; vacío = sin lugar. Si coincide con uno guardado, se reutiliza. */
+    val lugar: String,
+    val salon: String,
+    val modo: TransportMode,
+    val margen: Duration,
+    val aviso: Duration,
+)
+
+/** Todo lo que hace falta para construir el día: series, puntuales y semestre. */
+data class Agenda(
+    val actividades: Map<Long, Actividad>,
+    val lugares: Map<Long, Lugar>,
+    val reglas: List<WeeklyRule>,
+    val puntuales: List<Occurrence>,
+    val semestre: Semester?,
+) {
+    val vacia: Boolean get() = actividades.isEmpty()
+
+    companion object {
+        val VACIA = Agenda(emptyMap(), emptyMap(), emptyList(), emptyList(), null)
+    }
+}
+
+/**
+ * Fuente de la agenda. Hoy la implementa un repositorio en memoria con datos de ejemplo;
+ * Room (cifrado) y la ubicación + Routes API la sustituyen en pasos posteriores.
+ */
+interface AgendaRepository {
+    fun agenda(): Flow<Agenda>
+
+    /** Última estimación de trayecto hasta [lugarId] en [modo], o null si no se sabe. */
+    suspend fun estimacion(lugarId: Long, modo: TransportMode): TravelEstimate?
+
+    /** Minutos de traslado entre dos lugares (para conflictos), o null si no se sabe. */
+    fun minutosEntre(desde: Long, hasta: Long): Long?
+
+    /** Crea o sustituye una actividad con su serie o su fecha. Devuelve su id. */
+    suspend fun guardar(actividad: ActividadAGuardar): Long
+
+    /** Borra una actividad y todas sus sesiones. */
+    suspend fun eliminar(id: Long)
+}
+
+/** El lugar guardado con ese nombre (sin distinguir mayúsculas ni espacios de más), si existe. */
+fun Agenda.lugarLlamado(nombre: String): Lugar? {
+    val buscado = nombre.trim().lowercase()
+    if (buscado.isEmpty()) return null
+    return lugares.values.firstOrNull { it.nombre.trim().lowercase() == buscado }
+}
