@@ -83,16 +83,21 @@ abrir() {
   sleep 3
 }
 
-# recorrer <prefijo>: fotogramas desplazando el formulario hasta que no cambia (máx. 5).
+# recorrer <prefijo>: fotogramas desplazando el formulario hasta que dos seguidos coinciden
+# (el final). Máximo 10: con 360 dp y fuente 2,0 el formulario necesita más de 5 (antes el tope
+# de 5 dejaba la frase-resumen sin capturar). Si se llega al tope sin final, se avisa.
 recorrer() {
   local prefijo=$1 i=1
   local alto; alto=$(ADB shell wm size | tr -d '\r' | awk -F'[: x]+' '/Physical/{print $4}')
   fotograma "$prefijo-$i" || return 1
-  while [ $i -lt 5 ]; do
+  local final=no
+  while [ $i -lt 10 ]; do
     ADB shell input swipe 540 $((alto * 70 / 100)) 540 $((alto * 30 / 100)) 600; sleep 1.5
     i=$((i + 1)); fotograma "$prefijo-$i" || return 1
-    if cmp -s "$OUT/$prefijo-$i.xml" "$OUT/$prefijo-$((i - 1)).xml"; then rm -f "$OUT/$prefijo-$i".*; break; fi
+    if cmp -s "$OUT/$prefijo-$i.xml" "$OUT/$prefijo-$((i - 1)).xml"; then rm -f "$OUT/$prefijo-$i".*; final=si; break; fi
   done
+  [ $final = si ] || echo "  AVISO $prefijo: 10 fotogramas sin llegar al final del formulario"
+  [ $final = si ] || touch "$OUT/$prefijo.sin-final"
 }
 
 # tocar_etiqueta <resource-id>: toca el centro de un nodo del último volcado estable.

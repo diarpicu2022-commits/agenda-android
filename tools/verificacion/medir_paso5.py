@@ -156,7 +156,11 @@ for esc, textos in sorted(textos_por_escenario.items()):
     if esc.startswith('form-errores'):
         chequeos += [('error de título', MSG_TITULO in todo), ('error de hora', MSG_HORA in todo)]
     if esc.startswith('form-completo'):
-        chequeos += [('frase-resumen', re.search(r'^Álgebra lineal: ', todo, re.M) is not None)]
+        vista = re.search(r'^Álgebra lineal: ', todo, re.M) is not None
+        if not vista and os.path.exists(os.path.join(carpeta, esc + '.sin-final')):
+            # No es un fallo de la UI: el recorrido no llegó al final (ver capturas_paso5.sh).
+            print(f'   {esc}: frase-resumen NO ALCANZADA (recorrido sin final): repetir con más fotogramas')
+        chequeos += [('frase-resumen', vista)]
     if esc.startswith('form-conflictos'):
         chequeos += [('solape', 'Se cruza con' in todo), ('traslado', 'de traslado, necesitas' in todo), ('«Guardar igual»', 'Guardar igual' in todo)]
     if esc.startswith('form-puntual'):
