@@ -68,8 +68,7 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
 2. ~~Placeholders de hora~~, ~~decisiones del paso 5~~ y ~~enmienda C6~~: **aprobados por Diego el 2026-09-24**
    (anotado en el Registro de enmiendas del anexo).
 5. Pruebas instrumentadas (`connectedDebugAndroidTest`) y recorrido real de TalkBack: sin ejecutar.
-6. Compilar la app completa con el dominio nuevo (`./gradlew assembleDebug lintDebug testDebugUnitTest :core:domain:test`):
-   **pendiente**, no se pudo en la nube sin acceso a `dl.google.com`.
+6. ~~Compilar la app completa con el dominio nuevo~~: hecho en local el 2026-09-24 — build, lint y 95 pruebas en verde.
 
 ## 4. Siguientes pasos (cada uno se muestra y espera visto bueno)
 
