@@ -79,3 +79,17 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
 360 dp y fuente 2,0, restauran el dispositivo al terminar y miden contraste/toques/textos.
 Uso: `bash tools/verificacion/capturas_paso5.sh -s <serial-adb>`. En Git Bash (Windows) exportar `MSYS_NO_PATHCONV=1`.
 En el emulador `Agenda_Pixel` usar `-memory 2048` y **no** compilar a la vez (el PC de Diego tiene 12 GB).
+
+## 6. Activar la compilación automática en GitHub (CI)
+
+El flujo de CI está en `docs/ci/ci.yml` y no en `.github/workflows/`, porque el token con el que se subió el repo no tenía
+el permiso `workflow`. Para activarlo:
+
+```bash
+gh auth refresh -h github.com -s workflow     # una vez, autoriza en el navegador
+mkdir -p .github/workflows && git mv docs/ci/ci.yml .github/workflows/ci.yml
+git commit -m "Activar CI" && git push
+```
+
+Ojo: el runner necesita `platforms;android-37.0`. Si falla por la plataforma, añadir antes del build un paso con
+`$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-37.0"`.
