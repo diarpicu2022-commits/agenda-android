@@ -45,6 +45,13 @@ Dominio (`core/domain`), con pruebas: `ScheduleExpander` (series semanales, seme
 sal ya (2 min de gracia) / vas tarde; dato viejo > 15 min; recálculo a mitad de camino), `DayPlanner`/`Trip`.
 73 pruebas unitarias en verde. Los datos viven **en memoria** (`AgendaEnMemoria`) detrás de `AgendaRepository`.
 
+**2026-09-24 (sesión en la nube, solo dominio):** se añadieron, con pruebas, `ColombianHolidays` (Ley Emiliani + Pascua;
+`between()` llena `Semester.daysOff`), `AlarmPlanner` (precálculo a −120 min y salida solo si hay traslado; aviso propio
+de la actividad; nada en el pasado; idempotente para reprogramar tras `BOOT_COMPLETED`/`TIME_SET`) y `WorkedHours` +
+`PayPeriods` (semana lunes–domingo y quincena 1–15 / 16–fin). `:core:domain`: 25 pruebas, 0 fallos. **Nada de esto está
+conectado a la UI todavía** y la parte Android no se compiló: en esa sesión `dl.google.com` (SDK y Google Maven) estaba
+bloqueado por la red del entorno. Para probar el dominio sin SDK: `bash tools/verificacion/dominio_sin_sdk.sh`.
+
 Decisiones de Diego ya aplicadas (Registro de enmiendas del anexo): Big Shoulders → Archivo 62; horas pasadas en tinta con «✓»;
 solape «Se cruza con {actividad} {hora}»; etiqueta de pestaña que no cabe se reduce sola (mín. 14 sp, nunca parte palabras);
 alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; transporte bus / a pie / carro / moto.
@@ -58,6 +65,8 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
    «8 p. m.», «24/9»); margen 10 min y aviso 15 min por defecto; serie de 17 semanas si no hay semestre; «Deshacer» solo en nuevas.
 4. Enmienda pendiente de aprobar en C6: campo de texto, selector segmentado, casillas de días y alfiler del mapa.
 5. Pruebas instrumentadas (`connectedDebugAndroidTest`) y recorrido real de TalkBack: sin ejecutar.
+6. Compilar la app completa con el dominio nuevo (`./gradlew assembleDebug lintDebug testDebugUnitTest :core:domain:test`):
+   **pendiente**, no se pudo en la nube sin acceso a `dl.google.com`.
 
 ## 4. Siguientes pasos (cada uno se muestra y espera visto bueno)
 
