@@ -51,7 +51,10 @@ de la actividad; nada en el pasado; idempotente para reprogramar tras `BOOT_COMP
 `PayPeriods` (semana lunes–domingo y quincena 1–15 / 16–fin). Después, en la misma sesión: `ics/IcsReader` + `IcsWriter`
 (P3.11: VEVENT, RRULE semanal con BYDAY/UNTIL/COUNT, EXDATE, RECURRENCE-ID, TZID/UTC/flotante, líneas plegadas;
 las reglas no semanales se conservan en `unsupportedRule` para avisar, no se inventan) y `Attendance` (P2.9: faltas por
-materia contra un límite opcional; solo cuentan las sesiones que hubo). `:core:domain`: 33 pruebas, 0 fallos. **Nada de esto está
+materia contra un límite opcional; solo cuentan las sesiones que hubo), `QuietMode` (P2.6: tramos de No Molestar,
+uniendo sesiones seguidas), `TaskReminders` (P2.7: vencida / hoy / aviso N días antes, exámenes primero) y
+`MorningBriefing` (P2.8: sesiones del día, primera salida con traslado, tareas y horas de trabajo).
+`:core:domain`: 37 pruebas, 0 fallos. El modelo de datos aún no tiene tabla de tareas (arquitectura §3: `Tarea`). **Nada de esto está
 conectado a la UI todavía** y la parte Android no se compiló: en esa sesión `dl.google.com` (SDK y Google Maven) estaba
 bloqueado por la red del entorno. Para probar el dominio sin SDK: `bash tools/verificacion/dominio_sin_sdk.sh`.
 
