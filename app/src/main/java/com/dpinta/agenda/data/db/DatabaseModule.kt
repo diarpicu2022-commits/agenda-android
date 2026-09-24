@@ -20,11 +20,14 @@ object DatabaseModule {
     fun database(@ApplicationContext context: Context): AgendaDatabase {
         System.loadLibrary("sqlcipher")
         val factory = SupportOpenHelperFactory(DatabaseKeyManager(context).passphrase())
-        return Room.databaseBuilder(context, AgendaDatabase::class.java, "agenda.db")
+        // Sin fallbackToDestructiveMigration: un cambio de esquema sin Migration debe fallar,
+        // nunca borrar los datos de Diego.
+        return Room.databaseBuilder(context, AgendaDatabase::class.java, AgendaDatabase.NOMBRE)
             .openHelperFactory(factory)
+            .addMigrations(*AgendaDatabase.MIGRACIONES)
             .build()
     }
 
     @Provides
-    fun placeDao(db: AgendaDatabase): PlaceDao = db.placeDao()
+    fun agendaDao(db: AgendaDatabase): AgendaDao = db.agendaDao()
 }

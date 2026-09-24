@@ -106,10 +106,11 @@ class HoyViewModel @Inject constructor(
             placeOf = { agenda.actividades[it]?.lugarId },
             from = hoy,
             to = hoy.plusDays(DIAS_SIGUIENTE),
-            semester = agenda.semestre,
+            semester = agenda.semestreEn(hoy),
+            exceptions = agenda.excepciones,
         )
         val deHoy = sesiones.filter { it.start.toLocalDate() == hoy }
-        val conflictos = ConflictDetector.detect(deHoy) { a, b -> repositorio.minutosEntre(a, b) }
+        val conflictos = ConflictDetector.detect(deHoy) { a, b -> agenda.minutosEntre(a, b) }
 
         val siguiente = DayPlanner.next(deHoy, ahoraLocal)
         claveBanda = siguiente?.let { Clave(it.activityId, it.start) }

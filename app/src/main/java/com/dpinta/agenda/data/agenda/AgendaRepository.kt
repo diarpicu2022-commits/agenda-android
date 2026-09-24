@@ -2,7 +2,9 @@ package com.dpinta.agenda.data.agenda
 
 import com.dpinta.agenda.domain.ActivityKind
 import com.dpinta.agenda.domain.Occurrence
+import com.dpinta.agenda.domain.ColombianHolidays
 import com.dpinta.agenda.domain.Semester
+import com.dpinta.agenda.domain.SessionException
 import com.dpinta.agenda.domain.TransportMode
 import com.dpinta.agenda.domain.TravelEstimate
 import com.dpinta.agenda.domain.WeeklyRule
@@ -54,18 +56,26 @@ data class ActividadAGuardar(
     val aviso: Duration,
 )
 
-/** Todo lo que hace falta para construir el día: series, puntuales y semestre. */
+/** Todo lo que hace falta para construir el día: series, puntuales, excepciones, semestres y traslados. */
 data class Agenda(
     val actividades: Map<Long, Actividad>,
     val lugares: Map<Long, Lugar>,
     val reglas: List<WeeklyRule>,
     val puntuales: List<Occurrence>,
-    val semestre: Semester?,
+    val semestres: List<Semester> = emptyList(),
+    val excepciones: List<SessionException> = emptyList(),
+    /** Minutos de traslado entre lugares (desde, hasta). */
+    val traslados: Map<Pair<Long, Long>, Long> = emptyMap(),
 ) {
     val vacia: Boolean get() = actividades.isEmpty()
 
+    /** El semestre que contiene [fecha], si lo hay. */
+    fun semestreEn(fecha: LocalDate): Semester? = semestres.firstOrNull { !fecha.isBefore(it.start) && !fecha.isAfter(it.end) }
+
+    fun minutosEntre(desde: Long, hasta: Long): Long? = traslados[desde to hasta]
+
     companion object {
-        val VACIA = Agenda(emptyMap(), emptyMap(), emptyList(), emptyList(), null)
+        val VACIA = Agenda(emptyMap(), emptyMap(), emptyList(), emptyList())
     }
 }
 
@@ -79,15 +89,31 @@ interface AgendaRepository {
     /** Última estimación de trayecto hasta [lugarId] en [modo], o null si no se sabe. */
     suspend fun estimacion(lugarId: Long, modo: TransportMode): TravelEstimate?
 
-    /** Minutos de traslado entre dos lugares (para conflictos), o null si no se sabe. */
-    fun minutosEntre(desde: Long, hasta: Long): Long?
-
     /** Crea o sustituye una actividad con su serie o su fecha. Devuelve su id. */
     suspend fun guardar(actividad: ActividadAGuardar): Long
 
     /** Borra una actividad y todas sus sesiones. */
     suspend fun eliminar(id: Long)
+
+    /** Cancela o mueve una sola sesión de una serie. */
+    suspend fun guardarExcepcion(excepcion: SessionException)
+
+    suspend fun quitarExcepcion(actividadId: Long, fecha: LocalDate)
+
+    /** Guarda un semestre con sus días sin clase (fecha → motivo). Devuelve su id. */
+    suspend fun guardarSemestre(nombre: String, inicio: LocalDate, fin: LocalDate, diasSinClase: Map<LocalDate, String>): Long
+
+    /** Última duración conocida hasta un lugar (la escribirá la capa de rutas). */
+    suspend fun guardarEstimacion(lugarId: Long, estimacion: TravelEstimate)
+
+    suspend fun guardarTraslado(desde: Long, hasta: Long, minutos: Long)
 }
+
+/** Festivos de Colombia entre dos fechas, para proponerlos como días sin clase de un semestre. */
+fun festivosPropuestos(inicio: LocalDate, fin: LocalDate): Map<LocalDate, String> =
+    (inicio.year..fin.year).flatMap { ColombianHolidays.of(it) }
+        .filter { !it.date.isBefore(inicio) && !it.date.isAfter(fin) }
+        .associate { it.date to it.name }
 
 /** El lugar guardado con ese nombre (sin distinguir mayúsculas ni espacios de más), si existe. */
 fun Agenda.lugarLlamado(nombre: String): Lugar? {

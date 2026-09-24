@@ -75,7 +75,7 @@ class FormularioViewModel @Inject constructor(
                 val f = formularioDe(agenda, id, hoy)
                 if (f == null) noEncontrada.value = true else formulario.value = f
             } else {
-                formulario.value = Formulario.nuevo(hoy, agenda.semestre?.end)
+                formulario.value = Formulario.nuevo(hoy, agenda.semestreEn(hoy)?.end)
                 escenario(estadoGuardado.get<String>("escenario").orEmpty())
             }
             cargando.value = false
@@ -85,7 +85,7 @@ class FormularioViewModel @Inject constructor(
     val estado: StateFlow<FormularioUiState> =
         combine(formulario, intentado, fase, repositorio.agenda(), combine(cargando, noEncontrada) { c, n -> c to n }) { f, intento, fase, agenda, (carga, falta) ->
             val validacion = Validador.validar(f, hoy, id)
-            val conflictos = validacion.aGuardar?.let { conflictosDelBorrador(agenda, it, repositorio::minutosEntre) }.orEmpty()
+            val conflictos = validacion.aGuardar?.let { conflictosDelBorrador(agenda, it, agenda::minutosEntre) }.orEmpty()
             FormularioUiState(
                 cargando = carga,
                 esNueva = id == null,

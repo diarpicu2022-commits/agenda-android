@@ -5,7 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.dpinta.agenda.data.agenda.AgendaEnMemoria
+import androidx.lifecycle.lifecycleScope
+import com.dpinta.agenda.data.agenda.HerramientasDepuracion
 import com.dpinta.agenda.data.agenda.RelojAjustable
 import com.dpinta.agenda.ui.AgendaRoot
 import com.dpinta.agenda.ui.navegacion.Pestana
@@ -14,13 +15,14 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject lateinit var reloj: RelojAjustable
 
-    @Inject lateinit var agendaEjemplo: AgendaEnMemoria
+    @Inject lateinit var herramientas: HerramientasDepuracion
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,9 +49,8 @@ class MainActivity : ComponentActivity() {
                 reloj.desfase = Duration.between(ahora, objetivo)
             }
         }
-        if (intent.getStringExtra("ejemplo") == "cruce") {
-            agendaEjemplo.reemplazar(AgendaEnMemoria.ejemploConCruce(LocalDate.now(reloj)))
-        }
+        val ejemplo = intent.getStringExtra("ejemplo")
+        lifecycleScope.launch { herramientas.alArrancar(ejemplo) }
         val nombre = intent.getStringExtra("pestana")
         return Pestana.entries.firstOrNull { it.name.equals(nombre, ignoreCase = true) } ?: Pestana.Hoy
     }

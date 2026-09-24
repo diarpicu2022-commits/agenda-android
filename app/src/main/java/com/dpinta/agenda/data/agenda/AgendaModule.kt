@@ -30,7 +30,7 @@ class RelojAjustable @Inject constructor() : Clock() {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AgendaModule {
-    @Binds abstract fun repositorio(impl: AgendaEnMemoria): AgendaRepository
+    @Binds abstract fun repositorio(impl: AgendaRoom): AgendaRepository
 
     companion object {
         @Provides @Singleton fun reloj(reloj: RelojAjustable): Clock = reloj

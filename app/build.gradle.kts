@@ -35,6 +35,9 @@ android {
 
     buildFeatures { compose = true }
 
+    // Robolectric: pruebas de Room en la JVM, sin emulador.
+    testOptions { unitTests.isIncludeAndroidResources = true }
+
     lint {
         abortOnError = true
         checkReleaseBuilds = true
@@ -76,6 +79,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)

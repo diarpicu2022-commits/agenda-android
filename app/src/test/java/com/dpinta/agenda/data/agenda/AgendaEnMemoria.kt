@@ -13,16 +13,14 @@ import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Repositorio TEMPORAL en memoria con un día de ejemplo (el de los bocetos del anexo).
  * Las series valen todos los días para que el ejemplo se vea cualquier día que se abra la app.
  * Se sustituye por Room en el paso de persistencia.
  */
-@Singleton
-class AgendaEnMemoria @Inject constructor(private val reloj: Clock) : AgendaRepository {
+/** Doble de pruebas en memoria (antes era la fuente de la app; ahora la app usa AgendaRoom). */
+class AgendaEnMemoria(private val reloj: Clock) : AgendaRepository {
 
     private val estado = MutableStateFlow(ejemplo(LocalDate.now(reloj)))
 
@@ -34,7 +32,24 @@ class AgendaEnMemoria @Inject constructor(private val reloj: Clock) : AgendaRepo
         return TravelEstimate(Duration.ofMinutes(minutos), modo, reloj.instant() - Duration.ofMinutes(3), fromCache = false)
     }
 
-    override fun minutosEntre(desde: Long, hasta: Long): Long? = ENTRE_LUGARES[desde to hasta]
+    override suspend fun guardarExcepcion(excepcion: com.dpinta.agenda.domain.SessionException) {
+        estado.update { it.copy(excepciones = it.excepciones.filterNot { e -> e.activityId == excepcion.activityId && e.date == excepcion.date } + excepcion) }
+    }
+
+    override suspend fun quitarExcepcion(actividadId: Long, fecha: LocalDate) {
+        estado.update { it.copy(excepciones = it.excepciones.filterNot { e -> e.activityId == actividadId && e.date == fecha }) }
+    }
+
+    override suspend fun guardarSemestre(nombre: String, inicio: LocalDate, fin: LocalDate, diasSinClase: Map<LocalDate, String>): Long {
+        estado.update { it.copy(semestres = it.semestres + com.dpinta.agenda.domain.Semester(inicio, fin, diasSinClase.keys)) }
+        return estado.value.semestres.size.toLong()
+    }
+
+    override suspend fun guardarEstimacion(lugarId: Long, estimacion: TravelEstimate) = Unit
+
+    override suspend fun guardarTraslado(desde: Long, hasta: Long, minutos: Long) {
+        estado.update { it.copy(traslados = it.traslados + ((desde to hasta) to minutos)) }
+    }
 
     override suspend fun guardar(actividad: ActividadAGuardar): Long {
         var id = 0L
@@ -78,7 +93,7 @@ class AgendaEnMemoria @Inject constructor(private val reloj: Clock) : AgendaRepo
         }
     }
 
-    /** Pruebas y extra de depuración «ejemplo»: sustituye la agenda. */
+    /** Sustituye la agenda. */
     internal fun reemplazar(agenda: Agenda) {
         estado.value = agenda
     }
@@ -129,7 +144,7 @@ class AgendaEnMemoria @Inject constructor(private val reloj: Clock) : AgendaRepo
             )
             val puntuales = listOf(Occurrence(4, null, hoy.atTime(21, 0), hoy.atTime(21, 30)))
             val lugares = mapOf(CAMPUS to Lugar(CAMPUS, "Campus"), TIENDA to Lugar(TIENDA, "Tienda centro"))
-            return Agenda(actividades, lugares, reglas, puntuales, semestre = null)
+            return Agenda(actividades, lugares, reglas, puntuales, traslados = ENTRE_LUGARES)
         }
     }
 }

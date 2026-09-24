@@ -260,6 +260,8 @@ fun conflictosDelBorrador(agenda: Agenda, a: ActividadAGuardar, minutosEntre: (L
         placeOf = { if (it == id) lugarId else agenda.actividades[it]?.lugarId },
         from = desde,
         to = hasta,
+        semester = agenda.semestreEn(desde),
+        exceptions = agenda.excepciones,
     )
     fun titulo(o: Occurrence) = agenda.actividades[o.activityId]?.titulo.orEmpty()
     return ConflictDetector.detect(sesiones) { x, y -> if (x == LUGAR_NUEVO || y == LUGAR_NUEVO) null else minutosEntre(x, y) }
@@ -282,7 +284,7 @@ fun formularioDe(agenda: Agenda, id: Long, hoy: LocalDate): Formulario? {
     val act = agenda.actividades[id] ?: return null
     val regla = agenda.reglas.firstOrNull { it.activityId == id }
     val puntual = agenda.puntuales.firstOrNull { it.activityId == id }
-    val base = Formulario.nuevo(hoy, agenda.semestre?.end).copy(
+    val base = Formulario.nuevo(hoy, agenda.semestreEn(hoy)?.end).copy(
         tipo = act.tipo,
         titulo = act.titulo,
         lugar = act.lugarId?.let { agenda.lugares[it]?.nombre }.orEmpty(),
