@@ -48,7 +48,10 @@ sal ya (2 min de gracia) / vas tarde; dato viejo > 15 min; recálculo a mitad de
 **2026-09-24 (sesión en la nube, solo dominio):** se añadieron, con pruebas, `ColombianHolidays` (Ley Emiliani + Pascua;
 `between()` llena `Semester.daysOff`), `AlarmPlanner` (precálculo a −120 min y salida solo si hay traslado; aviso propio
 de la actividad; nada en el pasado; idempotente para reprogramar tras `BOOT_COMPLETED`/`TIME_SET`) y `WorkedHours` +
-`PayPeriods` (semana lunes–domingo y quincena 1–15 / 16–fin). `:core:domain`: 25 pruebas, 0 fallos. **Nada de esto está
+`PayPeriods` (semana lunes–domingo y quincena 1–15 / 16–fin). Después, en la misma sesión: `ics/IcsReader` + `IcsWriter`
+(P3.11: VEVENT, RRULE semanal con BYDAY/UNTIL/COUNT, EXDATE, RECURRENCE-ID, TZID/UTC/flotante, líneas plegadas;
+las reglas no semanales se conservan en `unsupportedRule` para avisar, no se inventan) y `Attendance` (P2.9: faltas por
+materia contra un límite opcional; solo cuentan las sesiones que hubo). `:core:domain`: 33 pruebas, 0 fallos. **Nada de esto está
 conectado a la UI todavía** y la parte Android no se compiló: en esa sesión `dl.google.com` (SDK y Google Maven) estaba
 bloqueado por la red del entorno. Para probar el dominio sin SDK: `bash tools/verificacion/dominio_sin_sdk.sh`.
 
