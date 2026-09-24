@@ -105,6 +105,10 @@ Tema propio. `dynamicColor` **desactivado**. Los hex son la fuente de verdad; lo
 | Línea de «ahora» (punto de 8 dp + filete + hora escrita) | Hora actual | Hoy y la columna del día actual en Semana |
 | Inversión papel/tinta | Día actual en la tira de Semana y pestaña activa | Semana, navegación |
 | Triángulo de aviso (icono) + texto `alerta-texto` | Conflicto o traslado insuficiente | Inline bajo la fila afectada |
+| Campo de texto: rectángulo con borde de 1,5 dp en `tinta-2`, `tinta` con foco, `alerta-texto` con error; etiqueta encima y error debajo con icono | Escribir un dato (enmienda 2026-09-24) | Formularios |
+| Selector segmentado: opciones con filete de 1,5 dp, la elegida invertida (papel/tinta) | Elegir una opción entre pocas (enmienda 2026-09-24) | Formularios |
+| Casillas de días `L M X J V S D` con la construcción del selector; área táctil ampliada a 48 dp | Elegir días de la serie (enmienda 2026-09-24) | Formulario de actividad |
+| Alfiler del mapa: filete vertical + cuadrado de 10 dp | Marcar el lugar elegido (enmienda 2026-09-24) | Mapa del formulario |
 
 Nada más. Una forma nueva exige enmienda.
 
@@ -134,7 +138,7 @@ Nada más. Una forma nueva exige enmienda.
 
 ### C9 · Accesibilidad
 
-- **C9.1 Contraste**: AA (4,5:1) como piso en todo texto; **AAA (≥ 7:1) en la hora de salida, el salón y las horas de la lista, también las ya pasadas** (se distinguen por la marca «✓» y el hilo, C6; enmienda 2026-09-23). Medido sobre tokens en §8 y se vuelve a medir **sobre captura del dispositivo** en cada paso.
+- **C9.1 Contraste**: AA (4,5:1) como piso en todo texto; **AAA (≥ 7:1) en la hora de salida, el salón y las horas de la lista, también las ya pasadas** (se distinguen por la marca «✓» y el hilo, C6; enmienda 2026-09-23). Los textos de ejemplo de los campos vacíos («8:00», «10:00») son ejemplos, no datos: van en `tinta-2` con AA (enmienda 2026-09-24). Medido sobre tokens en §8 y se vuelve a medir **sobre captura del dispositivo** en cada paso.
 - **C9.2 Toque**: ≥ **48 dp** en todo lo tocable, incluidos los chips de días `L M X J V S D`, la etiqueta de modo de transporte y las celdas de Semana (si la celda visual es menor, el área táctil se amplía).
 - **C9.3 TalkBack**: la banda se anuncia como una frase: «Sal a las 7 y 32 para Cálculo diferencial, salón B-204, 23 minutos en bus más 7 de margen, calculado hace 3 minutos». Los marcadores de tipo tienen etiqueta («Clase»). La línea de ahora es decorativa para TalkBack; la hora actual la da el sistema.
 - **C9.4 Foco** (teclado físico, switch access): anillo de 2 dp en `foco` con separación de 2 dp y radio 0. El orden es banda (acción primaria, luego secundaria, luego modo), filas de arriba abajo, navegación y Crear.
@@ -191,6 +195,9 @@ Vista de mes, tareas y exámenes (se diseñarán con enmienda cuando se aborden)
 | 2026-09-23 | C3, C6, C9.1 | Las horas ya pasadas de la lista van en `tinta` (AAA), no en `tinta-2`. Lo pasado se distingue con una marca «✓» dibujada sobre el hilo del día (nueva forma en C6) y con el propio hilo. | Contradicción entre C3 (tinta-2 para horas pasadas, 6,28 en claro) y C9.1 (AAA en las horas de la lista) detectada en el paso 4. | Diego |
 | 2026-09-23 | C10 | Texto de solape: «Se cruza con {actividad} {hora}», p. ej. «Se cruza con Física 9:00». | C10 solo tenía el texto de traslado insuficiente. | Diego |
 | 2026-09-23 | (aclaración, sin cambio de cláusula) | El dato viejo es a partir de 15 min, como dice C10. El dominio usaba 30 min por error; se corrigió en `DepartureCalculator.STALE_AFTER` con su prueba. | Discrepancia detectada en el paso 4. | Diego |
+| 2026-09-24 | C6 | Se añaden al repertorio cuatro formas del formulario: campo de texto, selector segmentado, casillas de días y alfiler del mapa (tal como se propusieron en el paso 5). | El formulario (paso 5) las necesitaba y el repertorio cerrado no las tenía. | Diego («acepto todas») |
+| 2026-09-24 | C9.1 | Los textos de ejemplo de los campos vacíos van en `tinta-2` (6,28:1, AA), no AAA. | Son ejemplos, no datos que se leen para decidir. | Diego («acepto todas») |
+| 2026-09-24 | (decisiones del paso 5, sin cambio de cláusula) | Formulario a pantalla completa; horas escritas como texto («8», «830», «8 p. m.», «24/9»); margen 10 min y aviso 15 min por defecto; serie de 17 semanas si no hay semestre; «Deshacer» solo en actividades nuevas. | Confirmación pendiente del paso 5. | Diego («acepto todas») |
 | 2026-09-24 | C2.4 | Etiqueta de pestaña que no cabe: se reduce solo ella, lo justo, mínimo 14 sp efectivos, sin partir palabras; el resto de la barra no cambia. | Con fuente 2,0, «Actividades» se partía en «Activida / des» (medido en el emulador, paso 4). | Diego |
 
 ---
@@ -802,7 +809,7 @@ Decisiones tomadas en el paso (a confirmar por Diego):
 - Un lugar escrito que coincide con uno guardado (sin distinguir mayúsculas) se reutiliza; uno nuevo no tiene tiempos de traslado y no se afirma ningún conflicto de traslado con él.
 - «Deshacer» solo en actividades nuevas: una edición no guarda la versión anterior.
 
-**Propuesta de enmienda a C6 (repertorio cerrado), pendiente de aprobación**: el formulario usa cuatro formas que el contrato no tenía: (1) campo de texto: rectángulo con borde de 1,5 dp en `tinta-2`, `tinta` con foco y `alerta-texto` con error; etiqueta encima y error debajo con icono; (2) selector segmentado: opciones con filete de 1,5 dp y la elegida invertida; (3) casillas de días L M X J V S D con la misma construcción (a 360 dp miden ~46 dp de ancho y su área táctil se amplía a 48); (4) alfiler del mapa: filete vertical + cuadrado de 10 dp. Si Diego no las aprueba, se cambian antes de seguir.
+**Enmienda a C6 (repertorio cerrado), aprobada por Diego el 2026-09-24**: el formulario usa cuatro formas que el contrato no tenía: (1) campo de texto: rectángulo con borde de 1,5 dp en `tinta-2`, `tinta` con foco y `alerta-texto` con error; etiqueta encima y error debajo con icono; (2) selector segmentado: opciones con filete de 1,5 dp y la elegida invertida; (3) casillas de días L M X J V S D con la misma construcción (a 360 dp miden ~46 dp de ancho y su área táctil se amplía a 48); (4) alfiler del mapa: filete vertical + cuadrado de 10 dp. Si Diego no las aprueba, se cambian antes de seguir.
 
 Verificado sin dispositivo: build, lint (solo los dos avisos previos), 73 pruebas unitarias en verde y `assembleDebugAndroidTest` compila (flujo de creación, mapa pendiente y etiqueta de la barra con fuente 2,0, sin ejecutar).
 

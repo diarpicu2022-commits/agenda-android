@@ -65,11 +65,8 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
 ## 3. Pendiente inmediato (antes del siguiente paso)
 
 1. Con 360 dp + fuente 2,0, el script no detecta la frase-resumen del formulario: revisar si se sale de la vista o si es el detector.
-2. Los placeholders de hora («8:00», «10:00») van en tinta-2 (6,28:1, AA). Diego debe decidir si se aceptan como AA
-   (son ejemplos, no datos) o pasan a AAA. **Preguntar; no cambiar por cuenta propia.**
-3. Confirmar con Diego las decisiones del paso 5: formulario a pantalla completa; horas escritas como texto (acepta «8», «830»,
-   «8 p. m.», «24/9»); margen 10 min y aviso 15 min por defecto; serie de 17 semanas si no hay semestre; «Deshacer» solo en nuevas.
-4. Enmienda pendiente de aprobar en C6: campo de texto, selector segmentado, casillas de días y alfiler del mapa.
+2. ~~Placeholders de hora~~, ~~decisiones del paso 5~~ y ~~enmienda C6~~: **aprobados por Diego el 2026-09-24**
+   (anotado en el Registro de enmiendas del anexo).
 5. Pruebas instrumentadas (`connectedDebugAndroidTest`) y recorrido real de TalkBack: sin ejecutar.
 6. Compilar la app completa con el dominio nuevo (`./gradlew assembleDebug lintDebug testDebugUnitTest :core:domain:test`):
    **pendiente**, no se pudo en la nube sin acceso a `dl.google.com`.
