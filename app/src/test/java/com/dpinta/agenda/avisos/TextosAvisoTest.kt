@@ -40,6 +40,23 @@ class TextosAvisoTest {
     }
 
     @Test
+    fun `sal ya y vas tarde siguen la copia del anexo`() {
+        val ya = TextosAviso.salYa(LocalTime.of(8, 0), "Cálculo", "B-204", estimacion(), Duration.ofMinutes(7), es24h = true)
+        assertEquals("Sal ya · Cálculo empieza 8:00", ya.titulo)
+        assertEquals("B-204 · 23 min en bus + 7 de margen", ya.texto)
+        val tarde = TextosAviso.vasTarde(4, LocalTime.of(8, 4), LocalTime.of(8, 0), "Cálculo", "B-204", es24h = true)
+        assertEquals("Vas 4 min tarde · llegas 8:04 a B-204", tarde.titulo)
+        assertEquals("Cálculo empieza 8:00", tarde.texto)
+        assertEquals("Vas 1 min tarde · llegas 8:04", TextosAviso.vasTarde(0, LocalTime.of(8, 4), LocalTime.of(8, 0), "Cálculo", "", true).titulo)
+    }
+
+    @Test
+    fun `resumen matutino`() {
+        assertEquals("Hoy: 3 cosas · primera salida 7:32", TextosAviso.resumen(3, LocalTime.of(7, 32), es24h = true).titulo)
+        assertEquals("Hoy: 1 cosa", TextosAviso.resumen(1, null, es24h = true).titulo)
+    }
+
+    @Test
     fun `el codigo de alarma es estable y distingue tipo y sesion`() {
         val inicio = LocalDateTime.of(2026, 9, 28, 8, 0)
         assertEquals(ProgramadorAvisos.codigo(AlarmKind.AVISO, 1, inicio), ProgramadorAvisos.codigo(AlarmKind.AVISO, 1, inicio))

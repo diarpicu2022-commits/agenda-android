@@ -28,15 +28,20 @@ class AlarmPlannerTest {
         assertEquals(listOf(1L, 3L), byKind[AlarmKind.PRECALCULO])
         assertEquals(listOf(1L, 3L), byKind[AlarmKind.SALIDA])
         assertEquals(listOf(1L, 2L, 3L, 4L), byKind[AlarmKind.AVISO])
-        // Cálculo: 8:00 − 10 min de margen − 40 de trayecto = 7:10.
-        assertEquals(at(7, 10), plan.single { it.kind == AlarmKind.SALIDA && it.activityId == 1L }.at)
+        assertEquals(listOf(1L, 3L), byKind[AlarmKind.SAL_YA])
+        assertEquals(listOf(1L, 3L), byKind[AlarmKind.VAS_TARDE])
+        // Cálculo: 8:00 − 10 min de margen − 40 de trayecto = 7:10; «Sal a las» 15 min antes y «Vas tarde» 2 min después.
+        fun deCalculo(k: AlarmKind) = plan.single { it.kind == k && it.activityId == 1L }.at
+        assertEquals(at(6, 55), deCalculo(AlarmKind.SALIDA))
+        assertEquals(at(7, 10), deCalculo(AlarmKind.SAL_YA))
+        assertEquals(at(7, 12), deCalculo(AlarmKind.VAS_TARDE))
         assertEquals(at(6), plan.single { it.kind == AlarmKind.PRECALCULO && it.activityId == 1L }.at)
         assertEquals(plan.sortedBy { it.at }, plan)
     }
 
     @Test fun `sin estimacion todavia no hay alarma de salida`() {
         val plan = AlarmPlanner.plan(all, bogota, at(5), { settings }, { null })
-        assertTrue(plan.none { it.kind == AlarmKind.SALIDA })
+        assertTrue(plan.none { it.kind in setOf(AlarmKind.SALIDA, AlarmKind.SAL_YA, AlarmKind.VAS_TARDE) })
         assertEquals(2, plan.count { it.kind == AlarmKind.PRECALCULO })
     }
 

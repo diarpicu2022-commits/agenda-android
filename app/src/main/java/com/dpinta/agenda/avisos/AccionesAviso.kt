@@ -27,8 +27,14 @@ enum class AccionAviso(val etiqueta: String) {
     val accion: String get() = "com.dpinta.agenda.aviso.$name"
 
     companion object {
-        fun anadir(contexto: Context, aviso: NotificationCompat.Builder, actividad: Long, inicio: LocalDateTime) {
-            for (a in entries) {
+        fun anadir(
+            contexto: Context,
+            aviso: NotificationCompat.Builder,
+            actividad: Long,
+            inicio: LocalDateTime,
+            acciones: List<AccionAviso> = entries,
+        ) {
+            for (a in acciones) {
                 val intent = Intent(contexto, AccionAvisoReceiver::class.java)
                     .setAction(a.accion)
                     .putExtra(ProgramadorAvisos.EXTRA_ACTIVIDAD, actividad)

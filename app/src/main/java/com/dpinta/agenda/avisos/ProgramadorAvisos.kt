@@ -20,8 +20,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Clock
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -50,21 +52,25 @@ class ProgramadorAvisos @Inject constructor(
         val anteriores = registro.getStringSet(CLAVE, emptySet()).orEmpty().mapNotNull { it.toIntOrNull() }
         for (c in anteriores) if (c !in codigos) pendiente(c, null)?.let(alarmas::cancel)
         for (a in nuevas) programar(a)
+        programarResumen(vacia = nuevas.isEmpty())
         registro.edit { putStringSet(CLAVE, codigos.map { it.toString() }.toSet()) }
     }
+
+    /** Sesiones de actividades que existen entre [desde] y [hasta], ambos incluidos. */
+    fun sesiones(agenda: Agenda, desde: LocalDate, hasta: LocalDate): List<Occurrence> = ScheduleExpander.expand(
+        rules = agenda.reglas,
+        oneOff = agenda.puntuales,
+        placeOf = { agenda.actividades[it]?.lugarId },
+        from = desde,
+        to = hasta,
+        semester = agenda.semestreEn(desde),
+        exceptions = agenda.excepciones,
+    ).filter { it.activityId in agenda.actividades }
 
     private suspend fun planear(agenda: Agenda): List<PlannedAlarm> {
         if (agenda.vacia) return emptyList()
         val hoy = LocalDate.now(reloj)
-        val sesiones = ScheduleExpander.expand(
-            rules = agenda.reglas,
-            oneOff = agenda.puntuales,
-            placeOf = { agenda.actividades[it]?.lugarId },
-            from = hoy,
-            to = hoy.plusDays(DIAS),
-            semester = agenda.semestreEn(hoy),
-            exceptions = agenda.excepciones,
-        ).filter { it.activityId in agenda.actividades }
+        val sesiones = sesiones(agenda, hoy, hoy.plusDays(DIAS))
         // AlarmPlanner no suspende: las estimaciones se leen antes.
         val estimaciones = HashMap<Occurrence, TravelEstimate?>()
         for (s in sesiones) {
@@ -85,12 +91,43 @@ class ProgramadorAvisos @Inject constructor(
 
     private fun programar(a: PlannedAlarm) {
         val intento = pendiente(codigo(a), a) ?: return
-        val ms = a.at.toEpochMilli()
+        poner(a.at.toEpochMilli(), intento)
+    }
+
+    private fun poner(ms: Long, intento: PendingIntent) {
         if (exactas) {
             alarmas.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, ms, intento)
         } else {
             alarmas.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, ms, intento)
         }
+    }
+
+    /** Lo llama el receptor al entregar el resumen: el de hoy ya no se vuelve a programar. */
+    fun resumenEntregado(fecha: LocalDate) = registro.edit { putString(CLAVE_RESUMEN, fecha.toString()) }
+
+    /**
+     * El resumen de hoy mientras no se haya entregado y no llegue más de [RETRASO_MAXIMO_RESUMEN] tarde;
+     * si no, el de mañana. Reprogramar (p. ej. el precálculo de las 6:00) no puede saltarse el de hoy.
+     */
+    private fun programarResumen(vacia: Boolean) {
+        val intent = Intent(contexto, AlarmaReceiver::class.java).setAction(ACCION_RESUMEN)
+        val pendiente = PendingIntent.getBroadcast(
+            contexto, CODIGO_RESUMEN, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        if (vacia) {
+            alarmas.cancel(pendiente)
+            return
+        }
+        val ahora = LocalDateTime.now(reloj)
+        val hoy = ahora.toLocalDate()
+        var cuando = hoy.atTime(HORA_RESUMEN)
+        val entregadoHoy = registro.getString(CLAVE_RESUMEN, null) == hoy.toString()
+        if (entregadoHoy || ahora.isAfter(cuando.plus(RETRASO_MAXIMO_RESUMEN))) {
+            cuando = cuando.plusDays(1)
+        } else if (cuando.isBefore(ahora)) {
+            cuando = ahora
+        }
+        poner(cuando.atZone(reloj.zone).toInstant().toEpochMilli(), pendiente)
     }
 
     /** Con [a] nulo solo busca uno ya existente, para cancelarlo. */
@@ -110,7 +147,16 @@ class ProgramadorAvisos @Inject constructor(
         /** Una semana por delante: al reiniciar, al cambiar la agenda o en cada precálculo se vuelve a llenar. */
         const val DIAS = 7L
         private const val CLAVE = "codigos"
+        private const val CLAVE_RESUMEN = "resumen_entregado"
+
+        /** Un resumen que llega más tarde que esto ya no es «matutino». */
+        val RETRASO_MAXIMO_RESUMEN: Duration = Duration.ofHours(2)
         const val ACCION = "com.dpinta.agenda.AVISO"
+        const val ACCION_RESUMEN = "com.dpinta.agenda.RESUMEN"
+        const val CODIGO_RESUMEN = 1
+
+        /** Hora del resumen matutino hasta que exista el ajuste para elegirla (arquitectura, P2.8). */
+        val HORA_RESUMEN: LocalTime = LocalTime.of(6, 0)
         const val EXTRA_TIPO = "tipo"
         const val EXTRA_ACTIVIDAD = "actividad"
         const val EXTRA_INICIO = "inicio"

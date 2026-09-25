@@ -199,6 +199,7 @@ Vista de mes, tareas y exámenes (se diseñarán con enmienda cuando se aborden)
 | 2026-09-24 | C9.1 | Los textos de ejemplo de los campos vacíos van en `tinta-2` (6,28:1, AA), no AAA. | Son ejemplos, no datos que se leen para decidir. | Diego («acepto todas») |
 | 2026-09-24 | (decisiones del paso 5, sin cambio de cláusula) | Formulario a pantalla completa; horas escritas como texto («8», «830», «8 p. m.», «24/9»); margen 10 min y aviso 15 min por defecto; serie de 17 semanas si no hay semestre; «Deshacer» solo en actividades nuevas. | Confirmación pendiente del paso 5. | Diego («acepto todas») |
 | 2026-09-24 | C2.4 | Etiqueta de pestaña que no cabe: se reduce solo ella, lo justo, mínimo 14 sp efectivos, sin partir palabras; el resto de la barra no cambia. | Con fuente 2,0, «Actividades» se partía en «Activida / des» (medido en el emulador, paso 4). | Diego |
+| 2026-09-24 | (fuera de alcance → nuevo) Icono de la app | Icono adaptativo «7:32» en Archivo 62/800, `tinta` sobre `senal`, con capa monocroma para iconos temáticos; texto dentro de la zona segura de 66 dp (esquina a 32,5 dp del centro); 10,15:1 medido sobre el render. Descartadas: «Salir» (se lee como cerrar sesión) y «La banda» (ilegible a 48 dp). Vista previa: `docs/capturas/icono-direcciones.png`. | El contrato dejaba el icono fuera de alcance. | Diego (eligió A) |
 
 ---
 

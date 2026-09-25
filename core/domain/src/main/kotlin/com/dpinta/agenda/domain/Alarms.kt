@@ -13,8 +13,14 @@ enum class AlarmKind {
     /** Recordatorio propio de la actividad (`avisoAntesMin`). */
     AVISO,
 
-    /** La hora de salida, cuando ya hay una estimación de trayecto. */
+    /** «Sal a las 7:32»: al entrar en «prepárate», 15 min antes de salir (C10). Solo con estimación. */
     SALIDA,
+
+    /** «Sal ya»: la hora de salida. */
+    SAL_YA,
+
+    /** «Vas tarde»: pasada la gracia de 2 min sin «Voy saliendo». */
+    VAS_TARDE,
 }
 
 data class PlannedAlarm(
@@ -63,7 +69,12 @@ object AlarmPlanner {
             settings.remindBefore?.let { add(AlarmKind.AVISO, start - it) }
             if (DayPlanner.needsTravel(DayPlanner.previous(occurrences, occ), occ)) {
                 add(AlarmKind.PRECALCULO, start - PRECALCULATION_LEAD)
-                travelOf(occ)?.let { add(AlarmKind.SALIDA, DepartureCalculator.plan(start, settings.margin, it, now).leaveAt) }
+                travelOf(occ)?.let {
+                    val leaveAt = DepartureCalculator.plan(start, settings.margin, it, now).leaveAt
+                    add(AlarmKind.SALIDA, leaveAt - DepartureCalculator.PREPARE_WINDOW)
+                    add(AlarmKind.SAL_YA, leaveAt)
+                    add(AlarmKind.VAS_TARDE, leaveAt + DepartureCalculator.LEAVE_GRACE)
+                }
             }
         }
         return result.sortedWith(compareBy({ it.at }, { it.kind }))

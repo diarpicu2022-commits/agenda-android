@@ -1,6 +1,7 @@
 package com.dpinta.agenda.avisos
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -13,6 +14,9 @@ import androidx.core.content.ContextCompat
 import com.dpinta.agenda.MainActivity
 import com.dpinta.agenda.R
 import com.dpinta.agenda.data.agenda.AgendaRepository
+import com.dpinta.agenda.data.agenda.SesionesEnCurso
+import com.dpinta.agenda.domain.ActivityKind
+import com.dpinta.agenda.domain.MorningBriefing
 import com.dpinta.agenda.domain.AlarmKind
 import com.dpinta.agenda.domain.DepartureCalculator
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,6 +25,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -42,9 +48,17 @@ class AlarmaReceiver : BroadcastReceiver() {
 
     @Inject lateinit var repositorio: AgendaRepository
     @Inject lateinit var programador: ProgramadorAvisos
+    @Inject lateinit var sesiones: SesionesEnCurso
     @Inject lateinit var reloj: Clock
 
     override fun onReceive(contexto: Context, intent: Intent) {
+        if (intent.action == ProgramadorAvisos.ACCION_RESUMEN) {
+            enSegundoPlano {
+                publicarResumen(contexto)
+                programador.reprogramar()
+            }
+            return
+        }
         if (intent.action != ProgramadorAvisos.ACCION) return
         val tipo = intent.getStringExtra(ProgramadorAvisos.EXTRA_TIPO)?.let(AlarmKind::valueOf) ?: return
         val id = intent.getLongExtra(ProgramadorAvisos.EXTRA_ACTIVIDAD, -1)
@@ -53,45 +67,106 @@ class AlarmaReceiver : BroadcastReceiver() {
             when (tipo) {
                 // Sin Routes API todavía: se vuelve a planear con la última estimación guardada.
                 AlarmKind.PRECALCULO -> programador.reprogramar()
-                AlarmKind.AVISO, AlarmKind.SALIDA -> publicar(contexto, tipo, id, inicio)
+                else -> publicar(contexto, tipo, id, inicio)
             }
         }
     }
 
+    @SuppressLint("MissingPermission") // puedeAvisar() lo comprueba antes
     private suspend fun publicar(contexto: Context, tipo: AlarmKind, id: Long, inicio: LocalDateTime) {
-        if (ContextCompat.checkSelfPermission(contexto, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) return
+        if (!puedeAvisar(contexto)) return
         val act = repositorio.agenda().first().actividades[id] ?: return
         val zona = reloj.zone
         val empiezaEn = inicio.atZone(zona).toInstant()
-        val (canal, texto) = if (tipo == AlarmKind.SALIDA) {
+        // Una alarma atrasada (hora cambiada, teléfono dormido) no avisa de algo que ya empezó.
+        if (!reloj.instant().isBefore(empiezaEn)) return
+        val es24h = DateFormat.is24HourFormat(contexto)
+        val deSalida = tipo != AlarmKind.AVISO
+        // Si ya tocó «Voy saliendo», no se le vuelve a apurar.
+        if (deSalida && sesiones.salida.value?.first == SesionesEnCurso.Sesion(id, inicio)) return
+        val (canal, texto) = if (deSalida) {
             val lugar = act.lugarId ?: return
             val estimacion = repositorio.estimacion(lugar, act.modo) ?: return
             val plan = DepartureCalculator.plan(empiezaEn, act.margen, estimacion, reloj.instant())
-            val salirA = plan.leaveAt.atZone(zona).toLocalTime()
-            Canal.Salida to TextosAviso.salida(salirA, act.titulo, act.salon, estimacion, act.margen, DateFormat.is24HourFormat(contexto))
+            val empieza = inicio.toLocalTime()
+            when (tipo) {
+                AlarmKind.SALIDA -> Canal.Salida to TextosAviso.salida(
+                    plan.leaveAt.atZone(zona).toLocalTime(), act.titulo, act.salon, estimacion, act.margen, es24h,
+                )
+                AlarmKind.SAL_YA -> Canal.SalYa to TextosAviso.salYa(empieza, act.titulo, act.salon, estimacion, act.margen, es24h)
+                else -> Canal.SalYa to TextosAviso.vasTarde(
+                    minutosTarde = Duration.between(plan.leaveAt, reloj.instant()).toMinutes(),
+                    llegas = plan.arriveIfLeavingNow.atZone(zona).toLocalTime(),
+                    empieza = empieza,
+                    actividad = act.titulo,
+                    salon = act.salon,
+                    es24h = es24h,
+                )
+            }
         } else {
             Canal.Empieza to TextosAviso.empieza(act.titulo, act.salon)
         }
-        val abrir = PendingIntent.getActivity(
-            contexto,
-            0,
-            Intent(contexto, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_IMMUTABLE,
+        val aviso = base(contexto, canal, texto)
+            .setWhen(empiezaEn.toEpochMilli())
+            .setShowWhen(true)
+            .setCategory(if (deSalida) NotificationCompat.CATEGORY_ALARM else NotificationCompat.CATEGORY_EVENT)
+        if (deSalida) {
+            val acciones = if (tipo == AlarmKind.SALIDA) AccionAviso.entries else listOf(AccionAviso.VoySaliendo)
+            AccionAviso.anadir(contexto, aviso, id, inicio, acciones)
+        }
+        // Salida, Sal ya y Vas tarde comparten número: cada uno sustituye al anterior.
+        val numero = ProgramadorAvisos.codigo(if (deSalida) AlarmKind.SALIDA else tipo, id, inicio)
+        NotificationManagerCompat.from(contexto).notify(numero, aviso.build())
+    }
+
+    /** «Hoy: 3 cosas · primera salida 7:32» (canal Resumen). Un día sin nada no avisa. */
+    @SuppressLint("MissingPermission") // puedeAvisar() lo comprueba antes
+    private suspend fun publicarResumen(contexto: Context) {
+        val agenda = repositorio.agenda().first()
+        val zona = reloj.zone
+        val hoy = LocalDate.now(reloj)
+        val previsto = hoy.atTime(ProgramadorAvisos.HORA_RESUMEN).atZone(zona).toInstant()
+        if (Duration.between(previsto, reloj.instant()) > ProgramadorAvisos.RETRASO_MAXIMO_RESUMEN) return
+        programador.resumenEntregado(hoy)
+        if (!puedeAvisar(contexto)) return
+        val deHoy = programador.sesiones(agenda, hoy, hoy)
+        if (deHoy.isEmpty()) return
+        val estimaciones = deHoy.associateWith { s ->
+            s.placeId?.let { repositorio.estimacion(it, agenda.actividades.getValue(s.activityId).modo) }
+        }
+        val resumen = MorningBriefing.of(
+            date = hoy,
+            occurrences = deHoy,
+            zone = zona,
+            now = reloj.instant(),
+            marginOf = { agenda.actividades.getValue(it).margen },
+            travelOf = { estimaciones[it] },
+            isWork = { agenda.actividades.getValue(it).tipo == ActivityKind.TRABAJO },
+            tasks = emptyList(),
         )
-        val aviso = NotificationCompat.Builder(contexto, canal.id)
+        val primera = resumen.firstDeparture?.atZone(zona)?.toLocalTime()
+        val texto = TextosAviso.resumen(resumen.sessions.size, primera, DateFormat.is24HourFormat(contexto))
+        val aviso = base(contexto, Canal.Resumen, texto).addAction(0, "Ver día", abrirApp(contexto))
+        NotificationManagerCompat.from(contexto).notify(ProgramadorAvisos.CODIGO_RESUMEN, aviso.build())
+    }
+
+    private fun puedeAvisar(contexto: Context) =
+        ContextCompat.checkSelfPermission(contexto, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+
+    private fun abrirApp(contexto: Context): PendingIntent = PendingIntent.getActivity(
+        contexto,
+        0,
+        Intent(contexto, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        PendingIntent.FLAG_IMMUTABLE,
+    )
+
+    private fun base(contexto: Context, canal: Canal, texto: TextoAviso) =
+        NotificationCompat.Builder(contexto, canal.id)
             .setSmallIcon(R.drawable.ic_aviso)
             .setContentTitle(texto.titulo)
             .setContentText(texto.texto)
-            .setWhen(empiezaEn.toEpochMilli())
-            .setShowWhen(true)
-            .setCategory(if (tipo == AlarmKind.SALIDA) NotificationCompat.CATEGORY_ALARM else NotificationCompat.CATEGORY_EVENT)
-            .setContentIntent(abrir)
+            .setContentIntent(abrirApp(contexto))
             .setAutoCancel(true)
-        if (tipo == AlarmKind.SALIDA) AccionAviso.anadir(contexto, aviso, id, inicio)
-        NotificationManagerCompat.from(contexto).notify(ProgramadorAvisos.codigo(tipo, id, inicio), aviso.build())
-    }
 }
 
 /** Reinicio, cambio de hora o de zona, o app actualizada: las alarmas exactas se pierden y hay que ponerlas otra vez. */

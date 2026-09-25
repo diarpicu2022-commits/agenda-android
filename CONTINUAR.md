@@ -84,7 +84,12 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
    +5 min reprograma a +5, Hoy no voy cancela la sesión y rehace las alarmas (`docs/capturas/paso6-*`).
    Copia sin cláusula, pendiente de visto bueno: «Ahora no» y «Agenda · en 15 min» del ejemplo.
    Sin medir: oscuro, 360 dp y fuente 2,0 de estas pantallas; «Voy saliendo» desde la notificación; TalkBack.
-   Falta: canal «Sal ya / Vas tarde» y resumen matutino; reprogramar al guardar una estimación (hoy solo lo hace el precálculo);
+   Hecho después: «Sal a las» 15 min antes de salir (ventana «prepárate»), «Sal ya» a la hora de salida y «Vas N min tarde»
+   2 min después si no tocó «Voy saliendo» (dominio: `AlarmKind.SAL_YA`/`VAS_TARDE`); resumen matutino a las 6:00 fijas
+   (`HORA_RESUMEN`, falta el ajuste para elegirla) que no se pierde si coincide con un reprogramado; las alarmas atrasadas
+   no avisan de sesiones ya empezadas. Icono de la app (enmienda en el anexo). Verificado en emulador cambiando la hora.
+   Pendiente de visto bueno: adelantar «Sal a las» a 15 min antes (antes sonaba a la hora de salida).
+   Falta: reprogramar al guardar una estimación (hoy solo lo hace el precálculo);
    la semilla no guarda trayecto hacia «Tienda centro» (lugar 2), por eso el Turno no tiene alarma de salida.
 3. **Ubicación + Google Routes API** (TRANSIT, DRIVE con tráfico, TWO_WHEELER, WALK) y Places (New) para el mapa.
    Diego tiene que crear la API key en Google Cloud (facturación activa; restringida a paquete + SHA-1 y a Routes/Places).
