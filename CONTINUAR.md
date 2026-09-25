@@ -73,8 +73,14 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
 ## 4. Siguientes pasos (cada uno se muestra y espera visto bueno)
 
 1. ~~**Persistencia real**~~ Hecho 2026-09-24 (rama `persistencia`): Room + SQLCipher v1 (actividad, lugar, serie, puntual, excepción, semestre + días sin clase con `festivosPropuestos`, trayecto, traslado), `AgendaRoom` en Hilt, `AgendaEnMemoria` solo en pruebas, semilla en `src/debug`; 99 pruebas (4 de Room con Robolectric). Pendiente: prueba de migración al crear v2, y verificar en emulador que la semilla aparece y que release arranca en «primer uso».
-2. **Notificaciones y alarmas**: `AlarmManager.setExactAndAllowWhileIdle` + `USE_EXACT_ALARM`; canales; reprogramar en
-   `BOOT_COMPLETED`, `TIME_SET`, `TIMEZONE_CHANGED`; permisos explicados antes de pedirlos (C10).
+2. **Notificaciones y alarmas** — parte lógica hecha 2026-09-24 (rama `avisos`): paquete `avisos/` con 4 canales del anexo,
+   `ProgramadorAvisos` (AlarmPlanner → `setExactAndAllowWhileIdle`, 7 días, idempotente, se rehace al cambiar la agenda),
+   receptores de alarma y de `BOOT_COMPLETED`/`TIME_SET`/`TIMEZONE_CHANGED`/`MY_PACKAGE_REPLACED`, textos «Sal a las…» y
+   «Empieza…» con prueba. Verificado en emulador: 58 alarmas exactas (`policy_permission`), aviso de salida y «Empieza»
+   llegan tras cambiar la hora (`docs/capturas/paso6-avisos-notificaciones.png`).
+   Falta: pantalla previa del permiso (Flujo 3) y franja «Sin avisos» (C10); acciones Voy saliendo · +5 min · Hoy no voy;
+   canal «Sal ya / Vas tarde» y resumen matutino; reprogramar al guardar una estimación (hoy solo lo hace el precálculo);
+   la semilla no guarda trayecto hacia «Tienda centro» (lugar 2), por eso el Turno no tiene alarma de salida.
 3. **Ubicación + Google Routes API** (TRANSIT, DRIVE con tráfico, TWO_WHEELER, WALK) y Places (New) para el mapa.
    Diego tiene que crear la API key en Google Cloud (facturación activa; restringida a paquete + SHA-1 y a Routes/Places).
    La clave va en `local.properties` con el Secrets Gradle Plugin. Live Update solo cuando Diego toca «Voy saliendo».
