@@ -78,8 +78,13 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
    receptores de alarma y de `BOOT_COMPLETED`/`TIME_SET`/`TIMEZONE_CHANGED`/`MY_PACKAGE_REPLACED`, textos «Sal a las…» y
    «Empieza…» con prueba. Verificado en emulador: 58 alarmas exactas (`policy_permission`), aviso de salida y «Empieza»
    llegan tras cambiar la hora (`docs/capturas/paso6-avisos-notificaciones.png`).
-   Falta: pantalla previa del permiso (Flujo 3) y franja «Sin avisos» (C10); acciones Voy saliendo · +5 min · Hoy no voy;
-   canal «Sal ya / Vas tarde» y resumen matutino; reprogramar al guardar una estimación (hoy solo lo hace el precálculo);
+   Hecho después (misma rama): pantalla previa del permiso (Flujo 3, una vez, al haber actividades), franja «Sin avisos»
+   (C10) que abre el diálogo o Ajustes, y acciones Voy saliendo · +5 min · Hoy no voy (estado compartido en
+   `SesionesEnCurso`). Verificado en emulador: contraste sobre render ≥ 5,68:1 (textos nuevos 14,6–16,2:1), toques ≥ 48 dp,
+   +5 min reprograma a +5, Hoy no voy cancela la sesión y rehace las alarmas (`docs/capturas/paso6-*`).
+   Copia sin cláusula, pendiente de visto bueno: «Ahora no» y «Agenda · en 15 min» del ejemplo.
+   Sin medir: oscuro, 360 dp y fuente 2,0 de estas pantallas; «Voy saliendo» desde la notificación; TalkBack.
+   Falta: canal «Sal ya / Vas tarde» y resumen matutino; reprogramar al guardar una estimación (hoy solo lo hace el precálculo);
    la semilla no guarda trayecto hacia «Tienda centro» (lugar 2), por eso el Turno no tiene alarma de salida.
 3. **Ubicación + Google Routes API** (TRANSIT, DRIVE con tráfico, TWO_WHEELER, WALK) y Places (New) para el mapa.
    Diego tiene que crear la API key en Google Cloud (facturación activa; restringida a paquete + SHA-1 y a Routes/Places).

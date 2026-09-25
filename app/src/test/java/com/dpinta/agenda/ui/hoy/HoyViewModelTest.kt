@@ -47,7 +47,7 @@ class HoyViewModelTest {
         val reloj = RelojVirtual(dia.atTime(h, m).atZone(zona).toInstant(), zona, this)
         val repo = AgendaEnMemoria(reloj)
         agenda?.let { repo.reemplazar(it(dia)) }
-        val vm = HoyViewModel(repo, reloj)
+        val vm = HoyViewModel(repo, reloj, com.dpinta.agenda.data.agenda.SesionesEnCurso())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.estado.collect {} }
         runCurrent()
         return vm to { vm.estado.value }

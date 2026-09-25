@@ -16,6 +16,7 @@ import com.dpinta.agenda.ui.components.banda.AccionBanda
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import com.dpinta.agenda.data.agenda.SesionesEnCurso
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -34,19 +35,19 @@ import javax.inject.Inject
  * (ScheduleExpander, DayPlanner, DepartureCalculator, Trip, ConflictDetector); aquí solo se
  * orquesta y se traduce con [BandaMapeador]. El reloj es inyectable para las pruebas.
  */
+private typealias Clave = SesionesEnCurso.Sesion
+
 @HiltViewModel
 class HoyViewModel @Inject constructor(
     private val repositorio: AgendaRepository,
     private val reloj: Clock,
+    sesiones: SesionesEnCurso,
 ) : ViewModel() {
 
-    /** Sesión identificada por actividad + inicio. */
-    private data class Clave(val actividadId: Long, val inicio: LocalDateTime)
-
-    private val salida = MutableStateFlow<Pair<Clave, Instant>?>(null)
-    private val llegadas = MutableStateFlow<Set<Clave>>(emptySet())
+    private val salida = sesiones.salida
+    private val llegadas = sesiones.llegadas
     private val modos = MutableStateFlow<Map<Long, TransportMode>>(emptyMap())
-    private val pospuesto = MutableStateFlow<Instant?>(null)
+    private val pospuesto = sesiones.pospuesto
 
     /** Sesión a la que apunta la banda ahora mismo (destino de las acciones). */
     @Volatile private var claveBanda: Clave? = null

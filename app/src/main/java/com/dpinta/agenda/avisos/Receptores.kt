@@ -25,7 +25,7 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 
 /** Corre [trabajo] fuera del hilo principal sin que el sistema mate el receptor antes de terminar. */
-private fun BroadcastReceiver.enSegundoPlano(trabajo: suspend () -> Unit) {
+internal fun BroadcastReceiver.enSegundoPlano(trabajo: suspend () -> Unit) {
     val pendiente = goAsync()
     CoroutineScope(Dispatchers.Default).launch {
         try {
@@ -89,8 +89,8 @@ class AlarmaReceiver : BroadcastReceiver() {
             .setCategory(if (tipo == AlarmKind.SALIDA) NotificationCompat.CATEGORY_ALARM else NotificationCompat.CATEGORY_EVENT)
             .setContentIntent(abrir)
             .setAutoCancel(true)
-            .build()
-        NotificationManagerCompat.from(contexto).notify(ProgramadorAvisos.codigo(tipo, id, inicio), aviso)
+        if (tipo == AlarmKind.SALIDA) AccionAviso.anadir(contexto, aviso, id, inicio)
+        NotificationManagerCompat.from(contexto).notify(ProgramadorAvisos.codigo(tipo, id, inicio), aviso.build())
     }
 }
 

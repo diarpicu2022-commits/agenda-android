@@ -57,6 +57,9 @@ import com.dpinta.agenda.ui.components.banda.rememberEs24h
 import com.dpinta.agenda.ui.theme.AgendaMedidas
 import com.dpinta.agenda.ui.theme.AgendaSpacing
 import com.dpinta.agenda.ui.theme.AgendaTheme
+import com.dpinta.agenda.ui.permisos.FranjaSinAvisos
+import com.dpinta.agenda.ui.permisos.PantallaPermisoAvisos
+import com.dpinta.agenda.ui.permisos.rememberPermisoAvisos
 import com.dpinta.agenda.ui.theme.FormaPuntoAhora
 import com.dpinta.agenda.ui.theme.Icono
 import com.dpinta.agenda.ui.theme.IconoAgenda
@@ -78,8 +81,15 @@ private val FORMATO_DIA_CORTO = DateTimeFormatter.ofPattern("EEEE", ESPANOL)
 @Composable
 fun HoyRuta(onAjustes: () -> Unit, onCrear: () -> Unit, onEditar: (Long) -> Unit, viewModel: HoyViewModel = hiltViewModel()) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val permiso = rememberPermisoAvisos(hayActividades = estado is HoyUiState.Dia)
+    if (permiso.explicar) {
+        PantallaPermisoAvisos(onActivar = permiso.activar, onAhoraNo = permiso.ahoraNo)
+        return
+    }
     HoyPantalla(
         estado = estado,
+        sinAvisos = !permiso.concedido,
+        onActivarAvisos = permiso.activar,
         onAccion = viewModel::onAccion,
         onCambiarModo = viewModel::onCambiarModo,
         onAjustes = onAjustes,
@@ -98,9 +108,14 @@ fun HoyPantalla(
     onCrear: () -> Unit,
     modifier: Modifier = Modifier,
     onEditar: (Long) -> Unit = {},
+    sinAvisos: Boolean = false,
+    onActivarAvisos: () -> Unit = {},
 ) {
     val c = AgendaTheme.colores
     Column(modifier.fillMaxSize().background(c.papel)) {
+        // La franja ocupa la barra de estado; lo de debajo ya no la reserva.
+        val franja = sinAvisos && estado is HoyUiState.Dia
+        if (franja) FranjaSinAvisos(onActivar = onActivarAvisos)
         when (estado) {
             HoyUiState.Cargando -> {
                 Cabecera("Hoy", accion = { BotonAjustes(onAjustes) })
@@ -111,10 +126,10 @@ fun HoyPantalla(
                 EstadoPrimerUso(onAnadir = onCrear)
             }
             is HoyUiState.Dia -> {
-                estado.banda?.let { BandaSalida(it, onAccion = onAccion, onCambiarModo = onCambiarModo) }
+                estado.banda?.let { BandaSalida(it, onAccion = onAccion, onCambiarModo = onCambiarModo, bajoBarraDeEstado = !franja) }
                 Cabecera(
                     titulo = FORMATO_DIA.format(estado.fecha),
-                    bajoBarraDeEstado = estado.banda == null,
+                    bajoBarraDeEstado = estado.banda == null && !franja,
                     accion = { BotonAjustes(onAjustes) },
                 )
                 if (estado.filas.isEmpty()) {

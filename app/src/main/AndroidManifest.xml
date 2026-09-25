@@ -35,6 +35,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".avisos.AccionAvisoReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".avisos.ReprogramarReceiver"
             android:exported="false">
             <intent-filter>
