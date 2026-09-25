@@ -104,6 +104,11 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
    horizontal (enmiendas del 2026-09-25 en el anexo). `docs/capturas/paso8-*`.
    Copia sin cláusula, pendiente de visto bueno: «Esta semana no tienes nada fijo.» y «Volver a esta semana».
 5. Prioridad 1 de la arquitectura: widget Glance (siguiente actividad + hora de salida), semestres/festivos en la UI.
+   **Semestres hechos 2026-09-25**: Ajustes > Semestre lista, crea, edita y elimina (doble toque); el formulario propone
+   solos los festivos de Colombia entre las fechas (se pueden quitar) y admite otros días con motivo. Verificado en
+   emulador: «Semana 8» y «Festivo: Día de la Raza · lun 12 oct» (`docs/capturas/paso9-*`).
+   Copia sin cláusula, pendiente de visto bueno: textos del formulario de semestre y de Ajustes.
+   **Google Cloud**: proyecto `agenda-personal-509712` creado; falta que Diego vincule la facturación.
 6. Prioridad 2: modo clase (No Molestar), tareas y exámenes por materia, resumen matutino, asistencia, horas trabajadas.
 7. Prioridad 3: importar/exportar `.ics`, notas por clase, **Wear OS** (Diego piensa comprar un Galaxy Watch8; mientras, emulador Wear OS 6).
 8. Versión final: APK/AAB de release firmado (keystore fuera de git), R8, sin logs de datos personales.

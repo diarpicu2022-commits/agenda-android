@@ -28,7 +28,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dpinta.agenda.ui.actividades.ActividadesRuta
-import com.dpinta.agenda.ui.ajustes.AjustesPantalla
+import com.dpinta.agenda.ui.ajustes.AjustesRuta
 import com.dpinta.agenda.ui.formulario.FormularioRuta
 import com.dpinta.agenda.ui.formulario.MapaPendientePantalla
 import com.dpinta.agenda.ui.debug.DemoBandaPantalla
@@ -37,6 +37,8 @@ import com.dpinta.agenda.ui.navegacion.BarraInferior
 import com.dpinta.agenda.ui.navegacion.Pestana
 import com.dpinta.agenda.ui.navegacion.RutaActividades
 import com.dpinta.agenda.ui.navegacion.RutaAjustes
+import com.dpinta.agenda.ui.navegacion.RutaSemestre
+import com.dpinta.agenda.ui.semestre.SemestreRuta
 import com.dpinta.agenda.ui.navegacion.RutaFormulario
 import com.dpinta.agenda.ui.navegacion.RutaMapa
 import com.dpinta.agenda.ui.navegacion.RutaDemoBanda
@@ -101,8 +103,13 @@ fun AgendaRoot(
                 composable<RutaSemana> { SemanaRuta(onCrear = alCrear, onEditar = alEditar) }
                 composable<RutaActividades> { ActividadesRuta(onCrear = alCrear, onEditar = alEditar) }
                 composable<RutaAjustes> {
-                    AjustesPantalla(onAtras = { nav.popBackStack() }, onDemoBanda = { nav.navigate(RutaDemoBanda) })
+                    AjustesRuta(
+                        onAtras = { nav.popBackStack() },
+                        onSemestre = { id -> nav.navigate(RutaSemestre(id ?: -1L)) },
+                        onDemoBanda = { nav.navigate(RutaDemoBanda) },
+                    )
                 }
+                composable<RutaSemestre> { SemestreRuta(onCerrar = { nav.popBackStack() }) }
                 composable<RutaFormulario> {
                     FormularioRuta(onCerrar = { nav.popBackStack() }, onMapa = { nav.navigate(RutaMapa) })
                 }

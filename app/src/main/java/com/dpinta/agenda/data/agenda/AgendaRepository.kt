@@ -100,14 +100,33 @@ interface AgendaRepository {
 
     suspend fun quitarExcepcion(actividadId: Long, fecha: LocalDate)
 
-    /** Guarda un semestre con sus días sin clase (fecha → motivo). Devuelve su id. */
-    suspend fun guardarSemestre(nombre: String, inicio: LocalDate, fin: LocalDate, diasSinClase: Map<LocalDate, String>): Long
+    /** Semestres guardados, con su nombre y el motivo de cada día sin clase (para Ajustes). */
+    fun semestres(): Flow<List<SemestreGuardado>>
+
+    /** Crea ([id] nulo) o sustituye un semestre con sus días sin clase (fecha → motivo). Devuelve su id. */
+    suspend fun guardarSemestre(
+        nombre: String,
+        inicio: LocalDate,
+        fin: LocalDate,
+        diasSinClase: Map<LocalDate, String>,
+        id: Long? = null,
+    ): Long
+
+    suspend fun eliminarSemestre(id: Long)
 
     /** Última duración conocida hasta un lugar (la escribirá la capa de rutas). */
     suspend fun guardarEstimacion(lugarId: Long, estimacion: TravelEstimate)
 
     suspend fun guardarTraslado(desde: Long, hasta: Long, minutos: Long)
 }
+
+data class SemestreGuardado(
+    val id: Long,
+    val nombre: String,
+    val inicio: LocalDate,
+    val fin: LocalDate,
+    val diasSinClase: Map<LocalDate, String>,
+)
 
 /** Festivos de Colombia entre dos fechas, para proponerlos como días sin clase de un semestre. */
 fun festivosPropuestos(inicio: LocalDate, fin: LocalDate): Map<LocalDate, String> =

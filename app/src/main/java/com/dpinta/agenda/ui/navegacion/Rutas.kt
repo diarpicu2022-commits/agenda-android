@@ -12,6 +12,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object RutaAjustes
 
+/** Crear (id = −1) o editar un semestre (Ajustes). */
+@Serializable data class RutaSemestre(val id: Long = -1L)
+
 /**
  * Crear (id = −1) o editar una actividad. [escenario] solo lo usa la app depurable para
  * capturas reproducibles (vacío en producción).

@@ -98,8 +98,22 @@ class AgendaRoom @Inject constructor(private val dao: AgendaDao, private val rel
         dao.quitarExcepcion(actividadId, fecha)
     }
 
-    override suspend fun guardarSemestre(nombre: String, inicio: LocalDate, fin: LocalDate, diasSinClase: Map<LocalDate, String>): Long =
-        dao.guardarSemestre(SemestreEntidad(nombre = nombre, inicio = inicio, fin = fin), diasSinClase)
+    override fun semestres(): Flow<List<SemestreGuardado>> =
+        combine(dao.semestres(), dao.diasSinClase()) { semestres, dias ->
+            semestres.map { s ->
+                SemestreGuardado(s.id, s.nombre, s.inicio, s.fin, dias.filter { it.semestreId == s.id }.associate { it.fecha to it.motivo })
+            }
+        }
+
+    override suspend fun guardarSemestre(
+        nombre: String,
+        inicio: LocalDate,
+        fin: LocalDate,
+        diasSinClase: Map<LocalDate, String>,
+        id: Long?,
+    ): Long = dao.guardarSemestre(SemestreEntidad(id = id ?: 0, nombre = nombre, inicio = inicio, fin = fin), diasSinClase)
+
+    override suspend fun eliminarSemestre(id: Long) = dao.eliminarSemestre(id)
 
     override suspend fun guardarEstimacion(lugarId: Long, estimacion: TravelEstimate) {
         dao.guardarTrayecto(TrayectoEntidad(lugarId, estimacion.mode, estimacion.duration.toMinutes().toInt(), estimacion.computedAt))

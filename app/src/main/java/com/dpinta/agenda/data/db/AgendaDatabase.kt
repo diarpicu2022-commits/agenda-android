@@ -78,6 +78,7 @@ abstract class AgendaDao {
     @Query("DELETE FROM dia_sin_clase WHERE semestre_id = :semestreId") abstract suspend fun borrarDiasSinClase(semestreId: Long)
     @Insert abstract suspend fun insertarDiasSinClase(dias: List<DiaSinClaseEntidad>)
     @Delete abstract suspend fun eliminarSemestre(s: SemestreEntidad)
+    @Query("DELETE FROM semestre WHERE id = :id") abstract suspend fun eliminarSemestre(id: Long)
 
     @Transaction
     open suspend fun guardarSemestre(s: SemestreEntidad, dias: Map<LocalDate, String>): Long {

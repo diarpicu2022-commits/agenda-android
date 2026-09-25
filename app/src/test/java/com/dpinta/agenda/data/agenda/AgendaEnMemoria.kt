@@ -40,9 +40,30 @@ class AgendaEnMemoria(private val reloj: Clock) : AgendaRepository {
         estado.update { it.copy(excepciones = it.excepciones.filterNot { e -> e.activityId == actividadId && e.date == fecha }) }
     }
 
-    override suspend fun guardarSemestre(nombre: String, inicio: LocalDate, fin: LocalDate, diasSinClase: Map<LocalDate, String>): Long {
-        estado.update { it.copy(semestres = it.semestres + com.dpinta.agenda.domain.Semester(inicio, fin, diasSinClase.keys)) }
-        return estado.value.semestres.size.toLong()
+    private val guardados = MutableStateFlow<List<SemestreGuardado>>(emptyList())
+
+    override fun semestres(): Flow<List<SemestreGuardado>> = guardados
+
+    override suspend fun guardarSemestre(
+        nombre: String,
+        inicio: LocalDate,
+        fin: LocalDate,
+        diasSinClase: Map<LocalDate, String>,
+        id: Long?,
+    ): Long {
+        val nuevoId = id ?: ((guardados.value.maxOfOrNull { it.id } ?: 0) + 1)
+        guardados.update { lista -> lista.filter { it.id != nuevoId } + SemestreGuardado(nuevoId, nombre, inicio, fin, diasSinClase) }
+        sincronizar()
+        return nuevoId
+    }
+
+    override suspend fun eliminarSemestre(id: Long) {
+        guardados.update { lista -> lista.filter { it.id != id } }
+        sincronizar()
+    }
+
+    private fun sincronizar() = estado.update { a ->
+        a.copy(semestres = guardados.value.sortedBy { it.inicio }.map { com.dpinta.agenda.domain.Semester(it.inicio, it.fin, it.diasSinClase.keys) })
     }
 
     override suspend fun guardarEstimacion(lugarId: Long, estimacion: TravelEstimate) = Unit
