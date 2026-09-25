@@ -108,7 +108,14 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
    solos los festivos de Colombia entre las fechas (se pueden quitar) y admite otros días con motivo. Verificado en
    emulador: «Semana 8» y «Festivo: Día de la Raza · lun 12 oct» (`docs/capturas/paso9-*`).
    Copia sin cláusula, pendiente de visto bueno: textos del formulario de semestre y de Ajustes.
-   **Google Cloud**: proyecto `agenda-personal-509712` creado; falta que Diego vincule la facturación.
+   **Google Cloud**: proyecto `agenda-personal-509712` creado. Diego decidió (2026-09-25) **no** vincular facturación por ahora:
+   Routes y Places la exigen aunque el uso quepa en el tramo gratis. En su lugar:
+   **Tiempos a mano (hecho 2026-09-25)**: Actividades > Lugares guardados > lugar: minutos desde casa por modo; se guardan
+   como `TravelEstimate.manual` (nunca «dato viejo») y al guardar se reprograman las alarmas. Room v2 (columna
+   `trayecto.manual`, migración 1→2 probada con Robolectric y en el emulador sobre la base cifrada).
+   Pendiente: el traslado entre lugares (Campus → Tienda) no se usa aún para la salida; se usa siempre «desde casa».
+   Para pasar a Routes más adelante: vincular facturación, poner cuota diaria por debajo del tramo gratis y crear la clave
+   restringida a `com.dpinta.agenda` + SHA-1 de depuración `44:40:86:A3:9E:D3:2C:73:F7:86:97:8D:1A:37:A0:A2:0C:C3:03:C3`.
 6. Prioridad 2: modo clase (No Molestar), tareas y exámenes por materia, resumen matutino, asistencia, horas trabajadas.
 7. Prioridad 3: importar/exportar `.ics`, notas por clase, **Wear OS** (Diego piensa comprar un Galaxy Watch8; mientras, emulador Wear OS 6).
 8. Versión final: APK/AAB de release firmado (keystore fuera de git), R8, sin logs de datos personales.

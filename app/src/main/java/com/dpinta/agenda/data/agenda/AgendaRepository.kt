@@ -89,6 +89,10 @@ interface AgendaRepository {
     /** Última estimación de trayecto hasta [lugarId] en [modo], o null si no se sabe. */
     suspend fun estimacion(lugarId: Long, modo: TransportMode): TravelEstimate?
 
+    /** Las estimaciones conocidas de un lugar, por modo. */
+    suspend fun estimaciones(lugarId: Long): Map<TransportMode, TravelEstimate> =
+        TransportMode.entries.mapNotNull { m -> estimacion(lugarId, m)?.let { m to it } }.toMap()
+
     /** Crea o sustituye una actividad con su serie o su fecha. Devuelve su id. */
     suspend fun guardar(actividad: ActividadAGuardar): Long
 

@@ -127,6 +127,8 @@ data class TrayectoEntidad(
     val modo: TransportMode,
     val minutos: Int,
     @ColumnInfo(name = "calculado_en") val calculadoEn: Instant,
+    /** Tiempo escrito por Diego, no calculado (v2). */
+    @ColumnInfo(defaultValue = "0") val manual: Boolean = false,
 )
 
 /** Minutos de traslado entre dos lugares, para detectar traslados imposibles (conflictos, C10). */

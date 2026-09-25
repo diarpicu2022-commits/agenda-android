@@ -12,6 +12,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object RutaAjustes
 
+/** Tiempos de trayecto escritos a mano para un lugar guardado. */
+@Serializable data class RutaLugar(val id: Long)
+
 /** Crear (id = −1) o editar un semestre (Ajustes). */
 @Serializable data class RutaSemestre(val id: Long = -1L)
 

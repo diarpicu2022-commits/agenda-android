@@ -49,9 +49,9 @@ import java.util.Locale
 private val FORMATO_FECHA = DateTimeFormatter.ofPattern("EEE d MMM", Locale.forLanguageTag("es"))
 
 @Composable
-fun ActividadesRuta(onCrear: () -> Unit, onEditar: (Long) -> Unit, viewModel: ActividadesViewModel = hiltViewModel()) {
+fun ActividadesRuta(onCrear: () -> Unit, onEditar: (Long) -> Unit, onLugar: (Long) -> Unit, viewModel: ActividadesViewModel = hiltViewModel()) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
-    ActividadesPantalla(estado, onCrear = onCrear, onEditar = onEditar)
+    ActividadesPantalla(estado, onCrear = onCrear, onEditar = onEditar, onLugar = onLugar)
 }
 
 /** Actividades (arquitectura de información del anexo): Clases · Trabajo · Puntuales y Lugares guardados. */
@@ -61,19 +61,20 @@ fun ActividadesPantalla(
     onCrear: () -> Unit,
     onEditar: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    onLugar: (Long) -> Unit = {},
 ) {
     Column(modifier.fillMaxSize().background(AgendaTheme.colores.papel)) {
         Cabecera("Actividades")
         when (estado) {
             ActividadesUiState.Cargando -> EsqueletoCarga("Cargando actividades")
             ActividadesUiState.Vacia -> EstadoPrimerUso(onAnadir = onCrear)
-            is ActividadesUiState.Lista -> Lista(estado, onEditar)
+            is ActividadesUiState.Lista -> Lista(estado, onEditar, onLugar)
         }
     }
 }
 
 @Composable
-private fun Lista(estado: ActividadesUiState.Lista, onEditar: (Long) -> Unit) {
+private fun Lista(estado: ActividadesUiState.Lista, onEditar: (Long) -> Unit, onLugar: (Long) -> Unit) {
     LazyColumn(Modifier.fillMaxSize()) {
         for (seccion in estado.secciones) {
             item(key = "s-${seccion.grupo}") { TituloSeccion(seccion.grupo.titulo) }
@@ -81,7 +82,7 @@ private fun Lista(estado: ActividadesUiState.Lista, onEditar: (Long) -> Unit) {
         }
         if (estado.lugares.isNotEmpty()) {
             item(key = "s-lugares") { TituloSeccion("Lugares guardados") }
-            items(estado.lugares, key = { "l-${it.nombre}" }) { FilaLugar(it) }
+            items(estado.lugares, key = { "l-${it.id}" }) { FilaLugar(it, onEditar = { onLugar(it.id) }) }
         }
     }
 }
@@ -156,10 +157,17 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
 }
 
 @Composable
-private fun FilaLugar(lugar: LugarFila) {
+private fun FilaLugar(lugar: LugarFila, onEditar: () -> Unit) {
     val c = AgendaTheme.colores
     val uso = if (lugar.actividades == 1) "1 actividad" else "${lugar.actividades} actividades"
-    Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
+    val interaccion = remember { MutableInteractionSource() }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .anilloFoco(interaccion, c.tinta)
+            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = "Tiempos de trayecto", role = Role.Button, onClick = onEditar)
+            .semantics(mergeDescendants = true) {},
+    ) {
         Row(
             Modifier
                 .fillMaxWidth()

@@ -55,7 +55,7 @@ class AgendaRoom @Inject constructor(private val dao: AgendaDao, private val rel
     }
 
     override suspend fun estimacion(lugarId: Long, modo: TransportMode): TravelEstimate? =
-        dao.trayecto(lugarId, modo)?.let { TravelEstimate(Duration.ofMinutes(it.minutos.toLong()), modo, it.calculadoEn, fromCache = false) }
+        dao.trayecto(lugarId, modo)?.let { TravelEstimate(Duration.ofMinutes(it.minutos.toLong()), modo, it.calculadoEn, fromCache = false, manual = it.manual) }
 
     override suspend fun guardar(actividad: ActividadAGuardar): Long {
         val fila = ActividadEntidad(
@@ -116,7 +116,7 @@ class AgendaRoom @Inject constructor(private val dao: AgendaDao, private val rel
     override suspend fun eliminarSemestre(id: Long) = dao.eliminarSemestre(id)
 
     override suspend fun guardarEstimacion(lugarId: Long, estimacion: TravelEstimate) {
-        dao.guardarTrayecto(TrayectoEntidad(lugarId, estimacion.mode, estimacion.duration.toMinutes().toInt(), estimacion.computedAt))
+        dao.guardarTrayecto(TrayectoEntidad(lugarId, estimacion.mode, estimacion.duration.toMinutes().toInt(), estimacion.computedAt, estimacion.manual))
     }
 
     override suspend fun guardarTraslado(desde: Long, hasta: Long, minutos: Long) {

@@ -45,7 +45,7 @@ data class ActividadFila(
 )
 
 @Immutable
-data class LugarFila(val nombre: String, val actividades: Int)
+data class LugarFila(val id: Long, val nombre: String, val actividades: Int)
 
 object ActividadesMapeador {
 
@@ -74,7 +74,7 @@ object ActividadesMapeador {
             .sortedBy { it.grupo.ordinal }
         val usos = agenda.actividades.values.groupingBy { it.lugarId }.eachCount()
         val lugares = agenda.lugares.values
-            .map { LugarFila(it.nombre, usos[it.id] ?: 0) }
+            .map { LugarFila(it.id, it.nombre, usos[it.id] ?: 0) }
             .sortedBy { it.nombre.lowercase() }
         return ActividadesUiState.Lista(secciones, lugares)
     }

@@ -49,6 +49,9 @@ class DepartureTest {
         assertFalse(DepartureCalculator.plan(start, margin, travel(now), now).stale)
         assertTrue(DepartureCalculator.plan(start, margin, travel(now, cached = true), now).stale)
         assertTrue(DepartureCalculator.plan(start, margin, travel(now - Duration.ofMinutes(16)), now).stale)
+        // Un tiempo escrito a mano hace días no caduca.
+        val manual = travel(now - Duration.ofDays(3)).copy(manual = true)
+        assertFalse(DepartureCalculator.plan(start, margin, manual, now).stale)
     }
 
     @Test fun `recalcula a mitad de camino y no en los ultimos 15 minutos`() {

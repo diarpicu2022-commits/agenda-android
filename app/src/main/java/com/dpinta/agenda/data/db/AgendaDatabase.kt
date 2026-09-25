@@ -120,10 +120,17 @@ abstract class AgendaDatabase : RoomDatabase() {
     abstract fun agendaDao(): AgendaDao
 
     companion object {
-        const val VERSION = 1
+        const val VERSION = 2
         const val NOMBRE = "agenda.db"
 
-        /** Migraciones no destructivas, en orden. Vacío mientras el esquema sea v1. */
-        val MIGRACIONES: Array<androidx.room.migration.Migration> = emptyArray()
+        /** v2: tiempos de trayecto escritos a mano (sin Routes API). */
+        val DE_1_A_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE trayecto ADD COLUMN manual INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        /** Migraciones no destructivas, en orden. */
+        val MIGRACIONES: Array<androidx.room.migration.Migration> = arrayOf(DE_1_A_2)
     }
 }

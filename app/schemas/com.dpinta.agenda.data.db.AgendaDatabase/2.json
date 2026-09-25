@@ -1,0 +1,581 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "781080967489ba3a8452756b7b86a7ce",
+    "entities": [
+      {
+        "tableName": "lugar",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `nombre_clave` TEXT NOT NULL, `direccion` TEXT, `latitud` REAL, `longitud` REAL, `google_place_id` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreClave",
+            "columnName": "nombre_clave",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "direccion",
+            "columnName": "direccion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "latitud",
+            "columnName": "latitud",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "longitud",
+            "columnName": "longitud",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "googlePlaceId",
+            "columnName": "google_place_id",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_lugar_nombre_clave",
+            "unique": true,
+            "columnNames": [
+              "nombre_clave"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_lugar_nombre_clave` ON `${TABLE_NAME}` (`nombre_clave`)"
+          }
+        ]
+      },
+      {
+        "tableName": "actividad",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `titulo` TEXT NOT NULL, `tipo` TEXT NOT NULL, `salon` TEXT NOT NULL, `lugar_id` INTEGER, `margen_min` INTEGER NOT NULL, `modo` TEXT NOT NULL, `aviso_min` INTEGER NOT NULL, FOREIGN KEY(`lugar_id`) REFERENCES `lugar`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titulo",
+            "columnName": "titulo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "salon",
+            "columnName": "salon",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lugarId",
+            "columnName": "lugar_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "margenMin",
+            "columnName": "margen_min",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modo",
+            "columnName": "modo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avisoMin",
+            "columnName": "aviso_min",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_actividad_lugar_id",
+            "unique": false,
+            "columnNames": [
+              "lugar_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_actividad_lugar_id` ON `${TABLE_NAME}` (`lugar_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "lugar",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "lugar_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "serie_semanal",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `actividad_id` INTEGER NOT NULL, `dias` INTEGER NOT NULL, `inicio` INTEGER NOT NULL, `fin` INTEGER NOT NULL, `desde` INTEGER NOT NULL, `hasta` INTEGER NOT NULL, `zona` TEXT NOT NULL, FOREIGN KEY(`actividad_id`) REFERENCES `actividad`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actividadId",
+            "columnName": "actividad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dias",
+            "columnName": "dias",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inicio",
+            "columnName": "inicio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fin",
+            "columnName": "fin",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "desde",
+            "columnName": "desde",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasta",
+            "columnName": "hasta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zona",
+            "columnName": "zona",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_serie_semanal_actividad_id",
+            "unique": false,
+            "columnNames": [
+              "actividad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_serie_semanal_actividad_id` ON `${TABLE_NAME}` (`actividad_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "actividad",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "actividad_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "sesion_puntual",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `actividad_id` INTEGER NOT NULL, `inicio` TEXT NOT NULL, `fin` TEXT NOT NULL, FOREIGN KEY(`actividad_id`) REFERENCES `actividad`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actividadId",
+            "columnName": "actividad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inicio",
+            "columnName": "inicio",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fin",
+            "columnName": "fin",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_sesion_puntual_actividad_id",
+            "unique": false,
+            "columnNames": [
+              "actividad_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sesion_puntual_actividad_id` ON `${TABLE_NAME}` (`actividad_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "actividad",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "actividad_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "excepcion",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `actividad_id` INTEGER NOT NULL, `fecha` INTEGER NOT NULL, `tipo` TEXT NOT NULL, `nuevo_inicio` TEXT, `nuevo_fin` TEXT, FOREIGN KEY(`actividad_id`) REFERENCES `actividad`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actividadId",
+            "columnName": "actividad_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fecha",
+            "columnName": "fecha",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nuevoInicio",
+            "columnName": "nuevo_inicio",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nuevoFin",
+            "columnName": "nuevo_fin",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_excepcion_actividad_id_fecha",
+            "unique": true,
+            "columnNames": [
+              "actividad_id",
+              "fecha"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_excepcion_actividad_id_fecha` ON `${TABLE_NAME}` (`actividad_id`, `fecha`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "actividad",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "actividad_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "semestre",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `inicio` INTEGER NOT NULL, `fin` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inicio",
+            "columnName": "inicio",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fin",
+            "columnName": "fin",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "dia_sin_clase",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`semestre_id` INTEGER NOT NULL, `fecha` INTEGER NOT NULL, `motivo` TEXT NOT NULL, PRIMARY KEY(`semestre_id`, `fecha`), FOREIGN KEY(`semestre_id`) REFERENCES `semestre`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "semestreId",
+            "columnName": "semestre_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fecha",
+            "columnName": "fecha",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "motivo",
+            "columnName": "motivo",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "semestre_id",
+            "fecha"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "semestre",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "semestre_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "trayecto",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`lugar_id` INTEGER NOT NULL, `modo` TEXT NOT NULL, `minutos` INTEGER NOT NULL, `calculado_en` INTEGER NOT NULL, `manual` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`lugar_id`, `modo`), FOREIGN KEY(`lugar_id`) REFERENCES `lugar`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "lugarId",
+            "columnName": "lugar_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modo",
+            "columnName": "modo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutos",
+            "columnName": "minutos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "calculadoEn",
+            "columnName": "calculado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "manual",
+            "columnName": "manual",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "lugar_id",
+            "modo"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "lugar",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "lugar_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "traslado",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`desde_id` INTEGER NOT NULL, `hasta_id` INTEGER NOT NULL, `minutos` INTEGER NOT NULL, `calculado_en` INTEGER NOT NULL, PRIMARY KEY(`desde_id`, `hasta_id`), FOREIGN KEY(`desde_id`) REFERENCES `lugar`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`hasta_id`) REFERENCES `lugar`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "desdeId",
+            "columnName": "desde_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hastaId",
+            "columnName": "hasta_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minutos",
+            "columnName": "minutos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "calculadoEn",
+            "columnName": "calculado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "desde_id",
+            "hasta_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_traslado_hasta_id",
+            "unique": false,
+            "columnNames": [
+              "hasta_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_traslado_hasta_id` ON `${TABLE_NAME}` (`hasta_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "lugar",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "desde_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "lugar",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "hasta_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '781080967489ba3a8452756b7b86a7ce')"
+    ]
+  }
+}

@@ -38,6 +38,8 @@ import com.dpinta.agenda.ui.navegacion.Pestana
 import com.dpinta.agenda.ui.navegacion.RutaActividades
 import com.dpinta.agenda.ui.navegacion.RutaAjustes
 import com.dpinta.agenda.ui.navegacion.RutaSemestre
+import com.dpinta.agenda.ui.navegacion.RutaLugar
+import com.dpinta.agenda.ui.lugar.LugarRuta
 import com.dpinta.agenda.ui.semestre.SemestreRuta
 import com.dpinta.agenda.ui.navegacion.RutaFormulario
 import com.dpinta.agenda.ui.navegacion.RutaMapa
@@ -101,7 +103,8 @@ fun AgendaRoot(
             ) {
                 composable<RutaHoy> { HoyRuta(onAjustes = { nav.navigate(RutaAjustes) }, onCrear = alCrear, onEditar = alEditar) }
                 composable<RutaSemana> { SemanaRuta(onCrear = alCrear, onEditar = alEditar) }
-                composable<RutaActividades> { ActividadesRuta(onCrear = alCrear, onEditar = alEditar) }
+                composable<RutaActividades> { ActividadesRuta(onCrear = alCrear, onEditar = alEditar, onLugar = { nav.navigate(RutaLugar(it)) }) }
+                composable<RutaLugar> { LugarRuta(onCerrar = { nav.popBackStack() }) }
                 composable<RutaAjustes> {
                     AjustesRuta(
                         onAtras = { nav.popBackStack() },

@@ -12,6 +12,8 @@ data class TravelEstimate(
     val computedAt: Instant,
     /** Sin red o sin permiso: se usó la última duración conocida para este trayecto. */
     val fromCache: Boolean,
+    /** Escrita por Diego («Campus: 23 min en bus»): no caduca, así que nunca es «dato viejo». */
+    val manual: Boolean = false,
 )
 
 data class DeparturePlan(
@@ -55,7 +57,7 @@ object DepartureCalculator {
             state = state,
             minutesToLeave = Math.floorDiv(untilLeave.seconds, 60L),
             arriveIfLeavingNow = now + travel.duration,
-            stale = travel.fromCache || Duration.between(travel.computedAt, now) > STALE_AFTER,
+            stale = !travel.manual && (travel.fromCache || Duration.between(travel.computedAt, now) > STALE_AFTER),
         )
     }
 

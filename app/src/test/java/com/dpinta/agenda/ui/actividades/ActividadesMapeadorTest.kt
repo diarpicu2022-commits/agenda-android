@@ -48,7 +48,7 @@ class ActividadesMapeadorTest {
         assertEquals(listOf("Informe", "Informe viejo"), lista.secciones[2].filas.map { it.titulo })
         assertEquals("Campus", lista.secciones[0].filas[0].lugar)
         assertEquals(
-            listOf(LugarFila("Campus", 3), LugarFila("Casa", 0), LugarFila("Tienda centro", 1)),
+            listOf(LugarFila(10, "Campus", 3), LugarFila(30, "Casa", 0), LugarFila(20, "Tienda centro", 1)),
             lista.lugares,
         )
     }
