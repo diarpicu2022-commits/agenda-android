@@ -125,6 +125,9 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
    al pasar de 35 a 30 min). Ojo en el emulador: apagarlo con `adb shell reboot -p`; `emu kill` pierde lo último escrito.
    Para pasar a Routes más adelante: vincular facturación, poner cuota diaria por debajo del tramo gratis y crear la clave
    restringida a `com.dpinta.agenda` + SHA-1 de depuración `44:40:86:A3:9E:D3:2C:73:F7:86:97:8D:1A:37:A0:A2:0C:C3:03:C3`.
+   **Resumen matutino configurable (hecho 2026-09-25)**: Ajustes > Resumen matutino (Activado/Apagado + hora, 6:00 por
+   defecto) en `AjustesAvisos` (preferencias, no es dato sensible); reprograma al cambiar. Verificado en emulador (7:30,
+   apagado y vuelta). Copia pendiente de visto bueno: «Una notificación en silencio con lo del día y la primera salida.»
 6. Prioridad 2: modo clase (No Molestar), tareas y exámenes por materia, resumen matutino, asistencia, horas trabajadas.
 7. Prioridad 3: importar/exportar `.ics`, notas por clase, **Wear OS** (Diego piensa comprar un Galaxy Watch8; mientras, emulador Wear OS 6).
 8. Versión final: APK/AAB de release firmado (keystore fuera de git), R8, sin logs de datos personales.

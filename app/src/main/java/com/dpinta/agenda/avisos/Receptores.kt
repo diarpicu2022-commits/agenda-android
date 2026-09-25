@@ -15,6 +15,7 @@ import com.dpinta.agenda.MainActivity
 import com.dpinta.agenda.R
 import com.dpinta.agenda.data.agenda.AgendaRepository
 import com.dpinta.agenda.data.agenda.SesionesEnCurso
+import com.dpinta.agenda.data.ajustes.AjustesAvisos
 import com.dpinta.agenda.data.agenda.trayectoHacia
 import com.dpinta.agenda.domain.ActivityKind
 import com.dpinta.agenda.domain.MorningBriefing
@@ -50,6 +51,7 @@ class AlarmaReceiver : BroadcastReceiver() {
     @Inject lateinit var repositorio: AgendaRepository
     @Inject lateinit var programador: ProgramadorAvisos
     @Inject lateinit var sesiones: SesionesEnCurso
+    @Inject lateinit var ajustes: AjustesAvisos
     @Inject lateinit var reloj: Clock
 
     override fun onReceive(contexto: Context, intent: Intent) {
@@ -133,7 +135,9 @@ class AlarmaReceiver : BroadcastReceiver() {
         val agenda = repositorio.agenda().first()
         val zona = reloj.zone
         val hoy = LocalDate.now(reloj)
-        val previsto = hoy.atTime(ProgramadorAvisos.HORA_RESUMEN).atZone(zona).toInstant()
+        val ajuste = ajustes.resumen.value
+        if (!ajuste.activo) return
+        val previsto = hoy.atTime(ajuste.hora).atZone(zona).toInstant()
         if (Duration.between(previsto, reloj.instant()) > ProgramadorAvisos.RETRASO_MAXIMO_RESUMEN) return
         programador.resumenEntregado(hoy)
         if (!puedeAvisar(contexto)) return

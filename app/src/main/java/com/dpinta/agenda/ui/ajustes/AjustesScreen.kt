@@ -28,6 +28,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.dpinta.agenda.data.agenda.AgendaRepository
 import com.dpinta.agenda.data.agenda.SemestreGuardado
+import com.dpinta.agenda.avisos.ProgramadorAvisos
+import com.dpinta.agenda.data.ajustes.AjusteResumen
+import com.dpinta.agenda.data.ajustes.AjustesAvisos
+import com.dpinta.agenda.ui.components.CampoTexto
+import com.dpinta.agenda.ui.components.Opcion
+import com.dpinta.agenda.ui.components.Segmentado
+import com.dpinta.agenda.ui.components.banda.formatearHora
+import com.dpinta.agenda.ui.components.banda.rememberEs24h
+import com.dpinta.agenda.ui.formulario.Interprete
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import com.dpinta.agenda.ui.components.BotonSubrayado
 import com.dpinta.agenda.ui.components.Cabecera
 import com.dpinta.agenda.ui.components.NotaPantalla
@@ -45,9 +59,21 @@ import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
-class AjustesViewModel @Inject constructor(repositorio: AgendaRepository) : ViewModel() {
+class AjustesViewModel @Inject constructor(
+    repositorio: AgendaRepository,
+    private val ajustes: AjustesAvisos,
+    private val programador: ProgramadorAvisos,
+) : ViewModel() {
     val semestres: StateFlow<List<SemestreGuardado>?> =
         repositorio.semestres().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val resumen: StateFlow<AjusteResumen> = ajustes.resumen
+
+    fun resumen(ajuste: AjusteResumen) {
+        if (ajuste == ajustes.resumen.value) return
+        ajustes.guardar(ajuste)
+        viewModelScope.launch { programador.reprogramar() }
+    }
 }
 
 private val FORMATO = DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("es"))
@@ -71,7 +97,8 @@ fun AjustesRuta(
     viewModel: AjustesViewModel = hiltViewModel(),
 ) {
     val semestres by viewModel.semestres.collectAsStateWithLifecycle()
-    AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda)
+    val resumen by viewModel.resumen.collectAsStateWithLifecycle()
+    AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen)
 }
 
 /** Ajustes (anexo §7). Por ahora: Semestre. En compilaciones depurables enlaza la demostración de la banda. */
@@ -82,6 +109,8 @@ fun AjustesPantalla(
     onSemestre: (Long?) -> Unit,
     onDemoBanda: () -> Unit,
     modifier: Modifier = Modifier,
+    resumen: AjusteResumen = AjusteResumen(),
+    onResumen: (AjusteResumen) -> Unit = {},
 ) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
@@ -103,6 +132,7 @@ fun AjustesPantalla(
                 else -> for (s in semestres) FilaSemestre(s) { onSemestre(s.id) }
             }
             BotonSubrayado("Añadir semestre", tinta = c.tinta, modifier = Modifier.padding(start = m), onClick = { onSemestre(null) })
+            ResumenMatutino(resumen, onResumen)
             if (depurable) {
                 BotonSubrayado(
                     "Demostración de la banda",
@@ -111,6 +141,47 @@ fun AjustesPantalla(
                     onClick = onDemoBanda,
                 )
             }
+        }
+    }
+}
+
+/** Resumen matutino (arquitectura P2.8): encendido o apagado y a qué hora llega. */
+@Composable
+private fun ResumenMatutino(ajuste: AjusteResumen, onCambio: (AjusteResumen) -> Unit) {
+    val c = AgendaTheme.colores
+    val t = AgendaTheme.tipo
+    val m = AgendaTheme.reticula.margen
+    val es24h = rememberEs24h()
+    // Sin clave de la hora: guardar mientras se escribe no debe reescribir el campo.
+    var texto by rememberSaveable { mutableStateOf(formatearHora(ajuste.hora, es24h).enLinea) }
+    var error by rememberSaveable { mutableStateOf<String?>(null) }
+    Column(Modifier.padding(horizontal = m), verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s12)) {
+        Text(
+            "Resumen matutino",
+            style = t.seccion,
+            color = c.tinta,
+            modifier = Modifier.padding(top = AgendaSpacing.s32).semantics { heading() },
+        )
+        Text("Una notificación en silencio con lo del día y la primera salida.", style = t.cuerpo, color = c.tinta)
+        Segmentado(
+            opciones = listOf(Opcion(true, "Activado"), Opcion(false, "Apagado")),
+            seleccion = ajuste.activo,
+            onSeleccion = { onCambio(ajuste.copy(activo = it)) },
+            etiquetaPrueba = "resumen",
+        )
+        if (ajuste.activo) {
+            CampoTexto(
+                etiqueta = "Hora",
+                valor = texto,
+                onCambio = { nuevo ->
+                    texto = nuevo
+                    val hora = Interprete.hora(nuevo)
+                    error = if (hora == null && nuevo.isNotBlank()) "Escribe la hora como 6 o 6:30" else null
+                    if (hora != null) onCambio(ajuste.copy(hora = hora))
+                },
+                error = error,
+                ayuda = "6:00",
+            )
         }
     }
 }

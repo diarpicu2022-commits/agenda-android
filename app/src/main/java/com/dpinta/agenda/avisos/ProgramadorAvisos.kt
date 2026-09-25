@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.core.content.edit
 import com.dpinta.agenda.data.agenda.Agenda
 import com.dpinta.agenda.data.agenda.AgendaRepository
+import com.dpinta.agenda.data.ajustes.AjustesAvisos
 import com.dpinta.agenda.data.agenda.trayectoHacia
 import com.dpinta.agenda.domain.AlarmKind
 import com.dpinta.agenda.domain.AlarmPlanner
@@ -25,7 +26,6 @@ import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,6 +39,7 @@ class ProgramadorAvisos @Inject constructor(
     @param:ApplicationContext private val contexto: Context,
     private val repositorio: AgendaRepository,
     private val reloj: Clock,
+    private val ajustes: AjustesAvisos,
 ) {
     private val alarmas = contexto.getSystemService(AlarmManager::class.java)
     private val registro = contexto.getSharedPreferences("avisos_programados", Context.MODE_PRIVATE)
@@ -118,13 +119,14 @@ class ProgramadorAvisos @Inject constructor(
         val pendiente = PendingIntent.getBroadcast(
             contexto, CODIGO_RESUMEN, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        if (vacia) {
+        val ajuste = ajustes.resumen.value
+        if (vacia || !ajuste.activo) {
             alarmas.cancel(pendiente)
             return
         }
         val ahora = LocalDateTime.now(reloj)
         val hoy = ahora.toLocalDate()
-        var cuando = hoy.atTime(HORA_RESUMEN)
+        var cuando = hoy.atTime(ajuste.hora)
         val entregadoHoy = registro.getString(CLAVE_RESUMEN, null) == hoy.toString()
         if (entregadoHoy || ahora.isAfter(cuando.plus(RETRASO_MAXIMO_RESUMEN))) {
             cuando = cuando.plusDays(1)
@@ -178,8 +180,6 @@ class ProgramadorAvisos @Inject constructor(
         const val ACCION_WIDGET = "com.dpinta.agenda.WIDGET"
         const val CODIGO_WIDGET = 2
 
-        /** Hora del resumen matutino hasta que exista el ajuste para elegirla (arquitectura, P2.8). */
-        val HORA_RESUMEN: LocalTime = LocalTime.of(6, 0)
         const val EXTRA_TIPO = "tipo"
         const val EXTRA_ACTIVIDAD = "actividad"
         const val EXTRA_INICIO = "inicio"
