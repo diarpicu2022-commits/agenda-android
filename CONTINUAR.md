@@ -97,7 +97,12 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
 4. Semana y Actividades con datos reales. **Actividades hecha 2026-09-25** (rama `avisos`): Clases · Trabajo · Puntuales
    (examen cuenta como clase, «otro» como puntual) y Lugares guardados con su número de actividades; tocar una fila
    abre la edición; «lun, mié y vie · 8:00 → 10:00 a. m. · Campus». Medido en emulador claro, oscuro y 360 dp + fuente
-   2,0 (`docs/capturas/paso7-*`): contraste mínimo 5,68:1 (barra inferior, previa), toques ≥ 48 dp. Falta: Semana.
+   2,0 (`docs/capturas/paso7-*`): contraste mínimo 5,68:1 (barra inferior, previa), toques ≥ 48 dp.
+   **Semana hecha 2026-09-25**: rejilla de 7 días con franjas de 48 dp, hoy invertido, línea de «ahora» solo en hoy,
+   celdas en `papel-2` con cuadrado de tipo + salón (rol nuevo `celda`) + nombre abreviado, carriles si dos sesiones se
+   cruzan, festivos del semestre, número de semana, ‹ › y «Volver a esta semana». Con letra grande se desliza en
+   horizontal (enmiendas del 2026-09-25 en el anexo). `docs/capturas/paso8-*`.
+   Copia sin cláusula, pendiente de visto bueno: «Esta semana no tienes nada fijo.» y «Volver a esta semana».
 5. Prioridad 1 de la arquitectura: widget Glance (siguiente actividad + hora de salida), semestres/festivos en la UI.
 6. Prioridad 2: modo clase (No Molestar), tareas y exámenes por materia, resumen matutino, asistencia, horas trabajadas.
 7. Prioridad 3: importar/exportar `.ics`, notas por clase, **Wear OS** (Diego piensa comprar un Galaxy Watch8; mientras, emulador Wear OS 6).

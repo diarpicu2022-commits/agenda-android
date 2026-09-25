@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -24,11 +26,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -59,7 +64,7 @@ private val ESPANOL: Locale = Locale.forLanguageTag("es")
 private val DIA_LARGO = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ESPANOL)
 private val DIA_CORTO = DateTimeFormatter.ofPattern("EEE d MMM", ESPANOL)
 
-/** C4.6: franjas de 48 dp por hora. */
+/** C4.6: franjas de 48 dp por hora (mínimo; ver [MedidasSemana]). */
 private val FRANJA: Dp = AgendaSpacing.s48
 
 /** Columna de horas de Semana: solo la cifra («7», «14»), en `celda`. */
@@ -125,81 +130,138 @@ private fun titulo(s: SemanaUiState.Semana): String {
     return s.numero?.let { "Semana $it · $rango" } ?: rango
 }
 
+/**
+ * Medidas de la rejilla según la letra del teléfono. Con la letra normal, 7 columnas iguales y
+ * franjas de 48 dp (C4.6). Si el salón no cabe, la columna toma el ancho que necesita y la rejilla
+ * se desliza en horizontal; si no cabe en alto, la franja crece (C2.4: nada se recorta; enmienda 2026-09-25).
+ */
+private data class MedidasSemana(val horas: Dp, val columna: Dp, val franja: Dp, val desliza: Boolean)
+
+@Composable
+private fun medir(s: SemanaUiState.Semana, ancho: Dp): MedidasSemana {
+    val t = AgendaTheme.tipo
+    val medidor = rememberTextMeasurer()
+    val densidad = LocalDensity.current
+    val es24h = rememberEs24h()
+    fun anchoDe(texto: String, estilo: androidx.compose.ui.text.TextStyle): Dp =
+        with(densidad) { medidor.measure(texto, estilo, softWrap = false, maxLines = 1).size.width.toDp() }
+    val horas = maxOf(COLUMNA_HORAS, anchoDe(if (es24h) "22" else "12", t.celda) + AgendaSpacing.s4)
+    val contenido = (
+        s.bloques.flatMap { listOf(anchoDe(it.salon, t.celda), anchoDe(it.abreviado, t.meta)) } +
+            s.dias.flatMap { listOf(anchoDe(nombreDia(it), t.meta), anchoDe(it.fecha.dayOfMonth.toString(), t.cuerpo)) } +
+            AgendaMedidas.marcadorTipo
+        ).max()
+    // 4 dp de relleno a la izquierda y 4 dp de separación a la derecha (C4.1).
+    val minima = contenido + AgendaSpacing.s8
+    val disponible = ancho - AgendaTheme.reticula.margen * 2 - horas
+    val lineaSalon = with(densidad) { medidor.measure("B-204", t.celda).size.height.toDp() }
+    val franja = maxOf(FRANJA, AgendaSpacing.s4 + AgendaMedidas.marcadorTipo + AgendaSpacing.s4 + lineaSalon + AgendaSpacing.s4)
+    return MedidasSemana(horas, maxOf(disponible / 7, minima), franja, minima * 7 > disponible)
+}
+
+private fun nombreDia(d: DiaSemana) = d.fecha.dayOfWeek.getDisplayName(TextStyle.SHORT, ESPANOL).removeSuffix(".")
+
 @Composable
 private fun Semana(s: SemanaUiState.Semana, onEditar: (Long) -> Unit, onEstaSemana: () -> Unit) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
     val m = AgendaTheme.reticula.margen
-    if (s.ahora == null) {
-        Row(Modifier.padding(horizontal = m)) { BotonSubrayado("Volver a esta semana", tinta = c.tinta, onClick = onEstaSemana) }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val medidas = medir(s, maxWidth)
+        // Una sola posición horizontal para la tira de días y la rejilla: se deslizan juntas.
+        val lateral = rememberScrollState()
+        // Si la rejilla se desliza, se abre con hoy a la vista (una columna antes, para dar contexto).
+        val hoy = s.dias.indexOfFirst { it.esHoy }
+        val desde = with(LocalDensity.current) { (medidas.columna * maxOf(hoy - 1, 0)).roundToPx() }
+        LaunchedEffect(s.lunes, medidas.desliza) { if (medidas.desliza && hoy >= 0) lateral.scrollTo(desde) }
+        Column {
+            if (s.ahora == null) {
+                Row(Modifier.padding(horizontal = m)) { BotonSubrayado("Volver a esta semana", tinta = c.tinta, onClick = onEstaSemana) }
+            }
+            TiraDias(s, medidas, lateral)
+            for (d in s.dias.filter { it.sinClase != null }) {
+                Text(
+                    "${d.sinClase} · ${DIA_CORTO.format(d.fecha).replace(".", "")}",
+                    style = t.meta,
+                    color = c.tinta,
+                    modifier = Modifier.padding(horizontal = m, vertical = AgendaSpacing.s4),
+                )
+            }
+            if (s.bloques.isEmpty()) {
+                Text("Esta semana no tienes nada fijo.", style = t.cuerpo, color = c.tinta, modifier = Modifier.padding(horizontal = m, vertical = AgendaSpacing.s12))
+            }
+            HorizontalDivider(thickness = AgendaMedidas.filete, color = c.filete)
+            Rejilla(s, medidas, lateral, onEditar)
+        }
     }
-    TiraDias(s)
-    for (d in s.dias.filter { it.sinClase != null }) {
-        Text(
-            "${d.sinClase} · ${DIA_CORTO.format(d.fecha).replace(".", "")}",
-            style = t.meta,
-            color = c.tinta,
-            modifier = Modifier.padding(horizontal = m, vertical = AgendaSpacing.s4),
-        )
-    }
-    if (s.bloques.isEmpty()) {
-        Text("Esta semana no tienes nada fijo.", style = t.cuerpo, color = c.tinta, modifier = Modifier.padding(horizontal = m, vertical = AgendaSpacing.s12))
-    }
-    HorizontalDivider(thickness = AgendaMedidas.filete, color = c.filete)
-    Rejilla(s, onEditar)
 }
+
+private fun Modifier.deslizable(medidas: MedidasSemana, estado: ScrollState): Modifier =
+    if (medidas.desliza) horizontalScroll(estado) else this
 
 /** Tira de días: el de hoy invertido (C6), los demás sin caja. */
 @Composable
-private fun TiraDias(s: SemanaUiState.Semana) {
+private fun TiraDias(s: SemanaUiState.Semana, medidas: MedidasSemana, lateral: ScrollState) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
-    Row(Modifier.fillMaxWidth().padding(start = AgendaTheme.reticula.margen + COLUMNA_HORAS, end = AgendaTheme.reticula.margen)) {
-        for (d in s.dias) {
-            val fondo = if (d.esHoy) c.tinta else c.papel
-            val tinta = if (d.esHoy) c.papel else c.tinta
-            val nombre = d.fecha.dayOfWeek.getDisplayName(TextStyle.SHORT, ESPANOL).removeSuffix(".")
-            Column(
-                Modifier
-                    .weight(1f)
-                    .background(fondo)
-                    .padding(horizontal = AgendaSpacing.s4, vertical = AgendaSpacing.s4)
-                    .clearAndSetSemantics {
-                        contentDescription = DIA_LARGO.format(d.fecha) + if (d.esHoy) ", hoy" else ""
-                    },
-            ) {
-                Text(nombre, style = t.meta, color = tinta, maxLines = 1)
-                Text(d.fecha.dayOfMonth.toString(), style = t.cuerpo, color = tinta)
+    val m = AgendaTheme.reticula.margen
+    Row(Modifier.fillMaxWidth().padding(start = m + medidas.horas, end = m)) {
+        Row(Modifier.weight(1f).deslizable(medidas, lateral)) {
+            for (d in s.dias) {
+                val fondo = if (d.esHoy) c.tinta else c.papel
+                val tinta = if (d.esHoy) c.papel else c.tinta
+                Column(
+                    Modifier
+                        .width(medidas.columna)
+                        .background(fondo)
+                        .padding(horizontal = AgendaSpacing.s4, vertical = AgendaSpacing.s4)
+                        .clearAndSetSemantics {
+                            contentDescription = DIA_LARGO.format(d.fecha) + if (d.esHoy) ", hoy" else ""
+                        },
+                ) {
+                    Text(nombreDia(d), style = t.meta, color = tinta, maxLines = 1, softWrap = false)
+                    Text(d.fecha.dayOfMonth.toString(), style = t.cuerpo, color = tinta, maxLines = 1, softWrap = false)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun Rejilla(s: SemanaUiState.Semana, onEditar: (Long) -> Unit) {
+private fun Rejilla(s: SemanaUiState.Semana, medidas: MedidasSemana, lateral: ScrollState, onEditar: (Long) -> Unit) {
     val c = AgendaTheme.colores
     val es24h = rememberEs24h()
     val horas = s.hasta - s.desde
+    val franja = medidas.franja
+    val columna = medidas.columna
     Box(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-        Row(Modifier.fillMaxWidth().height(FRANJA * horas).padding(horizontal = AgendaTheme.reticula.margen)) {
-            // Columna de horas: la cifra en la parte alta de cada franja.
-            Column(Modifier.width(COLUMNA_HORAS)) {
+        Row(Modifier.fillMaxWidth().height(franja * horas).padding(horizontal = AgendaTheme.reticula.margen)) {
+            // Columna de horas, fija aunque la rejilla se deslice: la cifra en la parte alta de cada franja.
+            Column(Modifier.width(medidas.horas)) {
                 for (h in s.desde until s.hasta) {
                     val cifra = if (es24h || h % 12 != 0) (if (es24h) h else h % 12).toString() else "12"
-                    Text(cifra, style = AgendaTheme.tipo.celda, color = c.tinta, modifier = Modifier.height(FRANJA).clearAndSetSemantics { })
+                    Text(
+                        cifra,
+                        style = AgendaTheme.tipo.celda,
+                        color = c.tinta,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.height(franja).clearAndSetSemantics { },
+                    )
                 }
             }
-            BoxWithConstraints(Modifier.weight(1f).fillMaxHeight()) {
-                val columna = maxWidth / 7
-                // Filete de 1,5 dp al inicio de cada hora (C6: separar filas).
-                for (h in 0 until horas) {
-                    HorizontalDivider(thickness = AgendaMedidas.filete, color = c.filete, modifier = Modifier.offset(y = FRANJA * h))
-                }
-                for (b in s.bloques) Celda(b, s.desde, columna, onEditar)
-                s.ahora?.let { ahora ->
-                    val hoy = s.dias.indexOfFirst { it.esHoy }
-                    val y = FRANJA * ((ahora.hour - s.desde) + ahora.minute / 60f)
-                    if (hoy >= 0 && ahora.hour >= s.desde && ahora.hour < s.hasta) LineaAhora(columna * hoy, y, columna, formatearHora(ahora, es24h).cifra)
+            Box(Modifier.weight(1f).fillMaxHeight().deslizable(medidas, lateral)) {
+                Box(Modifier.width(columna * 7).fillMaxHeight()) {
+                    // Filete de 1,5 dp al inicio de cada hora (C6: separar filas).
+                    for (h in 0 until horas) {
+                        HorizontalDivider(thickness = AgendaMedidas.filete, color = c.filete, modifier = Modifier.offset(y = franja * h))
+                    }
+                    for (b in s.bloques) Celda(b, s.desde, columna, franja, onEditar)
+                    s.ahora?.let { ahora ->
+                        val hoy = s.dias.indexOfFirst { it.esHoy }
+                        val y = franja * ((ahora.hour - s.desde) + ahora.minute / 60f)
+                        if (hoy >= 0 && ahora.hour >= s.desde && ahora.hour < s.hasta) LineaAhora(columna * hoy, y, columna, formatearHora(ahora, es24h).cifra)
+                    }
                 }
             }
         }
@@ -207,14 +269,14 @@ private fun Rejilla(s: SemanaUiState.Semana, onEditar: (Long) -> Unit) {
 }
 
 @Composable
-private fun Celda(b: Bloque, desde: Int, columna: Dp, onEditar: (Long) -> Unit) {
+private fun Celda(b: Bloque, desde: Int, columna: Dp, franja: Dp, onEditar: (Long) -> Unit) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
     val es24h = rememberEs24h()
-    val arriba = FRANJA * ((b.inicio.hour - desde) + b.inicio.minute / 60f)
+    val arriba = franja * ((b.inicio.hour - desde) + b.inicio.minute / 60f)
     val minutos = (b.fin.toSecondOfDay() - b.inicio.toSecondOfDay()) / 60f
     // C9.2: nunca menos de 48 dp tocables, aunque la sesión dure menos de una hora.
-    val alto = maxOf(FRANJA * (minutos / 60f), AgendaMedidas.toque)
+    val alto = maxOf(franja * (minutos / 60f), AgendaMedidas.toque)
     val ancho = columna / b.carriles
     val frase = listOf(
         b.fecha(),
