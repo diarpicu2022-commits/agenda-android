@@ -28,6 +28,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dpinta.agenda.ui.components.Cabecera
@@ -102,13 +104,23 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
     val t = AgendaTheme.tipo
     val es24h = rememberEs24h()
     val cuando = fila.cuando.map { textoCuando(it, es24h) }
-    val detalle = (cuando + fila.lugar).filter { it.isNotBlank() }.joinToString(" · ")
+    // C2.2: el rango (con «→», que Atkinson no tiene) va en Archivo, con el estilo fila-hora.
+    val rango = t.filaHora.toSpanStyle().copy(color = c.tinta)
+    val detalle = buildAnnotatedString {
+        cuando.forEachIndexed { i, (dias, horas) ->
+            if (i > 0) append(" · ")
+            append("$dias · ")
+            withStyle(rango) { append(horas) }
+        }
+        if (fila.lugar.isNotBlank()) append(if (cuando.isEmpty()) fila.lugar else " · ${fila.lugar}")
+    }
+    val detalleHablado = detalle.text.replace(" → ", " a ")
     val tipo = when (fila.tipo) {
         TipoFila.Clase -> "clase"
         TipoFila.Trabajo -> "trabajo"
         TipoFila.Puntual -> "puntual"
     }
-    val frase = listOf(fila.titulo, tipo, fila.salon.takeIf { it.isNotBlank() }?.let { "salón $it" }, detalle)
+    val frase = listOf(fila.titulo, tipo, fila.salon.takeIf { it.isNotBlank() }?.let { "salón $it" }, detalleHablado)
         .filterNotNull().filter { it.isNotBlank() }.joinToString(", ")
     val interaccion = remember { MutableInteractionSource() }
     Column(
@@ -137,7 +149,7 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
                 }
             }
             // Lleva horas: en tinta, AAA (C9.1).
-            if (detalle.isNotBlank()) Text(detalle, style = t.meta, color = c.tinta)
+            if (detalle.isNotEmpty()) Text(detalle, style = t.meta, color = c.tinta)
         }
         HorizontalDivider(thickness = AgendaMedidas.filete, color = c.filete)
     }
@@ -162,14 +174,15 @@ private fun FilaLugar(lugar: LugarFila) {
     }
 }
 
-/** «lun, mié y vie · 8:00 → 10:00» o «vie 26 sep · 9:00 p. m. → 9:30 p. m.»; rango con flecha (referente Timepage). */
-private fun textoCuando(c: Cuando, es24h: Boolean): String {
+/** («lun, mié y vie», «8:00 → 10:00 a. m.») o («vie 26 sep», «9:00 → 9:30 p. m.»); rango con flecha (referente Timepage). */
+private fun textoCuando(c: Cuando, es24h: Boolean): Pair<String, String> {
     val desde = formatearHora(c.inicio, es24h)
     val hasta = formatearHora(c.fin, es24h)
     // Misma franja (a. m./p. m.): el sufijo va una vez, al final.
     val rango = if (desde.sufijo12h == hasta.sufijo12h) "${desde.cifra} → ${hasta.enLinea}" else "${desde.enLinea} → ${hasta.enLinea}"
-    return when (c) {
-        is Cuando.Semanal -> "${textoDias(c.dias)} · $rango"
-        is Cuando.Fecha -> "${FORMATO_FECHA.format(c.fecha).replace(".", "")} · $rango"
+    val cuando = when (c) {
+        is Cuando.Semanal -> textoDias(c.dias)
+        is Cuando.Fecha -> FORMATO_FECHA.format(c.fecha).replace(".", "")
     }
+    return cuando to rango
 }

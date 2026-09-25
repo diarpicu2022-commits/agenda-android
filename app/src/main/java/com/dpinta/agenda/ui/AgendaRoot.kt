@@ -42,7 +42,7 @@ import com.dpinta.agenda.ui.navegacion.RutaMapa
 import com.dpinta.agenda.ui.navegacion.RutaDemoBanda
 import com.dpinta.agenda.ui.navegacion.RutaHoy
 import com.dpinta.agenda.ui.navegacion.RutaSemana
-import com.dpinta.agenda.ui.semana.SemanaPantalla
+import com.dpinta.agenda.ui.semana.SemanaRuta
 import com.dpinta.agenda.ui.theme.AgendaTheme
 
 /**
@@ -98,7 +98,7 @@ fun AgendaRoot(
                 popExitTransition = { ExitTransition.None },
             ) {
                 composable<RutaHoy> { HoyRuta(onAjustes = { nav.navigate(RutaAjustes) }, onCrear = alCrear, onEditar = alEditar) }
-                composable<RutaSemana> { SemanaPantalla(onCrear = alCrear) }
+                composable<RutaSemana> { SemanaRuta(onCrear = alCrear, onEditar = alEditar) }
                 composable<RutaActividades> { ActividadesRuta(onCrear = alCrear, onEditar = alEditar) }
                 composable<RutaAjustes> {
                     AjustesPantalla(onAtras = { nav.popBackStack() }, onDemoBanda = { nav.navigate(RutaDemoBanda) })

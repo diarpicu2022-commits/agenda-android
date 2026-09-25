@@ -85,6 +85,8 @@ data class AgendaType(
     val seccion: TextStyle = estilo(Atkinson, 700, 20, 26),
     /** Rango «8:00 → 10:00» en la lista del día. 18/24 Archivo 700. */
     val filaHora: TextStyle = estilo(Archivo62, 700, 18, 24),
+    /** Código de salón y horas dentro de una celda de Semana. 14/16 Archivo 700 (enmienda 2026-09-25). */
+    val celda: TextStyle = estilo(Archivo62, 700, 14, 16),
     /** Texto de lista y formularios. Mínimo del texto que se lee. 16/24 Atkinson 400. */
     val cuerpo: TextStyle = estilo(Atkinson, 400, 16, 24),
     /** Modo, margen, frescura del dato, lugar secundario. 14/20 Atkinson 400. */
