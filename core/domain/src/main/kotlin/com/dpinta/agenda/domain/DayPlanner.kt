@@ -28,6 +28,16 @@ object DayPlanner {
         val destination = next.placeId ?: return false
         return previous?.placeId != destination
     }
+
+    /**
+     * Desde qué lugar se sale hacia [next]: el de la sesión anterior del mismo día si hace falta
+     * traslado y esa sesión tenía lugar; null = desde casa (primera del día o anterior sin lugar).
+     */
+    fun origin(occurrences: List<Occurrence>, next: Occurrence): Long? {
+        val previous = previous(occurrences, next)
+        if (!needsTravel(previous, next)) return null
+        return previous?.placeId
+    }
 }
 
 /** Trayecto ya iniciado («Voy saliendo»). */

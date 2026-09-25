@@ -1,6 +1,7 @@
 package com.dpinta.agenda.data.agenda
 
 import com.dpinta.agenda.domain.ActivityKind
+import com.dpinta.agenda.domain.DayPlanner
 import com.dpinta.agenda.domain.Occurrence
 import com.dpinta.agenda.domain.ColombianHolidays
 import com.dpinta.agenda.domain.Semester
@@ -11,6 +12,7 @@ import com.dpinta.agenda.domain.WeeklyRule
 import kotlinx.coroutines.flow.Flow
 import java.time.DayOfWeek
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -137,6 +139,24 @@ fun festivosPropuestos(inicio: LocalDate, fin: LocalDate): Map<LocalDate, String
     (inicio.year..fin.year).flatMap { ColombianHolidays.of(it) }
         .filter { !it.date.isBefore(inicio) && !it.date.isAfter(fin) }
         .associate { it.date to it.name }
+
+/**
+ * Tiempo hasta [sesion]: si se llega desde otro lugar del mismo día y hay traslado guardado entre
+ * los dos, ese (Campus → Tienda); si no, el tiempo desde casa. Null si no se sabe o no hay lugar.
+ */
+suspend fun AgendaRepository.trayectoHacia(
+    agenda: Agenda,
+    dia: List<Occurrence>,
+    sesion: Occurrence,
+    modo: TransportMode,
+    ahora: Instant,
+): TravelEstimate? {
+    val destino = sesion.placeId ?: return null
+    DayPlanner.origin(dia, sesion)?.let { origen ->
+        agenda.minutosEntre(origen, destino)?.let { return TravelEstimate(Duration.ofMinutes(it), modo, ahora, fromCache = false, manual = true) }
+    }
+    return estimacion(destino, modo)
+}
 
 /** El lugar guardado con ese nombre (sin distinguir mayúsculas ni espacios de más), si existe. */
 fun Agenda.lugarLlamado(nombre: String): Lugar? {

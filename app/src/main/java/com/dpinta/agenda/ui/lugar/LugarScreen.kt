@@ -21,6 +21,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -54,11 +56,18 @@ import javax.inject.Inject
 /** Un trayecto de más de 5 h no es un «cuánto tardas»: es un error de tecleo. */
 private val MINUTOS = 1..300
 
+private const val ERROR = "Escribe los minutos, entre 1 y 300"
+
 data class LugarUiState(
     val nombre: String = "",
     /** Minutos escritos por modo, tal cual. */
     val minutos: Map<TransportMode, String> = emptyMap(),
     val errores: Map<TransportMode, String> = emptyMap(),
+    /** Los demás lugares guardados (id, nombre), para el traslado desde cada uno hasta este. */
+    val otros: List<Pair<Long, String>> = emptyList(),
+    /** Minutos escritos desde cada otro lugar, tal cual. */
+    val traslados: Map<Long, String> = emptyMap(),
+    val erroresTraslado: Map<Long, String> = emptyMap(),
     val terminado: Boolean = false,
 )
 
@@ -76,9 +85,11 @@ class LugarViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val nombre = repositorio.agenda().first().lugares[id]?.nombre.orEmpty()
+            val agenda = repositorio.agenda().first()
             val conocidos = repositorio.estimaciones(id).mapValues { it.value.duration.toMinutes().toString() }
-            _estado.update { it.copy(nombre = nombre, minutos = conocidos) }
+            val otros = agenda.lugares.values.filter { it.id != id }.sortedBy { it.nombre.lowercase() }.map { it.id to it.nombre }
+            val traslados = otros.mapNotNull { (otro, _) -> agenda.minutosEntre(otro, id)?.let { otro to it.toString() } }.toMap()
+            _estado.update { it.copy(nombre = agenda.lugares[id]?.nombre.orEmpty(), minutos = conocidos, otros = otros, traslados = traslados) }
         }
     }
 
@@ -86,18 +97,27 @@ class LugarViewModel @Inject constructor(
         it.copy(minutos = it.minutos + (modo to texto.filter(Char::isDigit).take(3)), errores = it.errores - modo)
     }
 
+    fun traslado(otro: Long, texto: String) = _estado.update {
+        it.copy(traslados = it.traslados + (otro to texto.filter(Char::isDigit).take(3)), erroresTraslado = it.erroresTraslado - otro)
+    }
+
     fun guardar() {
         val e = _estado.value
-        val errores = e.minutos.filter { (_, t) -> t.isNotBlank() && Interprete.minutos(t, MINUTOS) == null }
-            .mapValues { "Escribe los minutos, entre 1 y 300" }
-        if (errores.isNotEmpty()) {
-            _estado.update { it.copy(errores = errores) }
+        val invalido = { t: String -> t.isNotBlank() && Interprete.minutos(t, MINUTOS) == null }
+        val errores = e.minutos.filterValues(invalido).mapValues { ERROR }
+        val erroresTraslado = e.traslados.filterValues(invalido).mapValues { ERROR }
+        if (errores.isNotEmpty() || erroresTraslado.isNotEmpty()) {
+            _estado.update { it.copy(errores = errores, erroresTraslado = erroresTraslado) }
             return
         }
         viewModelScope.launch {
             for ((modo, texto) in e.minutos) {
                 val m = Interprete.minutos(texto, MINUTOS) ?: continue
                 repositorio.guardarEstimacion(id, TravelEstimate(Duration.ofMinutes(m.toLong()), modo, reloj.instant(), fromCache = false, manual = true))
+            }
+            for ((otro, texto) in e.traslados) {
+                val m = Interprete.minutos(texto, MINUTOS) ?: continue
+                repositorio.guardarTraslado(otro, id, m.toLong())
             }
             // La agenda no cambia al guardar un trayecto: las alarmas de salida se rehacen aquí.
             programador.reprogramar()
@@ -110,7 +130,7 @@ class LugarViewModel @Inject constructor(
 fun LugarRuta(onCerrar: () -> Unit, viewModel: LugarViewModel = hiltViewModel()) {
     val e by viewModel.estado.collectAsStateWithLifecycle()
     LaunchedEffect(e.terminado) { if (e.terminado) onCerrar() }
-    LugarPantalla(e, onMinutos = viewModel::minutos, onGuardar = viewModel::guardar, onCerrar = onCerrar)
+    LugarPantalla(e, onMinutos = viewModel::minutos, onTraslado = viewModel::traslado, onGuardar = viewModel::guardar, onCerrar = onCerrar)
 }
 
 /** Cuánto tardas desde casa a un lugar, por modo (C1.3: los cuatro modos, y solo cuatro). */
@@ -118,6 +138,7 @@ fun LugarRuta(onCerrar: () -> Unit, viewModel: LugarViewModel = hiltViewModel())
 fun LugarPantalla(
     e: LugarUiState,
     onMinutos: (TransportMode, String) -> Unit,
+    onTraslado: (Long, String) -> Unit,
     onGuardar: () -> Unit,
     onCerrar: () -> Unit,
     modifier: Modifier = Modifier,
@@ -145,6 +166,29 @@ fun LugarPantalla(
                     ayuda = "23",
                     teclado = KeyboardOptions(keyboardType = KeyboardType.Number),
                 )
+            }
+            if (e.otros.isNotEmpty()) {
+                Text(
+                    "Desde otros lugares",
+                    style = AgendaTheme.tipo.seccion,
+                    color = c.tinta,
+                    modifier = Modifier.padding(top = AgendaSpacing.s16).semantics { heading() },
+                )
+                Text(
+                    "Si vienes de otra actividad, la salida se calcula con este tiempo.",
+                    style = AgendaTheme.tipo.cuerpo,
+                    color = c.tinta,
+                )
+                for ((otro, nombre) in e.otros) {
+                    CampoTexto(
+                        etiqueta = "Desde $nombre, en minutos",
+                        valor = e.traslados[otro].orEmpty(),
+                        onCambio = { onTraslado(otro, it) },
+                        error = e.erroresTraslado[otro],
+                        ayuda = "35",
+                        teclado = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    )
+                }
             }
         }
         // C1.2: cancelar a la izquierda, guardar a la derecha, fijos abajo.

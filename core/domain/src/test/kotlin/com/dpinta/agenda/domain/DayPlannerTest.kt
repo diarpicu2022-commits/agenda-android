@@ -46,4 +46,16 @@ class DayPlannerTest {
         assertEquals(18L, p.minutesRemaining)
         assertEquals(0L, Trip.progress(salida, bus, now = salida + Duration.ofMinutes(40)).minutesRemaining)
     }
+
+    @Test fun `origen del trayecto`() {
+        // Primera del día: desde casa.
+        assertEquals(null, DayPlanner.origin(dia, calculo))
+        // Mismo lugar que la anterior: no hay trayecto, así que tampoco origen.
+        assertEquals(null, DayPlanner.origin(dia, fisica))
+        // Del Campus (10) a la Tienda (20).
+        assertEquals(10L, DayPlanner.origin(dia, turno))
+        // Después de una sesión sin lugar se sale desde casa.
+        val cena = Occurrence(5, placeId = 30, start = at(22), end = at(23))
+        assertEquals(null, DayPlanner.origin(dia + cena, cena))
+    }
 }

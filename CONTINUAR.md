@@ -113,7 +113,10 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
    **Tiempos a mano (hecho 2026-09-25)**: Actividades > Lugares guardados > lugar: minutos desde casa por modo; se guardan
    como `TravelEstimate.manual` (nunca «dato viejo») y al guardar se reprograman las alarmas. Room v2 (columna
    `trayecto.manual`, migración 1→2 probada con Robolectric y en el emulador sobre la base cifrada).
-   Pendiente: el traslado entre lugares (Campus → Tienda) no se usa aún para la salida; se usa siempre «desde casa».
+   **Traslados entre lugares (hecho 2026-09-25)**: si la sesión anterior del día fue en otro lugar, la salida usa el
+   traslado guardado entre los dos (`DayPlanner.origin` + `trayectoHacia`) en Hoy, alarmas, aviso de salida y resumen;
+   se escriben en la pantalla del lugar («Desde Campus, en minutos»). Verificado en emulador (alarmas del Turno 11:25 → 11:30
+   al pasar de 35 a 30 min). Ojo en el emulador: apagarlo con `adb shell reboot -p`; `emu kill` pierde lo último escrito.
    Para pasar a Routes más adelante: vincular facturación, poner cuota diaria por debajo del tramo gratis y crear la clave
    restringida a `com.dpinta.agenda` + SHA-1 de depuración `44:40:86:A3:9E:D3:2C:73:F7:86:97:8D:1A:37:A0:A2:0C:C3:03:C3`.
 6. Prioridad 2: modo clase (No Molestar), tareas y exámenes por materia, resumen matutino, asistencia, horas trabajadas.

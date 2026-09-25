@@ -17,6 +17,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import com.dpinta.agenda.data.agenda.SesionesEnCurso
+import com.dpinta.agenda.data.agenda.trayectoHacia
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -120,7 +121,7 @@ class HoyViewModel @Inject constructor(
             val clave = Clave(sesion.activityId, sesion.start)
             val modo = modos[sesion.activityId] ?: act.modo
             val conTraslado = DayPlanner.needsTravel(DayPlanner.previous(deHoy, sesion), sesion) && clave !in llegadas
-            val estimacion = if (conTraslado) sesion.placeId?.let { repositorio.estimacion(it, modo) } else null
+            val estimacion = if (conTraslado) repositorio.trayectoHacia(agenda, deHoy, sesion, modo, ahora) else null
             val inicio = sesion.start.atZone(zona).toInstant()
             val plan = estimacion?.let { DepartureCalculator.plan(inicio, act.margen, it, ahora) }
             BandaMapeador.modelo(

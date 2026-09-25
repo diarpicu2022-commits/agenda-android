@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.core.content.edit
 import com.dpinta.agenda.data.agenda.Agenda
 import com.dpinta.agenda.data.agenda.AgendaRepository
+import com.dpinta.agenda.data.agenda.trayectoHacia
 import com.dpinta.agenda.domain.AlarmKind
 import com.dpinta.agenda.domain.AlarmPlanner
 import com.dpinta.agenda.domain.AlarmSettings
@@ -75,7 +76,7 @@ class ProgramadorAvisos @Inject constructor(
         val estimaciones = HashMap<Occurrence, TravelEstimate?>()
         for (s in sesiones) {
             val modo = agenda.actividades.getValue(s.activityId).modo
-            estimaciones[s] = s.placeId?.let { repositorio.estimacion(it, modo) }
+            estimaciones[s] = repositorio.trayectoHacia(agenda, sesiones, s, modo, reloj.instant())
         }
         return AlarmPlanner.plan(
             occurrences = sesiones,

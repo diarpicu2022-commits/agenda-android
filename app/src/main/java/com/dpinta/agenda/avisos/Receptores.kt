@@ -15,6 +15,7 @@ import com.dpinta.agenda.MainActivity
 import com.dpinta.agenda.R
 import com.dpinta.agenda.data.agenda.AgendaRepository
 import com.dpinta.agenda.data.agenda.SesionesEnCurso
+import com.dpinta.agenda.data.agenda.trayectoHacia
 import com.dpinta.agenda.domain.ActivityKind
 import com.dpinta.agenda.domain.MorningBriefing
 import com.dpinta.agenda.domain.AlarmKind
@@ -75,7 +76,8 @@ class AlarmaReceiver : BroadcastReceiver() {
     @SuppressLint("MissingPermission") // puedeAvisar() lo comprueba antes
     private suspend fun publicar(contexto: Context, tipo: AlarmKind, id: Long, inicio: LocalDateTime) {
         if (!puedeAvisar(contexto)) return
-        val act = repositorio.agenda().first().actividades[id] ?: return
+        val agenda = repositorio.agenda().first()
+        val act = agenda.actividades[id] ?: return
         val zona = reloj.zone
         val empiezaEn = inicio.atZone(zona).toInstant()
         // Una alarma atrasada (hora cambiada, teléfono dormido) no avisa de algo que ya empezó.
@@ -85,8 +87,9 @@ class AlarmaReceiver : BroadcastReceiver() {
         // Si ya tocó «Voy saliendo», no se le vuelve a apurar.
         if (deSalida && sesiones.salida.value?.first == SesionesEnCurso.Sesion(id, inicio)) return
         val (canal, texto) = if (deSalida) {
-            val lugar = act.lugarId ?: return
-            val estimacion = repositorio.estimacion(lugar, act.modo) ?: return
+            val dia = programador.sesiones(agenda, inicio.toLocalDate(), inicio.toLocalDate())
+            val sesion = dia.firstOrNull { it.activityId == id && it.start == inicio } ?: return
+            val estimacion = repositorio.trayectoHacia(agenda, dia, sesion, act.modo, reloj.instant()) ?: return
             val plan = DepartureCalculator.plan(empiezaEn, act.margen, estimacion, reloj.instant())
             val empieza = inicio.toLocalTime()
             when (tipo) {
@@ -132,7 +135,7 @@ class AlarmaReceiver : BroadcastReceiver() {
         val deHoy = programador.sesiones(agenda, hoy, hoy)
         if (deHoy.isEmpty()) return
         val estimaciones = deHoy.associateWith { s ->
-            s.placeId?.let { repositorio.estimacion(it, agenda.actividades.getValue(s.activityId).modo) }
+            repositorio.trayectoHacia(agenda, deHoy, s, agenda.actividades.getValue(s.activityId).modo, reloj.instant())
         }
         val resumen = MorningBriefing.of(
             date = hoy,
