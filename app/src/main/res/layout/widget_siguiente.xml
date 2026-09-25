@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Siguiente» 2×2 (anexo). Radio 0 (C5.1), sin sombra (C5.2); tipos del contrato (C2, enmienda 2026-09-25). -->
+<!-- tools:ignore="Overdraw": el widget lo dibuja el lanzador, no el tema de la app. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_raiz"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/widget_senal"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:ignore="Overdraw">
+        <ImageView
+            android:id="@+id/widget_rotulo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="no"
+            android:contentDescription="@null" />
+        <ImageView
+            android:id="@+id/widget_hora"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="no"
+            android:layout_marginTop="4dp"
+            android:contentDescription="@null" />
+        <ImageView
+            android:id="@+id/widget_salon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="no"
+            android:layout_marginTop="4dp"
+            android:contentDescription="@null" />
+        <!-- Solo si la actividad no tiene salón: sin él, «EMPIEZA 9:00» no dice qué empieza. -->
+        <TextView
+            android:id="@+id/widget_nombre"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="16sp"
+            android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:fontVariationSettings="&apos;wght&apos; 600"
+            android:textColor="@color/widget_tinta" android:includeFontPadding="false" android:maxLines="2" android:ellipsize="end" />
+        <TextView
+            android:id="@+id/widget_hace"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:fontVariationSettings="&apos;wght&apos; 400"
+            android:textColor="@color/widget_tinta" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" />
+</LinearLayout>

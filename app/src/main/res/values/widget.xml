@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget «Siguiente»: la banda senal a sangre (C6) y su tinta (C3). -->
+    <color name="widget_senal">#FFFFB000</color>
+    <color name="widget_tinta">#FF14130F</color>
+    <string name="widget_siguiente">Siguiente salida</string>
+</resources>

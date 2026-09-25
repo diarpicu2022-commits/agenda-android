@@ -104,6 +104,12 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
    horizontal (enmiendas del 2026-09-25 en el anexo). `docs/capturas/paso8-*`.
    Copia sin cláusula, pendiente de visto bueno: «Esta semana no tienes nada fijo.» y «Volver a esta semana».
 5. Prioridad 1 de la arquitectura: widget Glance (siguiente actividad + hora de salida), semestres/festivos en la UI.
+   **Widget «Siguiente» hecho 2026-09-25** (no Glance: Glance solo admite fuentes del sistema, C11): `widget/`, 2×2 y 4×2
+   con RemoteViews, banda `senal` a sangre; «SAL A LAS» / «EMPIEZA» + hora + salón (2×2; sin salón, el nombre) y en 4×2
+   actividad, lugar y «Después: …». Las líneas en Archivo se dibujan como imagen (`WidgetDibujo`): por RemoteViews el
+   lanzador no respetaba el ancho 62 (medido: 2,36 frente a 2,12; con imagen, 2,05). Se actualiza al reprogramar y al
+   empezar cada sesión. Contraste medido 10,15:1. Android 12+ redondea las esquinas de todo widget (choca con C5.1; no
+   se puede evitar). Arreglado de paso: «hace …» en minutos/horas/días y sin «hace» con tiempos manuales (banda y widget).
    **Semestres hechos 2026-09-25**: Ajustes > Semestre lista, crea, edita y elimina (doble toque); el formulario propone
    solos los festivos de Colombia entre las fechas (se pueden quitar) y admite otros días con motivo. Verificado en
    emulador: «Semana 8» y «Festivo: Día de la Raza · lun 12 oct» (`docs/capturas/paso9-*`).

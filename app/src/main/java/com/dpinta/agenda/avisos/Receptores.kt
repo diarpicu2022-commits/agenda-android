@@ -53,6 +53,11 @@ class AlarmaReceiver : BroadcastReceiver() {
     @Inject lateinit var reloj: Clock
 
     override fun onReceive(contexto: Context, intent: Intent) {
+        if (intent.action == ProgramadorAvisos.ACCION_WIDGET) {
+            // Empezó una sesión: reprogramar redibuja el widget y fija el próximo cambio.
+            enSegundoPlano { programador.reprogramar() }
+            return
+        }
         if (intent.action == ProgramadorAvisos.ACCION_RESUMEN) {
             enSegundoPlano {
                 publicarResumen(contexto)

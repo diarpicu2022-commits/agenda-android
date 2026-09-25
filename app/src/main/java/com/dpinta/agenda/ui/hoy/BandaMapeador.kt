@@ -74,6 +74,7 @@ object BandaMapeador {
             margen = sesion.margen,
             calculadoHace = calculadoHace,
             datoViejo = plan.stale,
+            manual = estimacion.manual,
         )
         if (salioEn == null) return base
         val trayecto = Trip.progress(salioEn, estimacion, ahora)

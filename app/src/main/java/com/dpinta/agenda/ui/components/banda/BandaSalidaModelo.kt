@@ -56,6 +56,8 @@ data class BandaSalidaModelo(
     val margen: Duration,
     val calculadoHace: Duration,
     val datoViejo: Boolean,
+    /** Tiempo escrito por Diego: no es un cálculo, así que no lleva «hace…» (ni en pantalla ni en TalkBack). */
+    val manual: Boolean = false,
 ) {
     /** Estados en los que hay trayecto (todos menos «sin traslado»). */
     val hayTrayecto: Boolean get() = estado != EstadoBanda.SinTraslado
@@ -114,6 +116,19 @@ private fun minutos(d: Duration): Long = d.toMinutes()
 
 private fun minutosHablados(n: Long): String = if (n == 1L) "1 minuto" else "$n minutos"
 
+/** «25 min» · «27 h» · «3 días»: un dato de ayer no se cuenta en minutos. */
+fun antiguedad(d: Duration): String = when {
+    d < Duration.ofHours(1) -> "${d.toMinutes()} min"
+    d < Duration.ofDays(2) -> "${d.toHours()} h"
+    else -> "${d.toDays()} días"
+}
+
+private fun antiguedadHablada(d: Duration): String = when {
+    d < Duration.ofHours(1) -> minutosHablados(d.toMinutes())
+    d < Duration.ofDays(2) -> if (d.toHours() == 1L) "1 hora" else "${d.toHours()} horas"
+    else -> "${d.toDays()} días"
+}
+
 /** Hora para TalkBack: «7 y 32», «8 en punto», con «de la mañana/tarde/noche» en 12 h. */
 fun horaHablada(hora: LocalTime, es24h: Boolean): String {
     val h = if (es24h) hora.hour else (if (hora.hour % 12 == 0) 12 else hora.hour % 12)
@@ -161,9 +176,9 @@ fun textosBanda(m: BandaSalidaModelo, es24h: Boolean): TextosBanda {
         else -> "${minutos(m.duracion)} min + ${minutos(m.margen)} de margen"
     }
     val frescura = when {
-        !m.hayTrayecto -> null
-        m.datoViejo -> "estimado hace ${minutos(m.calculadoHace)} min"
-        else -> "hace ${minutos(m.calculadoHace)} min"
+        !m.hayTrayecto || m.manual -> null
+        m.datoViejo -> "estimado hace ${antiguedad(m.calculadoHace)}"
+        else -> "hace ${antiguedad(m.calculadoHace)}"
     }
 
     val (primaria, secundaria) = when (m.estado) {
@@ -197,28 +212,28 @@ fun fraseTalkBack(m: BandaSalidaModelo, es24h: Boolean): String {
     val lugarHablado = m.lugar.replace(" · ", ", ")
     val trayecto = "${minutosHablados(minutos(m.duracion))} ${m.modo.etiqueta} " +
         "más ${minutos(m.margen)} de margen"
-    val calculo = if (m.datoViejo) {
-        "estimado hace ${minutosHablados(minutos(m.calculadoHace))}, hora aproximada"
-    } else {
-        "calculado hace ${minutosHablados(minutos(m.calculadoHace))}"
+    val calculo = when {
+        m.manual -> ""
+        m.datoViejo -> ", estimado hace ${antiguedadHablada(m.calculadoHace)}, hora aproximada"
+        else -> ", calculado hace ${antiguedadHablada(m.calculadoHace)}"
     }
     val salida = horaHablada(m.horaSalida, es24h)
     val inicio = horaHablada(m.horaInicio, es24h)
     val llegada = horaHablada(m.horaLlegada, es24h)
     return when (m.estado) {
         EstadoBanda.Espera ->
-            "Sal a las $salida para ${m.actividad}, salón ${m.salon}, $trayecto, $calculo"
+            "Sal a las $salida para ${m.actividad}, salón ${m.salon}, $trayecto$calculo"
         EstadoBanda.Preparate ->
             "Sal a las $salida, en ${minutosHablados(m.minutosParaSalir)}, para ${m.actividad}, " +
-                "salón ${m.salon}, $trayecto, $calculo"
+                "salón ${m.salon}, $trayecto$calculo"
         EstadoBanda.SalYa ->
-            "Sal ya. ${m.actividad} empieza a las $inicio, salón ${m.salon}, $trayecto, $calculo"
+            "Sal ya. ${m.actividad} empieza a las $inicio, salón ${m.salon}, $trayecto$calculo"
         EstadoBanda.VasTarde ->
             "Vas tarde. ${m.actividad} empieza a las $inicio, llegas a las $llegada " +
-                "al salón ${m.salon}, $calculo"
+                "al salón ${m.salon}$calculo"
         EstadoBanda.EnCamino ->
             "Llegas a las $llegada al salón ${m.salon}, ${m.actividad}, " +
-                "${minutosHablados(minutos(m.duracion))} de trayecto ${m.modo.etiqueta}, $calculo"
+                "${minutosHablados(minutos(m.duracion))} de trayecto ${m.modo.etiqueta}$calculo"
         EstadoBanda.SinTraslado ->
             "${m.actividad} a las $inicio, salón ${m.salon}, $lugarHablado"
     }

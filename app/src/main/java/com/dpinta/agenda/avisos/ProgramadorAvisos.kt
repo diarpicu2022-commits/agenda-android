@@ -16,6 +16,7 @@ import com.dpinta.agenda.domain.Occurrence
 import com.dpinta.agenda.domain.PlannedAlarm
 import com.dpinta.agenda.domain.ScheduleExpander
 import com.dpinta.agenda.domain.TravelEstimate
+import com.dpinta.agenda.widget.WidgetSiguiente
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -54,6 +55,8 @@ class ProgramadorAvisos @Inject constructor(
         for (c in anteriores) if (c !in codigos) pendiente(c, null)?.let(alarmas::cancel)
         for (a in nuevas) programar(a)
         programarResumen(vacia = nuevas.isEmpty())
+        programarWidget()
+        WidgetSiguiente.actualizar(contexto)
         registro.edit { putStringSet(CLAVE, codigos.map { it.toString() }.toSet()) }
     }
 
@@ -131,6 +134,23 @@ class ProgramadorAvisos @Inject constructor(
         poner(cuando.atZone(reloj.zone).toInstant().toEpochMilli(), pendiente)
     }
 
+    /**
+     * El widget cambia de sesión cuando la siguiente empieza: una alarma inexacta a esa hora lo
+     * redibuja (y vuelve a programar la próxima). Sin sesiones por delante no hace falta.
+     */
+    private suspend fun programarWidget() {
+        val intent = Intent(contexto, AlarmaReceiver::class.java).setAction(ACCION_WIDGET)
+        val pendiente = PendingIntent.getBroadcast(contexto, CODIGO_WIDGET, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val agenda = repositorio.agenda().first()
+        val ahora = LocalDateTime.now(reloj)
+        val siguiente = sesiones(agenda, ahora.toLocalDate(), ahora.toLocalDate().plusDays(DIAS)).map { it.start }.filter { it.isAfter(ahora) }.minOrNull()
+        if (siguiente == null) {
+            alarmas.cancel(pendiente)
+            return
+        }
+        alarmas.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, siguiente.atZone(reloj.zone).toInstant().toEpochMilli() + 1_000, pendiente)
+    }
+
     /** Con [a] nulo solo busca uno ya existente, para cancelarlo. */
     private fun pendiente(codigo: Int, a: PlannedAlarm?): PendingIntent? {
         val intent = Intent(contexto, AlarmaReceiver::class.java).setAction(ACCION)
@@ -155,6 +175,8 @@ class ProgramadorAvisos @Inject constructor(
         const val ACCION = "com.dpinta.agenda.AVISO"
         const val ACCION_RESUMEN = "com.dpinta.agenda.RESUMEN"
         const val CODIGO_RESUMEN = 1
+        const val ACCION_WIDGET = "com.dpinta.agenda.WIDGET"
+        const val CODIGO_WIDGET = 2
 
         /** Hora del resumen matutino hasta que exista el ajuste para elegirla (arquitectura, P2.8). */
         val HORA_RESUMEN: LocalTime = LocalTime.of(6, 0)

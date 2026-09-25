@@ -137,4 +137,17 @@ class BandaSalidaTextosTest {
             assertNotEquals(colores.senal, colores.coloresBanda(EstadoBanda.SinTraslado).fondo)
         }
     }
+
+    @Test fun tiempoManualNoLlevaFrescura() {
+        val m = BandaSalidaMuestras.para(EstadoBanda.Espera, false).copy(manual = true, calculadoHace = java.time.Duration.ofDays(4))
+        val t = textosBanda(m, true)
+        assertNull(t.frescura)
+        assertEquals(false, t.fraseTalkBack.contains("hace"))
+    }
+
+    @Test fun antiguedadEnMinutosHorasODias() {
+        assertEquals("25 min", antiguedad(java.time.Duration.ofMinutes(25)))
+        assertEquals("27 h", antiguedad(java.time.Duration.ofMinutes(1645)))
+        assertEquals("3 días", antiguedad(java.time.Duration.ofDays(3)))
+    }
 }
