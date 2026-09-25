@@ -182,11 +182,7 @@ class HoyViewModel @Inject constructor(
             }
         }
 
-    private fun tipoFila(tipo: ActivityKind) = when (tipo) {
-        ActivityKind.CLASE, ActivityKind.EXAMEN -> TipoFila.Clase
-        ActivityKind.TRABAJO -> TipoFila.Trabajo
-        ActivityKind.PUNTUAL, ActivityKind.OTRO -> TipoFila.Puntual
-    }
+    private fun tipoFila(tipo: ActivityKind) = tipo.aTipoFila()
 
     private companion object {
         const val MINUTO_MS = 60_000L

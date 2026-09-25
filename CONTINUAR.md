@@ -94,7 +94,10 @@ alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; tr
 3. **Ubicación + Google Routes API** (TRANSIT, DRIVE con tráfico, TWO_WHEELER, WALK) y Places (New) para el mapa.
    Diego tiene que crear la API key en Google Cloud (facturación activa; restringida a paquete + SHA-1 y a Routes/Places).
    La clave va en `local.properties` con el Secrets Gradle Plugin. Live Update solo cuando Diego toca «Voy saliendo».
-4. Semana y Actividades con datos reales.
+4. Semana y Actividades con datos reales. **Actividades hecha 2026-09-25** (rama `avisos`): Clases · Trabajo · Puntuales
+   (examen cuenta como clase, «otro» como puntual) y Lugares guardados con su número de actividades; tocar una fila
+   abre la edición; «lun, mié y vie · 8:00 → 10:00 a. m. · Campus». Medido en emulador claro, oscuro y 360 dp + fuente
+   2,0 (`docs/capturas/paso7-*`): contraste mínimo 5,68:1 (barra inferior, previa), toques ≥ 48 dp. Falta: Semana.
 5. Prioridad 1 de la arquitectura: widget Glance (siguiente actividad + hora de salida), semestres/festivos en la UI.
 6. Prioridad 2: modo clase (No Molestar), tareas y exámenes por materia, resumen matutino, asistencia, horas trabajadas.
 7. Prioridad 3: importar/exportar `.ics`, notas por clase, **Wear OS** (Diego piensa comprar un Galaxy Watch8; mientras, emulador Wear OS 6).

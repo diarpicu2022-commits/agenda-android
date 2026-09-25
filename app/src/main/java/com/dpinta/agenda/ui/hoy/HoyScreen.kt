@@ -336,7 +336,7 @@ private fun LineaAhora(ahora: LocalTime, es24h: Boolean) {
 
 /** Marcador de tipo (C6): cuadrado de 10 dp relleno (clase, trabajo) o en contorno (puntual). */
 @Composable
-private fun MarcadorTipo(tipo: TipoFila) {
+internal fun MarcadorTipo(tipo: TipoFila) {
     val c = AgendaTheme.colores
     val base = Modifier.size(AgendaMedidas.marcadorTipo)
     when (tipo) {
@@ -363,9 +363,9 @@ private fun DiaSinNada(siguiente: SiguienteDia?) {
 
 /** C10 «cargando»: esqueleto de filas en `papel-2`, sin spinner ni brillo. */
 @Composable
-private fun EsqueletoCarga() {
+internal fun EsqueletoCarga(descripcion: String = "Cargando el día") {
     val c = AgendaTheme.colores
-    Column(Modifier.fillMaxWidth().semantics { contentDescription = "Cargando el día" }) {
+    Column(Modifier.fillMaxWidth().semantics { contentDescription = descripcion }) {
         repeat(4) {
             Row(Modifier.fillMaxWidth().height(AgendaSpacing.s64), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.padding(start = AgendaSpacing.s16).width(AgendaSpacing.s32).height(AgendaSpacing.s16).background(c.papel2))

@@ -1,12 +1,20 @@
 package com.dpinta.agenda.ui.hoy
 
 import androidx.compose.runtime.Immutable
+import com.dpinta.agenda.domain.ActivityKind
 import com.dpinta.agenda.ui.components.banda.BandaSalidaModelo
 import java.time.LocalDate
 import java.time.LocalTime
 
 /** Tipos que se distinguen a la vista (C3: clase, trabajo, puntual). */
 enum class TipoFila { Clase, Trabajo, Puntual }
+
+/** Examen cuenta como clase y «otro» como puntual: el marcador solo distingue tres (C6). */
+fun ActivityKind.aTipoFila(): TipoFila = when (this) {
+    ActivityKind.CLASE, ActivityKind.EXAMEN -> TipoFila.Clase
+    ActivityKind.TRABAJO -> TipoFila.Trabajo
+    ActivityKind.PUNTUAL, ActivityKind.OTRO -> TipoFila.Puntual
+}
 
 @Immutable
 data class FilaHoy(

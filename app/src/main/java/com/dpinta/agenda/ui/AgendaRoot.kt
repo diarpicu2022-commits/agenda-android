@@ -27,7 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.dpinta.agenda.ui.actividades.ActividadesPantalla
+import com.dpinta.agenda.ui.actividades.ActividadesRuta
 import com.dpinta.agenda.ui.ajustes.AjustesPantalla
 import com.dpinta.agenda.ui.formulario.FormularioRuta
 import com.dpinta.agenda.ui.formulario.MapaPendientePantalla
@@ -99,7 +99,7 @@ fun AgendaRoot(
             ) {
                 composable<RutaHoy> { HoyRuta(onAjustes = { nav.navigate(RutaAjustes) }, onCrear = alCrear, onEditar = alEditar) }
                 composable<RutaSemana> { SemanaPantalla(onCrear = alCrear) }
-                composable<RutaActividades> { ActividadesPantalla(onCrear = alCrear) }
+                composable<RutaActividades> { ActividadesRuta(onCrear = alCrear, onEditar = alEditar) }
                 composable<RutaAjustes> {
                     AjustesPantalla(onAtras = { nav.popBackStack() }, onDemoBanda = { nav.navigate(RutaDemoBanda) })
                 }
