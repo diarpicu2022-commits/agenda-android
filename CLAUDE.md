@@ -39,6 +39,16 @@ Lo comprobable se comprueba **ejecutando algo**:
 - Seguridad: base de datos cifrada (Room + SQLCipher, clave en Android Keystore), sin copia de seguridad en la nube,
   solo HTTPS. La clave de Google **nunca** en git: va en `local.properties` y restringida en Google Cloud.
 
+## Privacidad y cumplimiento legal
+
+- Desde el diseño, no al final: política de privacidad (versión y fecha) en `docs/legal/` y dentro de la app,
+  consentimiento previo, expreso e informado registrado con versión y fecha, explicación antes de cada permiso sensible,
+  y los derechos del titular dentro de la app (ver/exportar, corregir, **borrar todo**, revocar).
+- Marco: Ley 1581 de 2012 y Decreto 1377 de 2013 (Colombia); tiendas (Seguridad de los datos de Google Play, URL
+  pública de la política, permisos restringidos). Sin cookies ni rastreo: la política lo dice expresamente.
+- Los textos legales son borradores técnicos: antes de publicarlos para terceros, que los revise un abogado.
+- Estado y pendientes en `CONTINUAR.md` (sección «Privacidad y cumplimiento»).
+
 ## Git y PR
 
 - **Nunca firmar**: nada de `Co-Authored-By: Claude`, `Claude-Session:`, «Generated with Claude Code» ni enlaces a claude.ai,

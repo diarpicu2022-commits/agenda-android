@@ -152,3 +152,55 @@ git commit -m "Activar CI" && git push
 
 Ojo: el runner necesita `platforms;android-37.0`. Si falla por la plataforma, añadir antes del build un paso con
 `$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-37.0"`.
+
+## 7. Actualizaciones automáticas (Agenda y Gastos)
+
+Objetivo de Diego (2026-09-28): que al publicar una versión nueva, la app ya instalada en el teléfono reciba la
+actualización y se actualice sola. El plan completo, común a los dos proyectos, está en `gastos-android/CONTINUAR.md` §8.
+Resumen para Agenda:
+
+**Estado hoy:** `versionCode = 1` fijo; APK de **debug** firmadas con la clave de depuración de este PC
+(`APKs/Agenda-0.x.0-debug.apk`); sin firma de release; CI sin activar. Así no hay actualización automática: Android solo
+acepta una actualización con **la misma firma** y un **`versionCode` mayor**.
+
+**Canal** (decisión pendiente de Diego): A) Google Play, pista de prueba interna (recomendada: Play la instala sola);
+B) Obtainium + GitHub Releases (sin Play; token de lectura en el teléfono porque el repo es privado); C) Firebase App
+Distribution (avisa y pide confirmar). La app no necesita Internet para ninguno: la actualización la trae otra app.
+
+**Pasos:**
+1. Keystore de release propio de Agenda, fuera de git, con copia fuera del PC y la contraseña aparte (si se pierde,
+   ninguna versión futura podrá actualizar la instalada).
+2. `versionCode` que suba solo (número de commits o `AAMMDDnn`) y `versionName` semántico.
+3. `signingConfigs.release` desde `local.properties` o variables de entorno; nunca en el repo.
+4. Activar el CI (§6) y que una etiqueta `vX.Y.Z` compile el release firmado y lo publique en el canal elegido.
+5. **Migración única:** la APK de debug instalada no se actualiza con una firmada con otra clave; hay que desinstalar y
+   eso **borra los datos**. Antes hace falta una forma de sacarlos y volverlos a meter (la copia de seguridad de
+   `docs/arquitectura.md`, o exportar/importar `.ics`), y verificarla en el emulador.
+6. Si llega Wear OS, el reloj usa el mismo `applicationId` y la misma firma que el teléfono.
+7. Play: `USE_EXACT_ALARM` es un permiso restringido; en la consola hay que declarar que Agenda es una app de calendario
+   y recordatorios.
+
+## 8. Privacidad y cumplimiento (todas las versiones de aquí en adelante)
+
+Requisito de Diego para **todos sus proyectos** (2026-09-28): políticas de privacidad, cookies y todo lo de esa índole,
+desde el diseño y no al final. La regla general está en `CLAUDE.md` («Privacidad y cumplimiento legal»). Marco en
+Colombia: **Ley 1581 de 2012** (habeas data) y **Decreto 1377 de 2013** (compilado en el Decreto 1074 de 2015):
+autorización previa, expresa e informada; finalidades; derechos del titular (conocer, actualizar, rectificar, suprimir,
+revocar); política de tratamiento publicada. El registro en el RNBD no aplica a una app personal (solo a sociedades y
+entidades con activos por encima de 100.000 UVT; confirmarlo si la app pasa a ser de una empresa). Los textos que se
+escriban son borradores técnicos: **antes de publicarlos para terceros, que los revise un abogado.**
+
+**Qué aplica a Agenda:** horario, tareas, notas y recordatorios del usuario, cifrados en el teléfono; permisos de
+notificaciones, alarmas exactas y arranque. **Comprobar en el manifest fusionado** que no entra `INTERNET` por ninguna
+dependencia. Si no hay Internet ni analítica: **sin cookies ni rastreo**, y la política debe decirlo.
+
+**Qué falta (tamaño M, antes de publicar en cualquier canal):**
+1. `docs/legal/politica-de-privacidad.md` con versión y fecha: responsable y contacto, qué datos y para qué, que se
+   quedan en el teléfono y cifrados, cuánto tiempo, derechos y cómo ejercerlos, copia de seguridad, cambios.
+2. Pantalla «Privacidad» dentro de la app con esa política (texto local).
+3. Consentimiento registrado (versión y fecha) en el primer uso, y de nuevo si la política cambia; los permisos de
+   notificaciones y alarmas se explican antes de pedirlos.
+4. «Borrar todos mis datos» y exportar (`.ics` y/o copia) dentro de la app.
+5. Google Play: URL pública de la política (repo privado: publicarla aparte), formulario de Seguridad de los datos y la
+   declaración de `USE_EXACT_ALARM`.
+6. En el anexo de diseño, estas pantallas y estados entran en el alcance y usan el repertorio del contrato.
