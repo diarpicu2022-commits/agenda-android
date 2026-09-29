@@ -7,3 +7,5 @@ local.properties
 captures/
 *.keystore
 *.jks
+# Salida de compilación de la extensión Java de VS Code
+bin/
