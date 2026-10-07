@@ -1,5 +1,6 @@
 package com.dpinta.agenda.avisos
 
+import com.dpinta.agenda.widget.WidgetSiguiente
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
@@ -68,6 +69,8 @@ class AlarmaReceiver : BroadcastReceiver() {
             return
         }
         if (intent.action != ProgramadorAvisos.ACCION) return
+        // Cada alarma es un cambio de estado (prepárate, sal ya, vas tarde): el widget se redibuja con él.
+        WidgetSiguiente.actualizar(contexto)
         val tipo = intent.getStringExtra(ProgramadorAvisos.EXTRA_TIPO)?.let(AlarmKind::valueOf) ?: return
         val id = intent.getLongExtra(ProgramadorAvisos.EXTRA_ACTIVIDAD, -1)
         val inicio = intent.getStringExtra(ProgramadorAvisos.EXTRA_INICIO)?.let(LocalDateTime::parse) ?: return

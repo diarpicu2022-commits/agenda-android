@@ -80,6 +80,32 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
     }
 }
 
+/**
+ * En curso: la sesión que está pasando se queda en la esfera mientras dura (decisión de Diego, 2026-10-07). El anillo
+ * es la línea del día enrollada: se vacía hasta el final de la sesión. «AHORA» en `hora`, la cuenta hasta que termina,
+ * el nombre y «aula · hasta 10:00».
+ */
+@Composable
+fun PantallaEnCurso(s: WatchSession, ahora: LocalDateTime, ambiente: Boolean) {
+    val total = Duration.between(s.start, s.end).toMinutes().coerceAtLeast(1)
+    val queda = Duration.between(ahora, s.end)
+    val color = if (s.exam) Reloj.ciruela else Reloj.tipo(s.kind)
+    Box(Modifier.fillMaxSize().background(Reloj.fondo), contentAlignment = Alignment.Center) {
+        AnilloSesion(queda.toMinutes().toFloat() / total, color, Modifier.fillMaxSize(), ambiente)
+        Column(
+            Modifier.padding(horizontal = 30.dp).semantics(mergeDescendants = true) {},
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("AHORA", style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else Reloj.hora)
+            Text(s.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("Termina en", style = Tipo.apoyo, color = Reloj.tintaSuave)
+            Text(Formato.cuenta(queda), style = Tipo.hora, color = Reloj.tinta, maxLines = 1)
+            Text(listOf(s.room.ifBlank { s.place }, "hasta " + Formato.hora(s.end.toLocalTime())).filter { it.isNotBlank() }.joinToString(" · "),
+                style = Tipo.apoyo, color = Reloj.tintaSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
 /** 2 · Es hora de salir (WatchLeaveNow): rótulo, destino y cuenta; «Ya voy» debajo y el resto de acciones al bajar. */
 @Composable
 fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean, onAccion: (Accion) -> Unit) {

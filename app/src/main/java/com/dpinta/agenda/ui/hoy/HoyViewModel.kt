@@ -7,6 +7,7 @@ import com.dpinta.agenda.data.agenda.AgendaRepository
 import com.dpinta.agenda.domain.ActivityKind
 import com.dpinta.agenda.domain.Conflict
 import com.dpinta.agenda.domain.ConflictDetector
+import com.dpinta.agenda.domain.DayFocus
 import com.dpinta.agenda.domain.DayPlanner
 import com.dpinta.agenda.domain.DepartureCalculator
 import com.dpinta.agenda.domain.Occurrence
@@ -165,7 +166,26 @@ class HoyViewModel @Inject constructor(
         } else {
             null
         }
-        return HoyUiState.Dia(hoy, ahoraLocal.toLocalTime(), banda, filas, indiceAhora, proximo)
+        // La en curso se queda mientras dura; cambia a la salida hacia la siguiente cuando ya toca prepararse.
+        val actual = DayFocus.current(deHoy, ahoraLocal, { it.start }, { it.end })
+        val salidaSiguiente = banda?.takeIf { it.hayTrayecto }?.let { siguiente?.start?.toLocalDate()?.atTime(it.horaSalida) }
+        val enCurso = actual?.takeIf { DayFocus.showCurrent(ahoraLocal, it.end, siguiente?.start, salidaSiguiente) }?.let { s ->
+            val act = agenda.actividades.getValue(s.activityId)
+            EnCurso(
+                actividadId = s.activityId,
+                titulo = act.titulo,
+                tipo = tipoFila(act.tipo),
+                salon = act.salon,
+                lugar = act.lugarId?.let { agenda.lugares[it]?.nombre }.orEmpty(),
+                inicio = s.start.toLocalTime(),
+                fin = s.end.toLocalTime(),
+                despues = siguiente?.let { n ->
+                    val a = agenda.actividades.getValue(n.activityId)
+                    SiguienteDia(n.start.toLocalDate(), n.start.toLocalTime(), a.titulo, a.salon)
+                },
+            )
+        }
+        return HoyUiState.Dia(hoy, ahoraLocal.toLocalTime(), banda, filas, indiceAhora, proximo, enCurso)
     }
 
     private fun conflictoDe(s: Occurrence, conflictos: List<Conflict>, agenda: Agenda): ConflictoFila? =

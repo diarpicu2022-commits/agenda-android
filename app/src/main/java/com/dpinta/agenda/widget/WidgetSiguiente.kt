@@ -136,9 +136,16 @@ data class WidgetTextos(
         fun de(m: WidgetModelo, hoy: LocalDate, es24h: Boolean): WidgetTextos = when (m) {
             WidgetModelo.PrimerUso -> vacio("Empieza por tu horario de clases")
             WidgetModelo.SinNada -> vacio("Nada fijo en los próximos días.")
+            is WidgetModelo.EnCurso -> enCurso(m, es24h)
             is WidgetModelo.Siguiente -> {
                 val dia = m.dia?.let { if (it == hoy.plusDays(1)) "mañana" else it.dayOfWeek.getDisplayName(TextStyle.FULL, ESPANOL) }
-                val estado = if (m.salir) "sal a las" else "empieza"
+                // Pasada la hora de salida ya no se repite «sal a las 7:30» (dato ya falso): se dice qué toca.
+                val estado = when {
+                    !m.salir -> "empieza"
+                    m.estado == com.dpinta.agenda.domain.DepartureState.SAL_YA -> "sal ya · a las"
+                    m.estado == com.dpinta.agenda.domain.DepartureState.VAS_TARDE -> "vas tarde · salida"
+                    else -> "sal a las"
+                }
                 val hora = formatearHora(m.hora, es24h)
                 val nota = m.hace?.let { "hace ${antiguedad(it)}" }
                 val despues = m.despues?.let { d -> listOf("Después: ${formatearHora(d.hora, es24h).enLinea}", d.actividad, d.salon).filter { it.isNotBlank() }.joinToString(" · ") }
@@ -160,6 +167,23 @@ data class WidgetTextos(
                     ).joinToString(", ").replaceFirstChar { it.uppercase() },
                 )
             }
+        }
+
+        private fun enCurso(m: WidgetModelo.EnCurso, es24h: Boolean): WidgetTextos {
+            val fin = formatearHora(m.fin, es24h)
+            val despues = m.despues?.let { d -> listOf("Después: ${formatearHora(d.hora, es24h).enLinea}", d.actividad, d.salon).filter { it.isNotBlank() }.joinToString(" · ") }
+            return WidgetTextos(
+                rotulo = "AHORA · HASTA",
+                hora = fin.cifra,
+                sufijo = fin.sufijo12h,
+                salon = m.salon.ifBlank { null },
+                nota = m.actividad.takeIf { m.salon.isNotBlank() },
+                actividad = m.actividad,
+                lugar = m.lugar.ifBlank { null },
+                despues = despues,
+                hablado = listOfNotNull("Ahora: ${m.actividad}", m.salon.ifBlank { null }?.let { "salón $it" }, m.lugar.ifBlank { null },
+                    "hasta ${fin.enLinea}", despues).joinToString(", "),
+            )
         }
 
         private fun vacio(frase: String) = WidgetTextos(null, null, null, null, frase, null, null, null, frase)

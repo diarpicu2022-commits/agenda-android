@@ -148,7 +148,8 @@ class ProgramadorAvisos @Inject constructor(
         val pendiente = PendingIntent.getBroadcast(contexto, CODIGO_WIDGET, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val agenda = repositorio.agenda().first()
         val ahora = LocalDateTime.now(reloj)
-        val siguiente = sesiones(agenda, ahora.toLocalDate(), ahora.toLocalDate().plusDays(DIAS)).map { it.start }.filter { it.isAfter(ahora) }.minOrNull()
+        // Siguiente inicio o fin de sesión: al empezar, el widget pasa a «AHORA»; al terminar, a lo siguiente.
+        val siguiente = sesiones(agenda, ahora.toLocalDate(), ahora.toLocalDate().plusDays(DIAS)).flatMap { listOf(it.start, it.end) }.filter { it.isAfter(ahora) }.minOrNull()
         if (siguiente == null) {
             alarmas.cancel(pendiente)
             return

@@ -46,13 +46,16 @@ object Superficies {
 }
 
 /** Qué mostrar fuera de la app: la siguiente sesión, su urgencia y la hora de referencia (salida o inicio). */
-private data class Resumen(val s: WatchSession, val u: Urgency, val referencia: LocalDateTime) {
-    val salir get() = s.leaveAt != null
+private data class Resumen(val s: WatchSession, val u: Urgency, val referencia: LocalDateTime, val enCurso: Boolean = false) {
+    val salir get() = !enCurso && s.leaveAt != null
 }
 
 private fun resumen(contexto: Context, ahora: LocalDateTime): Resumen? {
     val dia = AlmacenDia.dia(contexto).value ?: return null
-    val s = dia.next(ahora) ?: return null
+    val foco = dia.focus(ahora) ?: return null
+    val s = foco.session
+    // En curso: la referencia es el final de la sesión (la Tarjeta dice «Ahora · hasta 10:00»).
+    if (foco.inProgress) return Resumen(s, Urgency.UPCOMING, s.end, enCurso = true)
     return Resumen(s, s.urgency(ahora, ZoneId.systemDefault()), s.leaveAt ?: s.start)
 }
 
@@ -116,7 +119,7 @@ class TarjetaProxima : TileService() {
                 .setThickness(dp(6f)).setColor(argbDe(color)).build())
             .build()
         val datos = Column.Builder()
-            .addContent(texto(if (r.s.exam) "PARCIAL" else "Próxima", 15f, if (r.s.exam) CW.ciruela else CW.tintaSuave, r.s.exam))
+            .addContent(texto(if (r.enCurso) "AHORA" else if (r.s.exam) "PARCIAL" else "Próxima", 15f, if (r.enCurso) CW.hora else if (r.s.exam) CW.ciruela else CW.tintaSuave, r.enCurso || r.s.exam))
             .addContent(texto(r.s.title, 20f, CW.tinta, true))
             // Con trayecto: hora de inicio · aula (la grande es la salida). Sin trayecto la grande ya es el inicio: aula · lugar.
             .addContent(texto((if (r.salir) listOf(Formato.hora(r.s.start.toLocalTime()), r.s.room.ifBlank { r.s.place }) else listOf(r.s.room, r.s.place))
@@ -125,7 +128,7 @@ class TarjetaProxima : TileService() {
             .addContent(
                 Row.Builder()
                     .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
-                    .addContent(texto(if (r.salir) "Salir " else "Empieza ", 15f, CW.tintaSuave))
+                    .addContent(texto(if (r.enCurso) "Hasta " else if (r.salir) "Salir " else "Empieza ", 15f, CW.tintaSuave))
                     .addContent(texto(Formato.hora(r.referencia.toLocalTime()), 32f, CW.hora, true))
                     .build(),
             )
@@ -160,7 +163,11 @@ class ComplicacionSalida : SuspendingComplicationDataSourceService() {
         val r = resumen(this, ahora) ?: return datos(request.complicationType, null, "—", "Nada fijo por ahora")
         val min = Duration.between(ahora, r.referencia).toMinutes().coerceAtLeast(0).toInt()
         val corto = r.s.title.take(3).uppercase()
-        val frase = if (r.salir) "Salir en ${Formato.cuenta(Duration.ofMinutes(min.toLong()))}" else "${r.s.title} en ${Formato.cuenta(Duration.ofMinutes(min.toLong()))}"
+        val frase = when {
+            r.enCurso -> "${r.s.title}: termina en ${Formato.cuenta(Duration.ofMinutes(min.toLong()))}"
+            r.salir -> "Salir en ${Formato.cuenta(Duration.ofMinutes(min.toLong()))}"
+            else -> "${r.s.title} en ${Formato.cuenta(Duration.ofMinutes(min.toLong()))}"
+        }
         return datos(request.complicationType, min, corto, frase)
     }
 

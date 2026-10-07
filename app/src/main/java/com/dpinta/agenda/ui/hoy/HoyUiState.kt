@@ -67,5 +67,23 @@ sealed interface HoyUiState {
         val indiceAhora: Int,
         /** Solo si hoy no hay filas. */
         val siguiente: SiguienteDia?,
+        /**
+         * Sesión en curso mientras dura (DayFocus, decisión de Diego 2026-10-07): mientras no sea nula, Hoy la muestra en la
+         * tarjeta AHORA en vez del boleto; el boleto vuelve cuando ya toca prepararse para la siguiente.
+         */
+        val enCurso: EnCurso? = null,
     ) : HoyUiState
 }
+
+/** La sesión que está pasando ahora, con lo siguiente para la línea «Después: …». */
+@Immutable
+data class EnCurso(
+    val actividadId: Long,
+    val titulo: String,
+    val tipo: TipoFila,
+    val salon: String,
+    val lugar: String,
+    val inicio: LocalTime,
+    val fin: LocalTime,
+    val despues: SiguienteDia?,
+)

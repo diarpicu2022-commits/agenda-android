@@ -53,3 +53,17 @@ fun AnilloCuenta(
         }
     }
 }
+
+/** Anillo de la sesión en curso: fracción que queda de la sesión, en el color de su línea; en siempre activo, contorno. */
+@Composable
+fun AnilloSesion(queda: Float, color: Color, modifier: Modifier = Modifier, ambiente: Boolean = false) {
+    val f = queda.coerceIn(0f, 1f)
+    Canvas(modifier) {
+        val grosor = if (ambiente) 2.dp.toPx() else 10.dp.toPx()
+        val margen = grosor / 2 + 3.dp.toPx()
+        val tam = Size(size.width - margen * 2, size.height - margen * 2)
+        val origen = Offset(margen, margen)
+        drawArc(if (ambiente) Reloj.linea else Reloj.superficieFuerte, 0f, 360f, false, origen, tam, style = Stroke(grosor))
+        if (f > 0f) drawArc(if (ambiente) Reloj.tintaSuave else color, -90f, 360f * f, false, origen, tam, style = Stroke(grosor, cap = StrokeCap.Round))
+    }
+}

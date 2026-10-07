@@ -70,6 +70,16 @@ data class WatchDay(val computedAt: LocalDateTime, val sessions: List<WatchSessi
     /** La siguiente sesión que todavía no ha empezado (igual que [DayPlanner.next] en el teléfono). */
     fun next(now: LocalDateTime): WatchSession? = sessions.sortedBy { it.start }.firstOrNull { it.start.isAfter(now) }
 
+    /** Lo que el reloj enfoca ahora ([DayFocus]): la sesión en curso mientras dura, o la siguiente cuando ya toca. */
+    data class Focus(val session: WatchSession, val inProgress: Boolean)
+
+    fun focus(now: LocalDateTime): Focus? {
+        val cur = current(now)
+        val nx = next(now)
+        if (cur != null && DayFocus.showCurrent(now, cur.end, nx?.start, nx?.leaveAt)) return Focus(cur, true)
+        return nx?.let { Focus(it, false) }
+    }
+
     /** La que está en curso ahora, si hay una. */
     fun current(now: LocalDateTime): WatchSession? = sessions.firstOrNull { !it.start.isAfter(now) && it.end.isAfter(now) }
 

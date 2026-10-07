@@ -83,7 +83,9 @@ fun CampusWatch(ambiente: Boolean) {
             c != null -> PantallaConfirmacion(c.texto, c.detalle, c.ok) { confirmacion = null }
             d == null -> PantallaSinDatos()
             else -> {
-                val siguiente = d.next(ahora)
+                // La en curso se queda mientras dura; cambia a la siguiente cuando ya toca prepararse (DayFocus).
+                val enfoque = d.focus(ahora)
+                val siguiente = enfoque?.session
                 val accion: (WatchSession, Accion) -> Unit = { s, a ->
                     alcance.launch {
                         val ok = Telefono.enviar(contexto, a, s)
@@ -98,6 +100,8 @@ fun CampusWatch(ambiente: Boolean) {
                 val paginas = buildList<@Composable () -> Unit> {
                     if (siguiente == null) {
                         add { PantallaLibre(d, ahora) }
+                    } else if (enfoque?.inProgress == true) {
+                        add { PantallaEnCurso(siguiente, ahora, ambiente) }
                     } else {
                         val u = siguiente.urgency(ahora, zona)
                         val salir = siguiente.leaveAt != null && (u == Urgency.LEAVE_NOW || u == Urgency.URGENT)

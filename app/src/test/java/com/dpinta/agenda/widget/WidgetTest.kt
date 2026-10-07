@@ -45,9 +45,28 @@ class WidgetTest {
     }
 
     @Test
+    fun `durante la clase el widget se queda en ella hasta que toca la siguiente`() {
+        // A las 9:00 Cálculo está en curso (8–10): se queda, no salta a Física (decisión de Diego, 2026-10-07).
+        val m = WidgetMapeador.modelo(agenda, listOf(calculo, fisica), hoy.atTime(9, 0), zona) { bus23 } as WidgetModelo.EnCurso
+        val t = WidgetTextos.de(m, hoy, es24h = true)
+        assertEquals("AHORA · HASTA", t.rotulo)
+        assertEquals("10:00", t.hora)
+        assertEquals("B-204", t.salon)
+        assertEquals("Después: 10:30 · Física mecánica · L-3", t.despues)
+    }
+
+    @Test
+    fun `pasada la hora de salida ya no dice sal a las`() {
+        val t = WidgetTextos.de(WidgetMapeador.modelo(agenda, listOf(calculo, fisica), hoy.atTime(7, 31), zona) { bus23 }, hoy, es24h = true)
+        assertEquals("SAL YA · A LAS", t.rotulo)
+        val tarde = WidgetTextos.de(WidgetMapeador.modelo(agenda, listOf(calculo, fisica), hoy.atTime(7, 40), zona) { bus23 }, hoy, es24h = true)
+        assertEquals("VAS TARDE · SALIDA", tarde.rotulo)
+    }
+
+    @Test
     fun `misma sede empieza y sin trayecto no hay salida`() {
-        // A las 9:00 lo siguiente es Física, en el mismo Campus que Cálculo: solo «empieza».
-        val m = WidgetMapeador.modelo(agenda, listOf(calculo, fisica), hoy.atTime(9, 0), zona) { bus23 } as WidgetModelo.Siguiente
+        // A las 10:10 Cálculo ya terminó; lo siguiente es Física, en el mismo Campus: solo «empieza».
+        val m = WidgetMapeador.modelo(agenda, listOf(calculo, fisica), hoy.atTime(10, 10), zona) { bus23 } as WidgetModelo.Siguiente
         val t = WidgetTextos.de(m, hoy, es24h = true)
         assertEquals("EMPIEZA", t.rotulo)
         assertEquals("10:30", t.hora)

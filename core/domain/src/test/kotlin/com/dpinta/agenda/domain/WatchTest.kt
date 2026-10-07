@@ -61,4 +61,15 @@ class WatchTest {
         assertNull(day.current(d.withHour(10)))
         assertNull(day.next(d.withHour(13)))
     }
+
+    @Test fun `el reloj se queda en la clase en curso y cambia cuando toca prepararse para la otra`() {
+        val d = LocalDateTime.of(2026, 10, 7, 0, 0)
+        val calculo = WatchSession(1, d.withHour(8), d.withHour(10), "Cálculo", "B-204", "Campus", null, WatchSession.Kind.CLASE, false)
+        val turno = WatchSession(2, d.withHour(12).withMinute(25), d.withHour(18), "Turno", "Caja 2", "Tienda", d.withHour(11).withMinute(30), WatchSession.Kind.TRABAJO, false)
+        val day = WatchDay(d, listOf(calculo, turno))
+        assertEquals(WatchDay.Focus(calculo, true), day.focus(d.withHour(8)))
+        assertEquals(WatchDay.Focus(calculo, true), day.focus(d.withHour(9).withMinute(59)))
+        assertEquals(WatchDay.Focus(turno, false), day.focus(d.withHour(10)))
+        assertNull(day.focus(d.withHour(19)))
+    }
 }

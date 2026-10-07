@@ -131,8 +131,13 @@ fun HoyPantalla(
             is HoyUiState.Dia -> {
                 // Sistema nuevo (PantallaHoy): fecha y título, el boleto de salida y la línea del día, en un solo desplazamiento.
                 ListaDelDia(estado, onEditar, bajoBarraDeEstado = !franja, onAjustes = onAjustes) {
-                    estado.banda?.let {
-                        BoletoSalida(it, onAccion = onAccion, onCambiarModo = onCambiarModo, modifier = Modifier.padding(horizontal = 16.dp))
+                    val enCurso = estado.enCurso
+                    if (enCurso != null) {
+                        TarjetaAhora(enCurso, estado.ahora, onEditar = { onEditar(enCurso.actividadId) }, modifier = Modifier.padding(horizontal = 16.dp))
+                    } else {
+                        estado.banda?.let {
+                            BoletoSalida(it, onAccion = onAccion, onCambiarModo = onCambiarModo, modifier = Modifier.padding(horizontal = 16.dp))
+                        }
                     }
                 }
             }
