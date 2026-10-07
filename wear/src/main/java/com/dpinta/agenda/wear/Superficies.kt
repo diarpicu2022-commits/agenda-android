@@ -105,7 +105,12 @@ class TarjetaProxima : TileService() {
 
     private fun tarjeta(r: Resumen, ahora: LocalDateTime): LayoutElementBuilders.LayoutElement {
         val color = colorUrgencia(r.u, r.s.exam)
-        val minutos = Duration.between(ahora, r.s.start).toMinutes().coerceIn(0, 60)
+        // En curso: el arco es lo que falta de la sesión; si no, los minutos que faltan para empezar (ventana de 1 h).
+        val minutos = if (r.enCurso) {
+            60 * Duration.between(ahora, r.s.end).toMinutes() / Duration.between(r.s.start, r.s.end).toMinutes().coerceAtLeast(1)
+        } else {
+            Duration.between(ahora, r.s.start).toMinutes()
+        }.coerceIn(0, 60)
         val riel = Arc.Builder()
             .setAnchorAngle(androidx.wear.protolayout.DimensionBuilders.degrees(0f))
             .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_START)

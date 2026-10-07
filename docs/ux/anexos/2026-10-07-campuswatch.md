@@ -62,3 +62,12 @@ No se usó nada fuera del sistema: los 35 colores se generan de `tokens.json`/`t
 El reloj guarda solo el horario de hoy y mañana que le pasa el teléfono (títulos, aulas, lugares y horas), en el
 almacenamiento privado de la app; no habla con ningún servidor. La política de Agenda (`docs/legal/`) debe añadir una
 línea sobre esto antes de publicarse.
+
+## Enmiendas (Diego, 2026-10-07 mañana)
+- **La sesión en curso se queda mientras dura** (antes, al llegar la hora saltaba a la siguiente): pantalla «En curso»
+  (AHORA, nombre, «Termina en», aula · hasta HH:MM; anillo = lo que falta de la sesión, en el color de su línea).
+  Cambia a la siguiente 15 min antes de la hora de salida (o de su inicio si no hay trayecto), o al terminar
+  (`DayFocus`, con pruebas; la misma regla en Hoy y en el widget del teléfono). Tarjeta y Complicación igual.
+  Medido en el emulador: `docs/capturas/cw-foco-en-curso.png`, `cw-foco-tarjeta.png`.
+- **Examen**: Diego pidió dejarlo «como quede mejor» → se mantiene: el parcial va en `ciruela` y pasa a Urgente justo al
+  llegar la hora de salida (nunca «Es hora de salir» antes de tiempo).
