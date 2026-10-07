@@ -29,13 +29,16 @@ import com.dpinta.agenda.ui.theme.AgendaMedidas
 import com.dpinta.agenda.ui.theme.AgendaMotion
 import com.dpinta.agenda.ui.theme.AgendaSpacing
 import com.dpinta.agenda.ui.theme.AgendaTheme
+import com.dpinta.agenda.ui.theme.Formas
+import androidx.compose.ui.draw.clip
 import com.dpinta.agenda.ui.theme.Icono
 import com.dpinta.agenda.ui.theme.IconoAgenda
 import com.dpinta.agenda.ui.theme.rememberReducirMovimiento
 
 /*
- * Vocabulario único de botones (C5.3). Mismo botón en la banda y fuera de ella; solo cambian
- * los colores de la superficie. Rectángulo, radio 0, alto mínimo 48 dp (C9.2).
+ * Botones del sistema Agenda (Button; enmienda 2026-10-07): pastilla, alto mínimo 48 dp.
+ * Primario relleno `hora` (uno por pantalla); «quiet» = texto `ruta`. Los colores del contrato anterior que
+ * llegan como parámetro (tinta/papel) se traducen aquí, así cada pantalla queda bien sin tocarla.
  */
 
 /** Acción primaria: relleno en la tinta de la superficie, texto en su fondo. */
@@ -48,22 +51,28 @@ internal fun BotonRelleno(
     onClick: () -> Unit,
 ) {
     val interaccion = remember { MutableInteractionSource() }
+    val ds = AgendaTheme.ds
+    // Relleno en tinta (el primario del contrato anterior) → primario del sistema: `hora` con `sobre-hora`.
+    val primario = relleno == AgendaTheme.colores.tinta
+    val fondo = if (primario) ds.hora else relleno
+    val texto0 = if (primario) ds.sobreHora else tinta
     Box(
         modifier
             .heightIn(min = AgendaMedidas.toque)
-            .anilloFoco(interaccion, relleno)
+            .anilloFoco(interaccion, fondo)
             .pulsacion(interaccion)
-            .background(relleno)
+            .clip(Formas.pastilla)
+            .background(fondo)
             .clickable(
                 interactionSource = interaccion,
-                indication = ripple(color = tinta),
+                indication = ripple(color = texto0),
                 role = Role.Button,
                 onClick = onClick,
             )
             .padding(horizontal = AgendaSpacing.s20, vertical = AgendaSpacing.s12),
         contentAlignment = Alignment.Center,
     ) {
-        Text(texto, style = AgendaTheme.tipo.boton, color = tinta)
+        Text(texto, style = AgendaTheme.tipo.boton, color = texto0)
     }
 }
 
@@ -90,7 +99,9 @@ internal fun BotonSubrayado(
             .padding(end = AgendaSpacing.s16, top = AgendaSpacing.s12, bottom = AgendaSpacing.s12),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Text(texto, style = AgendaTheme.tipo.boton, color = tinta, modifier = Modifier.subrayado(tinta))
+        // «quiet» del sistema: texto en `ruta`, sin subrayado (el subrayado era del contrato anterior).
+        val ds = AgendaTheme.ds
+        Text(texto, style = AgendaTheme.tipo.boton, color = if (tinta == AgendaTheme.colores.tinta) ds.ruta else tinta)
     }
 }
 

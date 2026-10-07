@@ -35,6 +35,9 @@ import androidx.compose.ui.text.style.TextAlign
 import com.dpinta.agenda.ui.theme.AgendaMedidas
 import com.dpinta.agenda.ui.theme.AgendaSpacing
 import com.dpinta.agenda.ui.theme.AgendaTheme
+import com.dpinta.agenda.ui.theme.Formas
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
 import com.dpinta.agenda.ui.theme.Icono
 import com.dpinta.agenda.ui.theme.IconoAgenda
 
@@ -57,8 +60,10 @@ internal fun CampoTexto(
     etiquetaPrueba: String = etiqueta,
 ) {
     val c = AgendaTheme.colores
+    val ds = AgendaTheme.ds
     Column(modifier) {
-        Text(etiqueta, style = AgendaTheme.tipo.meta, color = c.tinta)
+        // Etiqueta visible 14 · 600 en tinta (TextField del sistema).
+        Text(etiqueta, style = AgendaTheme.tipo.apoyo.copy(fontWeight = AgendaTheme.tipo.cuerpoFuerte.fontWeight), color = c.tinta)
         Spacer(Modifier.height(AgendaSpacing.s4))
         OutlinedTextField(
             value = valor,
@@ -68,18 +73,19 @@ internal fun CampoTexto(
             textStyle = AgendaTheme.tipo.cuerpo,
             keyboardOptions = teclado,
             placeholder = ayuda?.let { { Text(it, style = AgendaTheme.tipo.cuerpo, color = c.tinta2) } },
+            shape = Formas.ficha,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = c.tinta,
-                unfocusedTextColor = c.tinta,
-                errorTextColor = c.tinta,
-                focusedContainerColor = c.papel,
-                unfocusedContainerColor = c.papel,
-                errorContainerColor = c.papel,
-                cursorColor = c.tinta,
-                errorCursorColor = c.tinta,
-                focusedBorderColor = c.tinta,
-                unfocusedBorderColor = c.tinta2,
-                errorBorderColor = c.alertaTexto,
+                focusedTextColor = ds.tinta,
+                unfocusedTextColor = ds.tinta,
+                errorTextColor = ds.tinta,
+                focusedContainerColor = ds.superficie,
+                unfocusedContainerColor = ds.superficie,
+                errorContainerColor = ds.superficie,
+                cursorColor = ds.tinta,
+                errorCursorColor = ds.tinta,
+                focusedBorderColor = ds.tinta,
+                unfocusedBorderColor = ds.lineaFuerte,
+                errorBorderColor = ds.critico,
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -127,15 +133,18 @@ internal fun <T> Segmentado(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(AgendaSpacing.s8)) {
                 fila.forEach { o ->
                     val activa = o.valor == seleccion
-                    val tinta = if (activa) c.papel else c.tinta
+                    val ds = AgendaTheme.ds
+                    // Ficha del sistema: elegida en `ruta-suave` con borde `ruta`; las demás en superficie con `linea`.
+                    val tinta = if (activa) ds.ruta else ds.tinta
                     val interaccion = remember { MutableInteractionSource() }
                     Row(
                         Modifier
                             .weight(1f)
                             .heightIn(min = AgendaMedidas.toque)
-                            .anilloFoco(interaccion, c.tinta)
-                            .border(AgendaMedidas.filete, c.tinta)
-                            .background(if (activa) c.tinta else c.papel)
+                            .anilloFoco(interaccion, ds.ruta)
+                            .clip(Formas.ficha)
+                            .border(if (activa) 1.5.dp else 1.dp, if (activa) ds.ruta else ds.linea, Formas.ficha)
+                            .background(if (activa) ds.rutaSuave else ds.superficie)
                             .selectable(
                                 selected = activa,
                                 interactionSource = interaccion,
@@ -178,19 +187,21 @@ internal fun SelectorDias(
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(AgendaSpacing.s4)) {
         dias.forEach { (dia, letra) ->
             val activo = dia in elegidos
+            val ds = AgendaTheme.ds
             val interaccion = remember { MutableInteractionSource() }
             Box(
                 Modifier
                     .weight(1f)
                     .minimumInteractiveComponentSize()
                     .heightIn(min = AgendaMedidas.toque)
-                    .anilloFoco(interaccion, c.tinta)
-                    .border(AgendaMedidas.filete, c.tinta)
-                    .background(if (activo) c.tinta else c.papel)
+                    .anilloFoco(interaccion, ds.ruta)
+                    .clip(Formas.pastilla)
+                    .border(if (activo) 1.5.dp else 1.dp, if (activo) ds.ruta else ds.linea, Formas.pastilla)
+                    .background(if (activo) ds.ruta else ds.superficie)
                     .toggleable(
                         value = activo,
                         interactionSource = interaccion,
-                        indication = ripple(color = if (activo) c.papel else c.tinta),
+                        indication = ripple(color = if (activo) ds.sobreRuta else ds.ruta),
                         role = Role.Checkbox,
                         onValueChange = { onDia(dia) },
                     )
@@ -198,7 +209,7 @@ internal fun SelectorDias(
                     .testTag("dia-${dia.name.lowercase()}"),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(letra, style = AgendaTheme.tipo.boton, color = if (activo) c.papel else c.tinta)
+                Text(letra, style = AgendaTheme.tipo.boton, color = if (activo) AgendaTheme.ds.sobreRuta else AgendaTheme.ds.tinta)
             }
         }
     }

@@ -61,7 +61,6 @@ internal fun Cabecera(
             )
             accion?.invoke()
         }
-        HorizontalDivider(thickness = AgendaMedidas.filete, color = c.filete)
     }
 }
 
