@@ -381,15 +381,17 @@ private fun LineaAhora(ahora: LocalTime, es24h: Boolean) {
     }
 }
 
-/** Marcador de tipo (C6): cuadrado de 10 dp relleno (clase, trabajo) o en contorno (puntual). */
+/** Marcador de tipo = estación del sistema (círculo universidad, cuadrado trabajo, triángulo entrega), 12 dp, color de su línea. */
 @Composable
 internal fun MarcadorTipo(tipo: TipoFila) {
-    val c = AgendaTheme.colores
-    val base = Modifier.size(AgendaMedidas.marcadorTipo)
-    when (tipo) {
-        TipoFila.Clase -> Box(base.background(c.clase))
-        TipoFila.Trabajo -> Box(base.background(c.trabajo))
-        TipoFila.Puntual -> Box(base.border(AgendaMedidas.filete, c.puntual))
+    val color = AgendaTheme.ds.lineaDe(tipo)
+    androidx.compose.foundation.Canvas(Modifier.size(12.dp)) {
+        val w = size.width
+        when (tipo) {
+            TipoFila.Clase -> drawCircle(color, w / 2)
+            TipoFila.Trabajo -> drawRect(color)
+            TipoFila.Puntual -> drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(w / 2, 0f); lineTo(w, w); lineTo(0f, w); close() }, color)
+        }
     }
 }
 

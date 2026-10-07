@@ -41,6 +41,21 @@ referencias `PantallaHoy`, `DepartureCard`, `TodayTimeline`, `AppNav`. Temas «c
   (solo en el boleto: notificaciones y widget conservan su texto y sus pruebas) y tramo apilado con letra grande.
 - Pendiente de medir con los scripts de `tools/verificacion/`: contraste sobre el render de cada estado del boleto y 360 dp.
 
+## Paso 3 · Componentes compartidos (hecho)
+Botón principal en pastilla `hora` (uno por pantalla: «Guardar», «Ya voy»); «quiet» en texto `ruta` sin subrayado;
+selectores en fichas de 6 dp (elegida `ruta-suave` + borde `ruta`); días L–D en pastillas (elegido `ruta`); campos con
+etiqueta visible 14·600, borde `linea-fuerte` 1,5 dp, `superficie`, radio ficha; encabezado sin filete.
+Los colores del contrato anterior que llegan como parámetro se traducen dentro del componente, así Formulario, Ajustes,
+Semestre y Lugar cambian sin tocarlos. Capturas `sn-paso3-*`.
+
+## Paso 4 · Semana y Actividades (hecho)
+- **Semana** (PantallaSemana): rótulo «Semana 10 · 5–11 oct» + título; selector de días en pastillas con las estaciones
+  de cada día (hoy con anillo `hora`, elegido en `ruta`, festivo con anillo `ciruela`); debajo, la línea del día elegido
+  con las mismas estaciones de Hoy, y los cruces como aviso «X y Y se cruzan de 9:00 a 10:00» (◐ `aviso`).
+  Reemplaza la rejilla horaria (se eliminó el código de la rejilla).
+- **Actividades**: estaciones del sistema (● ■ ▲) en lugar de cuadrados, rangos en `hora-sm`, encabezados `encabezado`.
+- `:app:testDebugUnitTest` 84/84, `:core:domain:test` en verde, `lintDebug` sin errores. Capturas `sn-paso4-*`.
+
 ## Siguiente
-Semana, Actividades, Formulario, Ajustes y Semestre todavía usan los alias (se ven con la paleta y la tipografía nuevas,
-pero con la composición vieja). Widget «Siguiente»: pendiente de pasar al `HomeWidget` del sistema.
+Formulario, Ajustes y Semestre ya usan las piezas nuevas pero conservan su composición; pendiente pasarlos a `SettingsGroup`
+y `Switch` del sistema. Widget «Siguiente»: pendiente de pasar al `HomeWidget` del sistema (hoy sigue el amarillo anterior).

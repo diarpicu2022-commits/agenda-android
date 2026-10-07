@@ -91,7 +91,7 @@ private fun Lista(estado: ActividadesUiState.Lista, onEditar: (Long) -> Unit, on
 private fun TituloSeccion(texto: String) {
     Text(
         texto,
-        style = AgendaTheme.tipo.seccion,
+        style = AgendaTheme.tipo.encabezado,
         color = AgendaTheme.colores.tinta,
         modifier = Modifier
             .padding(start = AgendaTheme.reticula.margen, end = AgendaTheme.reticula.margen, top = AgendaSpacing.s32, bottom = AgendaSpacing.s8)
@@ -106,7 +106,7 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
     val es24h = rememberEs24h()
     val cuando = fila.cuando.map { textoCuando(it, es24h) }
     // C2.2: el rango (con «→», que Atkinson no tiene) va en Archivo, con el estilo fila-hora.
-    val rango = t.filaHora.toSpanStyle().copy(color = c.tinta)
+    val rango = t.horaSm.toSpanStyle().copy(color = c.tinta)
     val detalle = buildAnnotatedString {
         cuando.forEachIndexed { i, (dias, horas) ->
             if (i > 0) append(" · ")
@@ -146,7 +146,7 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
                 Text(fila.titulo, style = t.cuerpo, color = c.tinta, maxLines = 2, modifier = Modifier.weight(1f))
                 if (fila.salon.isNotBlank()) {
                     Spacer(Modifier.width(AgendaSpacing.s12))
-                    Text(fila.salon, style = t.filaHora, color = c.tinta)
+                    Text(fila.salon, style = t.cuerpoFuerte.copy(fontFamily = t.horaLg.fontFamily), color = c.tinta)
                 }
             }
             // Lleva horas: en tinta, AAA (C9.1).
