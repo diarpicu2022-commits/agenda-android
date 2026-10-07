@@ -11,11 +11,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 
 val LocalAgendaColors = staticCompositionLocalOf { AgendaColoresClaro }
+val LocalAgendaDs = staticCompositionLocalOf { AgendaDsClaro }
 val LocalAgendaType = staticCompositionLocalOf { AgendaType() }
 val LocalAgendaGrid = staticCompositionLocalOf { AgendaGrid.Compacta }
 
 /**
- * Tema de la agenda (contrato de diseño, dirección A «Tablero de salidas»).
+ * Tema de la agenda: sistema de diseño Agenda + CampusWatch (enmienda 2026-10-07; antes, dirección A «Tablero de salidas»).
  *
  * - Colores propios en claro y oscuro (C3). Sin dynamicColor: la app no toma el color
  *   del fondo de pantalla, así el contraste medido se mantiene.
@@ -28,6 +29,7 @@ fun AgendaTheme(
     oscuro: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
+    val ds = if (oscuro) AgendaDsNoche else AgendaDsClaro
     val colores = if (oscuro) AgendaColoresOscuro else AgendaColoresClaro
     val tipo = remember { AgendaType() }
     val anchoPx = LocalWindowInfo.current.containerSize.width
@@ -36,6 +38,7 @@ fun AgendaTheme(
 
     CompositionLocalProvider(
         LocalAgendaColors provides colores,
+        LocalAgendaDs provides ds,
         LocalAgendaType provides tipo,
         LocalAgendaGrid provides reticula,
     ) {
@@ -52,6 +55,9 @@ fun AgendaTheme(
 object AgendaTheme {
     val colores: AgendaColors
         @Composable @ReadOnlyComposable get() = LocalAgendaColors.current
+    /** Tokens del sistema Agenda + CampusWatch (los que usan las pantallas nuevas). */
+    val ds: AgendaDs
+        @Composable @ReadOnlyComposable get() = LocalAgendaDs.current
     val tipo: AgendaType
         @Composable @ReadOnlyComposable get() = LocalAgendaType.current
     val reticula: AgendaGrid

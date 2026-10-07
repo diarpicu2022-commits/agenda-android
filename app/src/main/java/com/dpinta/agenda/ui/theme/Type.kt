@@ -13,35 +13,32 @@ import androidx.compose.ui.unit.sp
 import com.dpinta.agenda.R
 
 /*
- * Tipografía. Contrato de diseño, cláusulas C2.1 a C2.3 (C2.1 enmendada el 2026-09-23:
- * Archivo sustituye a Big Shoulders Display por no tener cifras tabulares).
- * Ambas familias van empaquetadas en res/font (OFL; licencias en docs/licencias).
- * Nunca se usa FontFamily.Default.
+ * Tipografía del sistema Agenda + CampusWatch (README · Tipografía; enmienda 2026-10-07):
+ * Bricolage Grotesque («display»: horas, cuentas regresivas, títulos) y Figtree («ui»: todo lo demás).
+ * Empaquetadas en res/font (OFL). Nunca se usa FontFamily.Default.
  */
 
-/** Ancho fijo de Archivo en todo el sistema (C2.1). */
-private const val ANCHO_ARCHIVO = 62f
-
-private fun archivo(peso: Int) = Font(
-    resId = R.font.archivo_variable,
-    weight = FontWeight(peso),
-    variationSettings = FontVariation.Settings(
-        FontVariation.weight(peso),
-        FontVariation.width(ANCHO_ARCHIVO),
-    ),
-)
-
-private fun atkinson(peso: Int) = Font(
-    resId = R.font.atkinson_hyperlegible_next_variable,
+private fun bricolage(peso: Int) = Font(
+    resId = R.font.bricolage_grotesque_variable,
     weight = FontWeight(peso),
     variationSettings = FontVariation.Settings(FontVariation.weight(peso)),
 )
 
-/** Cifras de hora, salones, rótulos, sufijo y horas de fila. Pesos 800 y 700. */
-val Archivo62 = FontFamily(archivo(700), archivo(800))
+private fun figtree(peso: Int) = Font(
+    resId = R.font.figtree_variable,
+    weight = FontWeight(peso),
+    variationSettings = FontVariation.Settings(FontVariation.weight(peso)),
+)
 
-/** Todo lo demás. Pesos 400, 600 y 700. */
-val Atkinson = FontFamily(atkinson(400), atkinson(600), atkinson(700))
+/** Familia «display». */
+val Bricolage = FontFamily(bricolage(600), bricolage(650), bricolage(700))
+
+/** Familia «ui». */
+val Figtree = FontFamily(figtree(400), figtree(450), figtree(600), figtree(650), figtree(700))
+
+// Nombres anteriores: apuntan a las familias nuevas mientras cada pantalla migra.
+val Archivo62 = Bricolage
+val Atkinson = Figtree
 
 /** Cifras tabulares en todo texto (C2.2): las horas y duraciones no cambian de ancho. */
 private const val TNUM = "tnum"
@@ -68,32 +65,42 @@ private fun estilo(
     lineHeightStyle = interlineadoExacto,
 )
 
-/** Escala única del sistema (C2.3). Ningún texto por debajo de 14 sp. */
+/** Escala del sistema (tokens.json · type). Ningún texto por debajo de 12 sp; el que se lee, 14 sp o más. */
 @Immutable
 data class AgendaType(
-    /** La hora de salida en la banda. Solo ahí. 96/88 Archivo 800. */
-    val horaSalida: TextStyle = estilo(Archivo62, 800, 96, 88),
-    /** Código de salón en banda y detalle. 40/44 Archivo 800. */
-    val salon: TextStyle = estilo(Archivo62, 800, 40, 44),
-    /** «SAL A LAS», «SAL YA», «VAS TARDE», «LLEGAS». 20/24 Archivo 700, mayúsculas, +0,04 em. */
-    val rotulo: TextStyle = estilo(Archivo62, 700, 20, 24, tracking = 0.04f),
-    /** «a. m.» / «p. m.» bajo la hora, solo en 12 h (C1.1). 24/28 Archivo 700. */
-    val sufijo: TextStyle = estilo(Archivo62, 700, 24, 28),
-    /** Nombre de actividad en la banda. 28/32 Atkinson 600. */
-    val actividad: TextStyle = estilo(Atkinson, 600, 28, 32),
-    /** Títulos de pantalla y sección. 20/26 Atkinson 700. */
-    val seccion: TextStyle = estilo(Atkinson, 700, 20, 26),
-    /** Rango «8:00 → 10:00» en la lista del día. 18/24 Archivo 700. */
-    val filaHora: TextStyle = estilo(Archivo62, 700, 18, 24),
-    /** Código de salón y horas dentro de una celda de Semana. 14/16 Archivo 700 (enmienda 2026-09-25). */
-    val celda: TextStyle = estilo(Archivo62, 700, 14, 16),
-    /** Texto de lista y formularios. Mínimo del texto que se lee. 16/24 Atkinson 400. */
-    val cuerpo: TextStyle = estilo(Atkinson, 400, 16, 24),
-    /** Modo, margen, frescura del dato, lugar secundario. 14/20 Atkinson 400. */
-    val meta: TextStyle = estilo(Atkinson, 400, 14, 20),
-    /** Etiquetas de botón. 16/20 Atkinson 600. */
-    val boton: TextStyle = estilo(Atkinson, 600, 16, 20),
-)
+    /** hora-hero 56/56 · 700 · −0,03 em: la cuenta de salida y la hora de la tarjeta Ahora. */
+    val horaHero: TextStyle = estilo(Bricolage, 700, 56, 56, tracking = -0.03f),
+    /** hora-xl 36/40 · 650 · −0,02 em: hora de salida, total de horas. */
+    val horaXl: TextStyle = estilo(Bricolage, 650, 36, 40, tracking = -0.02f),
+    /** hora-lg 22/26 · 600 · −0,01 em: marcas de hora en la línea del día. */
+    val horaLg: TextStyle = estilo(Bricolage, 600, 22, 26, tracking = -0.01f),
+    /** hora-sm 14/18 · 600: rangos dentro de ítems y chips. */
+    val horaSm: TextStyle = estilo(Bricolage, 600, 14, 18),
+    /** titulo 28/32 · 700 · −0,02 em: título de pantalla y saludo. */
+    val titulo: TextStyle = estilo(Figtree, 700, 28, 32, tracking = -0.02f),
+    /** encabezado 19/24 · 650: nombre de la actividad actual, encabezado de tarjeta. */
+    val encabezado: TextStyle = estilo(Figtree, 650, 19, 24),
+    /** cuerpo-fuerte 16/22 · 600: nombre de actividad en la línea del día. */
+    val cuerpoFuerte: TextStyle = estilo(Figtree, 600, 16, 22),
+    /** cuerpo 16/24 · 400. */
+    val cuerpo: TextStyle = estilo(Figtree, 400, 16, 24),
+    /** apoyo 14/20 · 450: lugar, metadatos, ayuda de campo. */
+    val apoyo: TextStyle = estilo(Figtree, 450, 14, 20),
+    /** etiqueta 12/16 · 700 · +0,06 em, en mayúsculas: AHORA, PRÓXIMA, PARCIAL (máximo dos palabras). */
+    val etiqueta: TextStyle = estilo(Figtree, 700, 12, 16, tracking = 0.06f),
+) {
+    // Roles del contrato anterior → roles del sistema (se retiran al migrar cada pantalla).
+    val horaSalida: TextStyle get() = horaHero
+    val salon: TextStyle get() = horaXl
+    val rotulo: TextStyle get() = etiqueta
+    val sufijo: TextStyle get() = apoyo
+    val actividad: TextStyle get() = encabezado
+    val seccion: TextStyle get() = titulo
+    val filaHora: TextStyle get() = horaLg
+    val celda: TextStyle get() = horaSm
+    val meta: TextStyle get() = apoyo
+    val boton: TextStyle get() = cuerpoFuerte
+}
 
 /**
  * Los 15 roles de Material 3 apuntan a roles del contrato, para que ningún componente M3

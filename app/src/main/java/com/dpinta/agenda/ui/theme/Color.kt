@@ -44,55 +44,42 @@ data class AgendaColors(
     val esOscuro: Boolean,
 )
 
-// Filete = tinta al 18 % (0.18 x 255 = 45.9 -> 0x2E).
-private const val ALFA_FILETE = 0x2E000000
-
-val AgendaColoresClaro = AgendaColors(
-    papel = Color(0xFFF2EFE6),
-    papel2 = Color(0xFFE8E4D8),
-    tinta = Color(0xFF14130F),
-    tinta2 = Color(0xFF5A574E),
-    filete = Color(ALFA_FILETE or 0x14130F),
-    senal = Color(0xFFFFB000),
-    sobreSenal = Color(0xFF14130F),
-    tarde = Color(0xFF8E2A17),
-    sobreTarde = Color(0xFFF3EEE2),
-    alertaTexto = Color(0xFF8E2A17),
-    clase = Color(0xFF1F4FB8),
-    trabajo = Color(0xFF1E6B45),
-    puntual = Color(0xFF14130F),
-    foco = Color(0xFF14130F),
-    esOscuro = false,
+/**
+ * Enmienda 2026-10-07 (Diego, 2026-10-06: «botar el UI feo y colocarle el del sistema de diseño»): los tokens vienen del
+ * sistema Agenda + CampusWatch ([AgendaDs], generado). Estos nombres se mantienen como alias mientras cada pantalla
+ * pasa a usar los del sistema directamente.
+ */
+fun AgendaDs.comoAgendaColors() = AgendaColors(
+    papel = fondo,
+    papel2 = superficieFuerte,
+    tinta = tinta,
+    tinta2 = tintaSuave,
+    filete = linea,
+    senal = hora,
+    sobreSenal = sobreHora,
+    tarde = critico,
+    sobreTarde = if (esNoche) fondo else superficie,
+    alertaTexto = critico,
+    clase = lineaUniversidad,
+    trabajo = lineaTrabajo,
+    puntual = lineaEntrega,
+    foco = ruta,
+    esOscuro = esNoche,
 )
 
-val AgendaColoresOscuro = AgendaColors(
-    papel = Color(0xFF0E0F0C),
-    papel2 = Color(0xFF1A1B17),
-    tinta = Color(0xFFF2EFE6),
-    tinta2 = Color(0xFFA29E92),
-    filete = Color(ALFA_FILETE or 0xF2EFE6),
-    senal = Color(0xFFFFB547),
-    sobreSenal = Color(0xFF0E0F0C),
-    tarde = Color(0xFF8E2A17),
-    sobreTarde = Color(0xFFF3EEE2),
-    alertaTexto = Color(0xFFFF8A6B),
-    clase = Color(0xFF8FB0FF),
-    trabajo = Color(0xFF6FCB98),
-    puntual = Color(0xFFF2EFE6),
-    foco = Color(0xFFF2EFE6),
-    esOscuro = true,
-)
+val AgendaColoresClaro = AgendaDsClaro.comoAgendaColors()
+val AgendaColoresOscuro = AgendaDsNoche.comoAgendaColors()
 
 /**
  * Mapea los tokens a los roles de Material 3 para que los componentes M3 hereden el sistema.
- * El ámbar ([AgendaColors.senal]) NO se asigna a ningún rol M3: así ningún componente
- * estándar puede pintarlo por accidente (C3.1). Sin tinte tonal: surfaceTint = papel (C5.2).
+ * «hora» ([AgendaColors.senal]) NO se asigna a ningún rol M3: es el acento de «ahora» y solo lo pintan los componentes
+ * propios. El primario es «ruta». Sin tinte tonal: surfaceTint = papel.
  */
 fun AgendaColors.toMaterialScheme(): ColorScheme {
     val base = if (esOscuro) darkColorScheme() else lightColorScheme()
     return base.copy(
-        primary = tinta,
-        onPrimary = papel,
+        primary = foco,
+        onPrimary = if (esOscuro) papel else Color.White,
         primaryContainer = papel2,
         onPrimaryContainer = tinta,
         inversePrimary = papel,

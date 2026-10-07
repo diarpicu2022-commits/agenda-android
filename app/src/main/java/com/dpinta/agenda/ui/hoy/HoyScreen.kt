@@ -2,6 +2,9 @@ package com.dpinta.agenda.ui.hoy
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -49,7 +52,7 @@ import com.dpinta.agenda.ui.components.Cabecera
 import com.dpinta.agenda.ui.components.EstadoPrimerUso
 import com.dpinta.agenda.ui.components.anilloFoco
 import com.dpinta.agenda.ui.components.banda.AccionBanda
-import com.dpinta.agenda.ui.components.banda.BandaSalida
+import com.dpinta.agenda.ui.components.boleto.BoletoSalida
 import com.dpinta.agenda.ui.components.banda.BandaSalidaMuestras
 import com.dpinta.agenda.ui.components.banda.EstadoBanda
 import com.dpinta.agenda.ui.components.banda.formatearHora
@@ -126,16 +129,11 @@ fun HoyPantalla(
                 EstadoPrimerUso(onAnadir = onCrear)
             }
             is HoyUiState.Dia -> {
-                estado.banda?.let { BandaSalida(it, onAccion = onAccion, onCambiarModo = onCambiarModo, bajoBarraDeEstado = !franja) }
-                Cabecera(
-                    titulo = FORMATO_DIA.format(estado.fecha),
-                    bajoBarraDeEstado = estado.banda == null && !franja,
-                    accion = { BotonAjustes(onAjustes) },
-                )
-                if (estado.filas.isEmpty()) {
-                    DiaSinNada(estado.siguiente)
-                } else {
-                    ListaDelDia(estado, onEditar)
+                // Sistema nuevo (PantallaHoy): fecha y título, el boleto de salida y la línea del día, en un solo desplazamiento.
+                ListaDelDia(estado, onEditar, bajoBarraDeEstado = !franja, onAjustes = onAjustes) {
+                    estado.banda?.let {
+                        BoletoSalida(it, onAccion = onAccion, onCambiarModo = onCambiarModo, modifier = Modifier.padding(horizontal = 16.dp))
+                    }
                 }
             }
         }
@@ -147,18 +145,67 @@ private fun BotonAjustes(onAjustes: () -> Unit) =
     BotonIcono(Icono.Ajustes, "Ajustes", AgendaTheme.colores.tinta, onClick = onAjustes)
 
 @Composable
-private fun ListaDelDia(estado: HoyUiState.Dia, onEditar: (Long) -> Unit) {
+private fun ListaDelDia(
+    estado: HoyUiState.Dia,
+    onEditar: (Long) -> Unit,
+    bajoBarraDeEstado: Boolean,
+    onAjustes: () -> Unit,
+    boleto: @Composable () -> Unit,
+) {
     val es24h = rememberEs24h()
+    val ds = AgendaTheme.ds
+    val t = AgendaTheme.tipo
+    // La sesión en curso (si hay) se resalta como AHORA; el marcador va justo después de ella.
+    val enCurso = estado.filas.indexOfFirst { !it.pasada && !it.inicio.isAfter(estado.ahora) && it.fin.isAfter(estado.ahora) }
+    if (bajoBarraDeEstado) Spacer(Modifier.fillMaxWidth().background(ds.fondo).statusBarsPadding())
     LazyColumn(Modifier.fillMaxSize().testTag(EtiquetasHoy.LISTA)) {
+        item(key = "cabecera") {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(FORMATO_DIA.format(estado.fecha), style = t.apoyo, color = ds.tintaSuave)
+                    Text(saludo(estado.ahora), style = t.titulo, color = ds.tinta, modifier = Modifier.semantics { heading() })
+                }
+                BotonAjustes(onAjustes)
+            }
+        }
+        item(key = "boleto") { boleto() }
+        item(key = "tu-dia") {
+            Text("Tu día", style = t.encabezado, color = ds.tinta,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp).semantics { heading() })
+        }
+        if (estado.filas.isEmpty()) {
+            item(key = "vacio") { DiaSinNada(estado.siguiente) }
+        }
         itemsIndexed(estado.filas, key = { _, f -> f.clave }) { i, fila ->
-            if (i == estado.indiceAhora) LineaAhora(estado.ahora, es24h)
-            FilaDelDia(fila, antesDeAhora = i < estado.indiceAhora, es24h = es24h, onEditar = { onEditar(fila.actividadId) })
+            if (enCurso < 0 && i == estado.indiceAhora) MarcadorAhora(estado.ahora, es24h)
+            EstacionDelDia(
+                fila = fila,
+                enCurso = i == enCurso,
+                antesDeAhora = i < estado.indiceAhora && i != enCurso,
+                primera = i == 0,
+                ultima = i == estado.filas.lastIndex,
+                es24h = es24h,
+                onEditar = { onEditar(fila.actividadId) },
+            )
+            if (i == enCurso) MarcadorAhora(estado.ahora, es24h)
         }
-        if (estado.indiceAhora >= estado.filas.size) {
-            item(key = "ahora-final") { LineaAhora(estado.ahora, es24h) }
+        if (enCurso < 0 && estado.filas.isNotEmpty() && estado.indiceAhora >= estado.filas.size) {
+            item(key = "ahora-final") { MarcadorAhora(estado.ahora, es24h) }
         }
-        item(key = "pie") { Spacer(Modifier.height(AgendaSpacing.s24)) }
+        item(key = "pie") { Spacer(Modifier.height(AgendaSpacing.s24 * 3)) }
     }
+}
+
+/** Saludo según la hora (PantallaHoy: «Buenos días, Diego»; sin nombre porque la app no tiene cuentas). */
+private fun saludo(ahora: LocalTime): String = when (ahora.hour) {
+    in 5..11 -> "Buenos días"
+    in 12..18 -> "Buenas tardes"
+    else -> "Buenas noches"
 }
 
 /**

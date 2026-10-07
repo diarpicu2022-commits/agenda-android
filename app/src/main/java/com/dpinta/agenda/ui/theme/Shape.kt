@@ -5,21 +5,29 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
-/** Radio 0 como CornerBasedShape (Material 3 lo exige en Shapes). */
-private val RadioCero = RoundedCornerShape(0.dp)
-
 /**
- * Formas. Contrato de diseño, cláusula C5.1: radio 0 en todo.
- * Se sobrescriben las cinco formas de Material 3 para que ningún componente estándar
- * (hojas, menús, snackbar, campos, botones) traiga esquinas redondeadas.
+ * Formas del sistema Agenda + CampusWatch (README · «Las formas dependen del objeto»; enmienda 2026-10-07):
+ * ficha 6 (chips, insignias, campos), bloque 14 (bloques de actividad, ítems, avisos), lámina 24 (tarjetas
+ * protagonistas y hojas inferiores), pastilla (botones, interruptores, selector de día, rótulo Ahora).
+ * Círculos solo para estaciones, el anillo de cuenta y el marcador Ahora.
  */
+object Formas {
+    val ficha = RoundedCornerShape(6.dp)
+    val bloque = RoundedCornerShape(14.dp)
+    val lamina = RoundedCornerShape(24.dp)
+    val laminaArriba = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    val pastilla = RoundedCornerShape(percent = 50)
+    val estacion = CircleShape
+}
+
+/** Material 3 hereda las formas del sistema (campos = ficha, menús y avisos = bloque, hojas = lámina). */
 val AgendaShapes = Shapes(
-    extraSmall = RadioCero,
-    small = RadioCero,
-    medium = RadioCero,
-    large = RadioCero,
-    extraLarge = RadioCero,
+    extraSmall = Formas.ficha,
+    small = Formas.ficha,
+    medium = Formas.bloque,
+    large = Formas.lamina,
+    extraLarge = Formas.lamina,
 )
 
-/** Única excepción (C5.4): el punto de la línea de «ahora» marca un instante, no un bloque. */
+/** El punto de la línea de «ahora» marca un instante: círculo. */
 val FormaPuntoAhora = CircleShape
