@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget «Siguiente» 2×2 (anexo). Radio 0 (C5.1), sin sombra (C5.2); tipos del contrato (C2, enmienda 2026-09-25). -->
+<!-- Widget «Siguiente» 2×2 (anexo). HomeWidget del sistema Agenda (enmienda 2026-10-07): lámina 24 en superficie, Bricolage + Figtree. -->
 <!-- tools:ignore="Overdraw": el widget lo dibuja el lanzador, no el tema de la app. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widget_raiz"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/widget_senal"
+    android:background="@drawable/widget_fondo"
     android:orientation="vertical"
     android:padding="16dp"
     tools:ignore="Overdraw">
@@ -37,13 +37,13 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textSize="16sp"
-            android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:fontVariationSettings="&apos;wght&apos; 600"
+            android:fontFamily="@font/figtree_variable" android:fontVariationSettings="&apos;wght&apos; 600"
             android:textColor="@color/widget_tinta" android:includeFontPadding="false" android:maxLines="2" android:ellipsize="end" />
         <TextView
             android:id="@+id/widget_hace"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="14sp"
-            android:fontFamily="@font/atkinson_hyperlegible_next_variable" android:fontVariationSettings="&apos;wght&apos; 400"
-            android:textColor="@color/widget_tinta" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" />
+            android:fontFamily="@font/figtree_variable" android:fontVariationSettings="&apos;wght&apos; 400"
+            android:textColor="@color/widget_tinta_suave" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" />
 </LinearLayout>

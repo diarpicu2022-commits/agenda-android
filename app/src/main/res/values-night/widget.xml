@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Siguiente» (HomeWidget del sistema Agenda; generado de tokens.json, tema noche). -->
 <resources>
-    <color name="widget_senal">#FFFFB547</color>
-    <color name="widget_tinta">#FF0E0F0C</color>
+    <color name="widget_fondo">#FF1F1B25</color>
+    <color name="widget_borde">#FF3A3442</color>
+    <color name="widget_tinta">#FFF3EDE4</color>
+    <color name="widget_tinta_suave">#FFB6AAB7</color>
+    <color name="widget_hora">#FFFF9068</color>
+    <color name="widget_senal">#FF1F1B25</color>
 </resources>

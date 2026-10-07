@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Widget «Siguiente» (HomeWidget del sistema Agenda; generado de tokens.json, tema claro). -->
 <resources>
-    <!-- Widget «Siguiente»: la banda senal a sangre (C6) y su tinta (C3). -->
-    <color name="widget_senal">#FFFFB000</color>
-    <color name="widget_tinta">#FF14130F</color>
+    <color name="widget_fondo">#FFFFFAF2</color>
+    <color name="widget_borde">#FFD8CCB9</color>
+    <color name="widget_tinta">#FF251E2B</color>
+    <color name="widget_tinta_suave">#FF665A69</color>
+    <color name="widget_hora">#FFAD3C24</color>
+    <color name="widget_senal">#FFFFFAF2</color>
     <string name="widget_siguiente">Siguiente salida</string>
 </resources>

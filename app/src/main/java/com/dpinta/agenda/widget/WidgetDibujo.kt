@@ -11,38 +11,41 @@ import com.dpinta.agenda.R
 import kotlin.math.ceil
 
 /**
- * Las líneas en Archivo del widget se dibujan aquí, en la app, como imagen: a través de RemoteViews
- * el lanzador carga Archivo pero no respeta el eje de ancho 62 (medido en el emulador: «9:00» salía
- * con proporción 2,36 frente a 2,12 de Archivo 62/800). Así el widget usa exactamente la misma letra
- * que la banda (C2.1). TalkBack lee la frase completa del contenedor, no las imágenes.
+ * Las líneas de cifras del widget se dibujan aquí como imagen, con la familia «display» del sistema (Bricolage
+ * Grotesque) y el peso exacto: por RemoteViews el lanzador no respeta los ejes variables. TalkBack lee la frase
+ * completa del contenedor, no las imágenes. Enmienda 2026-10-07: antes Archivo 62.
  */
 class WidgetDibujo(private val contexto: Context) {
 
-    private val archivo = ResourcesCompat.getFont(contexto, R.font.archivo_variable)
+    private val bricolage = ResourcesCompat.getFont(contexto, R.font.bricolage_grotesque_variable)
+    private val figtree = ResourcesCompat.getFont(contexto, R.font.figtree_variable)
     private val tinta = contexto.getColor(R.color.widget_tinta)
+    private val tintaSuave = contexto.getColor(R.color.widget_tinta_suave)
+    private val hora = contexto.getColor(R.color.widget_hora)
     private val metricas = contexto.resources.displayMetrics
 
-    private fun pincel(sp: Float, peso: Int, espaciado: Float = 0f) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        typeface = archivo
+    private fun pincel(sp: Float, peso: Int, espaciado: Float = 0f, cifras: Boolean = true, color0: Int = tinta) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        typeface = if (cifras) bricolage else figtree
         textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, metricas)
-        color = tinta
-        fontVariationSettings = "'wdth' 62, 'wght' $peso"
+        color = color0
+        fontVariationSettings = "'wght' $peso"
         letterSpacing = espaciado
         fontFeatureSettings = "tnum"
     }
 
-    /** `rotulo`: 20 sp, 700, +0,04 em (C2.3). */
-    fun rotulo(texto: String, anchoMax: Int) = dibujar(listOf(texto to pincel(20f, 700, 0.04f)), anchoMax)
+    /** `etiqueta`: 12 sp, Figtree 700, +0,06 em, en tinta-suave («SAL A LAS», «EMPIEZA»). */
+    fun rotulo(texto: String, anchoMax: Int) = dibujar(listOf(texto to pincel(12f, 700, 0.06f, cifras = false, color0 = tintaSuave)), anchoMax)
 
     /** La hora con las métricas de `salon` (40 sp, 800) y, en 12 h, el `sufijo` (24 sp, 700) en la misma línea base. */
     fun hora(cifra: String, sufijo: String?, anchoMax: Int): Bitmap {
-        val partes = mutableListOf(cifra to pincel(40f, 800))
-        if (sufijo != null) partes += " $sufijo" to pincel(24f, 700)
+        // `hora-xl` 36/650 en el acento `hora` (la hora de salida es lo más grande del widget).
+        val partes = mutableListOf(cifra to pincel(36f, 650, -0.02f, color0 = hora))
+        if (sufijo != null) partes += " $sufijo" to pincel(16f, 600, color0 = hora)
         return dibujar(partes, anchoMax)
     }
 
-    /** `fila-hora`: 18 sp, 700. */
-    fun salon(texto: String, anchoMax: Int) = dibujar(listOf(texto to pincel(18f, 700)), anchoMax)
+    /** Salón: Bricolage 600, 18 sp, en tinta. */
+    fun salon(texto: String, anchoMax: Int) = dibujar(listOf(texto to pincel(18f, 600)), anchoMax)
 
     /** Tramos seguidos sobre una misma línea base; si no cabe en [anchoMax] px, se reduce entera (nunca se corta). */
     private fun dibujar(partes: List<Pair<String, Paint>>, anchoMax: Int): Bitmap {

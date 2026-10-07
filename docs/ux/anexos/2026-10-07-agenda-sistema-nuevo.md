@@ -56,6 +56,15 @@ Semestre y Lugar cambian sin tocarlos. Capturas `sn-paso3-*`.
 - **Actividades**: estaciones del sistema (● ■ ▲) en lugar de cuadrados, rangos en `hora-sm`, encabezados `encabezado`.
 - `:app:testDebugUnitTest` 84/84, `:core:domain:test` en verde, `lintDebug` sin errores. Capturas `sn-paso4-*`.
 
+## Paso 5 · Widget «Siguiente» (hecho)
+HomeWidget del sistema: lámina 24 en `superficie` con borde `linea` (antes, banda amarilla a sangre), rótulo en
+`etiqueta` `tinta-suave`, la hora en Bricolage `hora-xl` con el acento `hora`, salón en Bricolage 600, textos en Figtree.
+Colores generados de `tokens.json` para claro y noche (`res/values*/widget.xml`). Mismos textos y pruebas.
+**Desviación consciente**: el sistema muestra una cuenta («Salir en 18 min»); un widget de Android no se puede redibujar
+cada minuto y una cuenta congelada mentiría, así que se mantiene la hora absoluta («Sal a las 7:30»), que siempre es cierta.
+**Pendiente encontrado al medir** (ya existía): pasada la hora de salida el widget sigue diciendo «Sal a las 7:30» hasta
+el siguiente reprogramado; debería pasar a «Vas tarde» o a la siguiente sesión con una alarma a la hora de salida.
+
 ## Siguiente
 Formulario, Ajustes y Semestre ya usan las piezas nuevas pero conservan su composición; pendiente pasarlos a `SettingsGroup`
 y `Switch` del sistema. Widget «Siguiente»: pendiente de pasar al `HomeWidget` del sistema (hoy sigue el amarillo anterior).
