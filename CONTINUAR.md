@@ -211,3 +211,5 @@ dependencia. Si no hay Internet ni analítica: **sin cookies ni rastreo**, y la 
 5. Google Play: URL pública de la política (repo privado: publicarla aparte), formulario de Seguridad de los datos y la
    declaración de `USE_EXACT_ALARM`.
 6. En el anexo de diseño, estas pantallas y estados entran en el alcance y usan el repertorio del contrato.
+
+- **Pedido del profe (2026-10-07), pendiente**: modo claro/oscuro a elección y cambio de idioma (es/en). Detalle en `Proyectos Finales/PENDIENTES-PROFE.md`. CampusWatch: colores de la app y modo claro.
