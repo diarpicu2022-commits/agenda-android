@@ -49,6 +49,9 @@ kotlin { jvmToolchain(21) }
 room { schemaDirectory("$projectDir/schemas") }
 
 dependencies {
+    // CampusWatch: el teléfono publica el día al reloj y recibe sus acciones.
+    implementation(libs.play.services.wearable)
+    implementation(libs.coroutines.play.services)
     implementation(project(":core:domain"))
 
     implementation(libs.androidx.core.ktx)

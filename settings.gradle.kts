@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Agenda"
-include(":app", ":core:domain")
+include(":app", ":core:domain", ":wear")

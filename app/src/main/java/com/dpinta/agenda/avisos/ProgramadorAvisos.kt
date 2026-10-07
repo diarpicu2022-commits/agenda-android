@@ -17,6 +17,7 @@ import com.dpinta.agenda.domain.Occurrence
 import com.dpinta.agenda.domain.PlannedAlarm
 import com.dpinta.agenda.domain.ScheduleExpander
 import com.dpinta.agenda.domain.TravelEstimate
+import com.dpinta.agenda.reloj.PublicadorReloj
 import com.dpinta.agenda.widget.WidgetSiguiente
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
@@ -40,6 +41,7 @@ class ProgramadorAvisos @Inject constructor(
     private val repositorio: AgendaRepository,
     private val reloj: Clock,
     private val ajustes: AjustesAvisos,
+    private val publicadorReloj: PublicadorReloj,
 ) {
     private val alarmas = contexto.getSystemService(AlarmManager::class.java)
     private val registro = contexto.getSharedPreferences("avisos_programados", Context.MODE_PRIVATE)
@@ -58,6 +60,7 @@ class ProgramadorAvisos @Inject constructor(
         programarResumen(vacia = nuevas.isEmpty())
         programarWidget()
         WidgetSiguiente.actualizar(contexto)
+        publicadorReloj.publicar(repositorio.agenda().first(), ::sesiones)
         registro.edit { putStringSet(CLAVE, codigos.map { it.toString() }.toSet()) }
     }
 

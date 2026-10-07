@@ -62,6 +62,13 @@ Decisiones de Diego ya aplicadas (Registro de enmiendas del anexo): Big Shoulder
 solape «Se cruza con {actividad} {hora}»; etiqueta de pestaña que no cabe se reduce sola (mín. 14 sp, nunca parte palabras);
 alcance completo P1–P3; reloj según el ajuste del teléfono; mano derecha; transporte bus / a pie / carro / moto.
 
+**2026-10-07 · CampusWatch (rama `campuswatch`)**: módulo `:wear` (Wear OS) con el sistema de diseño Agenda + CampusWatch:
+Próxima con anillo de cuenta, Es hora de salir, Acciones, Horario de hoy y mañana, Confirmación, Tarjeta y Complicación;
+el teléfono publica el día (`app/reloj/`) y recibe las acciones con el mismo receptor de la notificación. Dominio
+`Watch.kt` con pruebas. Detalle, desviaciones y medidas en `docs/ux/anexos/2026-10-07-campuswatch.md`.
+Pendiente: emparejar teléfono ↔ reloj de verdad (Galaxy Watch o emulador con Play), Asistencia/QR (necesita servidor),
+vibración por nivel en el reloj, firma de release común para teléfono y reloj.
+
 ## 3. Pendiente inmediato (antes del siguiente paso)
 
 1. Con 360 dp + fuente 2,0, el script no detecta la frase-resumen del formulario: revisar si se sale de la vista o si es el detector.

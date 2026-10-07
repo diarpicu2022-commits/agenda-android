@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GENERADO desde tokens.json / tokens.css (tema «reloj»). No editar a mano. -->
+<resources>
+    <color name="cw_fondo">#050407</color>
+    <color name="cw_superficie">#141118</color>
+    <color name="cw_superficie_fuerte">#221d28</color>
+    <color name="cw_linea">#3b3444</color>
+    <color name="cw_linea_fuerte">#857a8d</color>
+    <color name="cw_tinta">#fbf6ee</color>
+    <color name="cw_tinta_suave">#c8bcc6</color>
+    <color name="cw_deshabilitado">#5f5766</color>
+    <color name="cw_ruta">#8fd5d4</color>
+    <color name="cw_ruta_suave">#0f292c</color>
+    <color name="cw_sobre_ruta">#061314</color>
+    <color name="cw_hora">#ff9a74</color>
+    <color name="cw_hora_suave">#3a1a14</color>
+    <color name="cw_sobre_hora">#160c0e</color>
+    <color name="cw_ciruela">#efb2de</color>
+    <color name="cw_ciruela_suave">#2f1a2c</color>
+    <color name="cw_sobre_ciruela">#1a0c17</color>
+    <color name="cw_linea_trabajo">#ecc26a</color>
+    <color name="cw_linea_trabajo_suave">#2c210b</color>
+    <color name="cw_linea_personal">#b4d4a6</color>
+    <color name="cw_linea_personal_suave">#1a2516</color>
+    <color name="cw_linea_entrega">#adc3f0</color>
+    <color name="cw_linea_entrega_suave">#151e33</color>
+    <color name="cw_exito">#93ddc1</color>
+    <color name="cw_exito_suave">#0f2a21</color>
+    <color name="cw_aviso">#f7c072</color>
+    <color name="cw_aviso_suave">#2f2008</color>
+    <color name="cw_critico">#ff978d</color>
+    <color name="cw_critico_suave">#3a1816</color>
+    <color name="cw_urg_calma">#adc2b3</color>
+    <color name="cw_urg_perdida">#948998</color>
+    <color name="cw_urg_proxima">#8fd5d4</color>
+    <color name="cw_urg_pronto">#f7c072</color>
+    <color name="cw_urg_salir">#ff9a74</color>
+    <color name="cw_urg_urgente">#ff978d</color>
+</resources>
