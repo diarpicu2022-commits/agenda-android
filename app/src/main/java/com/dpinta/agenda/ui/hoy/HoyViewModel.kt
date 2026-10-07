@@ -44,6 +44,7 @@ class HoyViewModel @Inject constructor(
     private val repositorio: AgendaRepository,
     private val reloj: Clock,
     sesiones: SesionesEnCurso,
+    private val perfil: StateFlow<com.dpinta.agenda.data.perfil.Perfil> = kotlinx.coroutines.flow.MutableStateFlow(com.dpinta.agenda.data.perfil.Perfil()),
 ) : ViewModel() {
 
     private val salida = sesiones.salida
@@ -64,9 +65,12 @@ class HoyViewModel @Inject constructor(
     }
 
     val estado: StateFlow<HoyUiState> =
-        combine(repositorio.agenda(), minuto, salida, llegadas, modos) { agenda, ahora, salida, llegadas, modos ->
-            construir(agenda, ahora, salida, llegadas, modos)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HoyUiState.Cargando)
+        combine(
+            combine(repositorio.agenda(), minuto, salida, llegadas, modos) { agenda, ahora, salida, llegadas, modos ->
+                construir(agenda, ahora, salida, llegadas, modos)
+            },
+            perfil,
+        ) { e, p -> if (e is HoyUiState.Dia) e.copy(nombre = p.primerNombre) else e }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HoyUiState.Cargando)
 
     /** «+5 min» pospone el aviso; lo consumirá el paso de notificaciones. */
     val avisoPospuestoHasta: StateFlow<Instant?> = pospuesto

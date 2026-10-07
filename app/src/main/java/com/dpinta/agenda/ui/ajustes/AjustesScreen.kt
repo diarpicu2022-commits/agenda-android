@@ -63,7 +63,12 @@ class AjustesViewModel @Inject constructor(
     repositorio: AgendaRepository,
     private val ajustes: AjustesAvisos,
     private val programador: ProgramadorAvisos,
+    private val perfilLocal: com.dpinta.agenda.data.perfil.PerfilLocal,
 ) : ViewModel() {
+    val perfil: StateFlow<com.dpinta.agenda.data.perfil.Perfil> = perfilLocal.perfil
+
+    fun perfil(p: com.dpinta.agenda.data.perfil.Perfil) = perfilLocal.guardar(p)
+
     val semestres: StateFlow<List<SemestreGuardado>?> =
         repositorio.semestres().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -98,7 +103,9 @@ fun AjustesRuta(
 ) {
     val semestres by viewModel.semestres.collectAsStateWithLifecycle()
     val resumen by viewModel.resumen.collectAsStateWithLifecycle()
-    AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen)
+    val perfil by viewModel.perfil.collectAsStateWithLifecycle()
+    AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen,
+        perfil = perfil, onPerfil = viewModel::perfil)
 }
 
 /** Ajustes (anexo §7). Por ahora: Semestre. En compilaciones depurables enlaza la demostración de la banda. */
@@ -111,6 +118,8 @@ fun AjustesPantalla(
     modifier: Modifier = Modifier,
     resumen: AjusteResumen = AjusteResumen(),
     onResumen: (AjusteResumen) -> Unit = {},
+    perfil: com.dpinta.agenda.data.perfil.Perfil = com.dpinta.agenda.data.perfil.Perfil(),
+    onPerfil: (com.dpinta.agenda.data.perfil.Perfil) -> Unit = {},
 ) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
@@ -120,6 +129,7 @@ fun AjustesPantalla(
     Column(modifier.fillMaxSize().background(c.papel)) {
         Cabecera("Ajustes", onAtras = onAtras)
         Column(Modifier.verticalScroll(rememberScrollState())) {
+            TuPerfil(perfil, onPerfil)
             Text(
                 "Semestre",
                 style = t.seccion,
@@ -142,6 +152,28 @@ fun AjustesPantalla(
                 )
             }
         }
+    }
+}
+
+/**
+ * Tu perfil (cuenta local): nombre para el saludo de Hoy y, si quieres, carrera y universidad. Se guarda solo en este
+ * teléfono; se guarda al escribir.
+ */
+@Composable
+private fun TuPerfil(perfil: com.dpinta.agenda.data.perfil.Perfil, onCambio: (com.dpinta.agenda.data.perfil.Perfil) -> Unit) {
+    val c = AgendaTheme.colores
+    val t = AgendaTheme.tipo
+    val m = AgendaTheme.reticula.margen
+    var nombre by rememberSaveable { mutableStateOf(perfil.nombre) }
+    var carrera by rememberSaveable { mutableStateOf(perfil.carrera) }
+    var universidad by rememberSaveable { mutableStateOf(perfil.universidad) }
+    fun guardar() = onCambio(com.dpinta.agenda.data.perfil.Perfil(nombre, carrera, universidad))
+    Column(Modifier.padding(horizontal = m), verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s12)) {
+        Text("Tu perfil", style = t.seccion, color = c.tinta, modifier = Modifier.padding(top = AgendaSpacing.s24).semantics { heading() })
+        Text("Cuenta local: estos datos se guardan solo en este teléfono, sin servidor ni copia en la nube.", style = t.meta, color = AgendaTheme.ds.tintaSuave)
+        CampoTexto("Tu nombre", nombre, { nombre = it; guardar() }, error = null, ayuda = "Diego")
+        CampoTexto("Carrera (opcional)", carrera, { carrera = it; guardar() }, error = null, ayuda = "Ingeniería de Software")
+        CampoTexto("Universidad (opcional)", universidad, { universidad = it; guardar() }, error = null)
     }
 }
 

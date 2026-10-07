@@ -173,7 +173,7 @@ private fun ListaDelDia(
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(FORMATO_DIA.format(estado.fecha), style = t.apoyo, color = ds.tintaSuave)
-                    Text(saludo(estado.ahora), style = t.titulo, color = ds.tinta, modifier = Modifier.semantics { heading() })
+                    Text(saludo(estado.ahora) + (estado.nombre?.let { ", $it" } ?: ""), style = t.titulo, color = ds.tinta, modifier = Modifier.semantics { heading() })
                 }
                 BotonAjustes(onAjustes)
             }
@@ -206,7 +206,7 @@ private fun ListaDelDia(
     }
 }
 
-/** Saludo según la hora (PantallaHoy: «Buenos días, Diego»; sin nombre porque la app no tiene cuentas). */
+/** Saludo según la hora (PantallaHoy: «Buenos días, Diego»); el nombre sale del perfil local de Ajustes. */
 private fun saludo(ahora: LocalTime): String = when (ahora.hour) {
     in 5..11 -> "Buenos días"
     in 12..18 -> "Buenas tardes"

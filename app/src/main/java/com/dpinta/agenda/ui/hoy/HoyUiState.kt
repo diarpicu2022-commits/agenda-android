@@ -72,6 +72,8 @@ sealed interface HoyUiState {
          * tarjeta AHORA en vez del boleto; el boleto vuelve cuando ya toca prepararse para la siguiente.
          */
         val enCurso: EnCurso? = null,
+        /** Primer nombre del perfil local para el saludo; null si no lo ha escrito. */
+        val nombre: String? = null,
     ) : HoyUiState
 }
 

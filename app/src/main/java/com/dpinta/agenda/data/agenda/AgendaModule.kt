@@ -34,5 +34,8 @@ abstract class AgendaModule {
 
     companion object {
         @Provides @Singleton fun reloj(reloj: RelojAjustable): Clock = reloj
+
+        /** Perfil de la cuenta local como flujo (Hoy lo lee para el saludo; las pruebas pasan uno fijo). */
+        @Provides fun perfil(local: com.dpinta.agenda.data.perfil.PerfilLocal): kotlinx.coroutines.flow.StateFlow<com.dpinta.agenda.data.perfil.Perfil> = local.perfil
     }
 }
