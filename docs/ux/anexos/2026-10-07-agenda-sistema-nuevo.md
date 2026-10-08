@@ -68,3 +68,20 @@ el siguiente reprogramado; debería pasar a «Vas tarde» o a la siguiente sesi�
 ## Siguiente
 Formulario, Ajustes y Semestre ya usan las piezas nuevas pero conservan su composición; pendiente pasarlos a `SettingsGroup`
 y `Switch` del sistema. Widget «Siguiente»: pendiente de pasar al `HomeWidget` del sistema (hoy sigue el amarillo anterior).
+
+## Paso 6 · Ajustes, formulario, Semestre y Lugar (2026-10-08)
+
+- **Ajustes**: nota de privacidad («Tus datos permanecen en este dispositivo»), Tu perfil, grupos del sistema (Agenda ·
+  Avisos · Datos) con `GrupoAjustes`/`FilaAjuste`/`FilaInterruptor` (`ui/components/Ajustes.kt`). «Lugares y traslados»
+  ahora se abre desde aquí. **«Borrar todos mis datos»** (derecho del titular, CLAUDE.md §Privacidad 5) con diálogo de
+  confirmación y `clearApplicationUserData()`. «Demostración de la banda» solo en la compilación de prueba.
+- **Formulario**: el tipo se elige con **fichas** con la forma de estación de cada tipo (● Clase, ■ Trabajo, ▲ Puntual,
+  ◆ Examen, ○ Otro), en lugar del segmentado; choques en caja `avisoSuave`; resumen en caja `rutaSuave`; pie sobre
+  `superficie`; títulos de sección en `encabezado`.
+- **Semestre y Lugar**: «Días sin clase» y los títulos de sección pasaron de `seccion` a `encabezado` (mismo nivel que
+  el formulario).
+
+Verificación: `assembleDebug`, `testDebugUnitTest` (**86 pruebas, 0 fallos**) y `lintDebug` sin errores; capturas en el
+emulador del teléfono: `docs/capturas/sn-paso6-{ajustes,ajustes-2,formulario,formulario-2,semestre}.png`.
+Pendiente declarado: el diálogo de «Borrar todos mis datos» no se pulsó en la verificación (borra el emulador de
+demostración); queda probado por compilación, no por recorrido.
