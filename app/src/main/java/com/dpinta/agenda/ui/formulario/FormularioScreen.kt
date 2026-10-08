@@ -1,5 +1,14 @@
 package com.dpinta.agenda.ui.formulario
 
+import com.dpinta.agenda.ui.theme.Formas
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.border
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -153,7 +162,7 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
                 .padding(horizontal = m),
         ) {
             Seccion("¿Qué es?")
-            Segmentado(TIPOS, f.tipo, acciones.onTipo, columnas = 3, etiquetaPrueba = "tipo")
+            FichasTipo(f.tipo, acciones.onTipo)
             Spacer(Modifier.height(AgendaSpacing.s16))
             CampoTexto(
                 "Nombre",
@@ -224,6 +233,10 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
                 Seccion("Conflictos")
                 Column(
                     Modifier
+                        .fillMaxWidth()
+                        .clip(Formas.bloque)
+                        .background(AgendaTheme.ds.avisoSuave)
+                        .padding(AgendaSpacing.s16)
                         .testTag(EtiquetasFormulario.CONFLICTOS)
                         .semantics { liveRegion = LiveRegionMode.Polite },
                 ) {
@@ -237,8 +250,14 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
             Text(
                 estado.borradorValido?.let { resumen(it, es24h) } ?: "Completa el nombre, los días y las horas para ver el resumen.",
                 style = AgendaTheme.tipo.cuerpo,
-                color = if (estado.borradorValido != null) c.tinta else c.tinta2,
-                modifier = Modifier.testTag(EtiquetasFormulario.RESUMEN).semantics { liveRegion = LiveRegionMode.Polite },
+                color = if (estado.borradorValido != null) AgendaTheme.ds.tinta else AgendaTheme.ds.tintaSuave,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(Formas.bloque)
+                    .background(if (estado.borradorValido != null) AgendaTheme.ds.rutaSuave else AgendaTheme.ds.superficieFuerte)
+                    .padding(AgendaSpacing.s16)
+                    .testTag(EtiquetasFormulario.RESUMEN)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
             )
             Spacer(Modifier.height(AgendaSpacing.s24))
         }
@@ -250,8 +269,8 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
 @Composable
 private fun PieAcciones(estado: FormularioUiState, acciones: AccionesFormulario) {
     val c = AgendaTheme.colores
-    Column(Modifier.fillMaxWidth().background(c.papel).windowInsetsPadding(WindowInsets.navigationBars)) {
-        HorizontalDivider(thickness = AgendaMedidas.filete, color = c.filete)
+    Column(Modifier.fillMaxWidth().background(AgendaTheme.ds.superficie).windowInsetsPadding(WindowInsets.navigationBars)) {
+        HorizontalDivider(thickness = 1.dp, color = AgendaTheme.ds.linea)
         val errores = estado.errores.size
         val mensaje = when (val fase = estado.fase) {
             is FaseGuardado.Error -> fase.mensaje
@@ -286,8 +305,57 @@ private fun PieAcciones(estado: FormularioUiState, acciones: AccionesFormulario)
 @Composable
 private fun Seccion(titulo: String) {
     Spacer(Modifier.height(AgendaSpacing.s24))
-    Text(titulo, style = AgendaTheme.tipo.seccion, color = AgendaTheme.colores.tinta, modifier = Modifier.semantics { heading() })
+    Text(titulo, style = AgendaTheme.tipo.encabezado, color = AgendaTheme.ds.tinta, modifier = Modifier.semantics { heading() })
     Spacer(Modifier.height(AgendaSpacing.s12))
+}
+
+/**
+ * Tipo de actividad en fichas (Chip): cada una con la estación de su línea — ● clase, ■ trabajo, ▲ entrega,
+ * ◆ examen, ○ otro. La elegida lleva el `-suave` de su línea y borde en su color.
+ */
+@Composable
+private fun FichasTipo(actual: ActivityKind, onTipo: (ActivityKind) -> Unit) {
+    val ds = AgendaTheme.ds
+    androidx.compose.foundation.layout.FlowRow(
+        Modifier.fillMaxWidth().selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(AgendaSpacing.s8),
+        verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s8),
+    ) {
+        TIPOS.forEach { o ->
+            val activa = o.valor == actual
+            val (linea, suave) = when (o.valor) {
+                ActivityKind.CLASE -> ds.lineaUniversidad to ds.rutaSuave
+                ActivityKind.TRABAJO -> ds.lineaTrabajo to ds.lineaTrabajoSuave
+                ActivityKind.PUNTUAL -> ds.lineaEntrega to ds.lineaEntregaSuave
+                ActivityKind.EXAMEN -> ds.lineaExamen to ds.ciruelaSuave
+                ActivityKind.OTRO -> ds.lineaPersonal to ds.lineaPersonalSuave
+            }
+            Row(
+                Modifier
+                    .heightIn(min = 48.dp)
+                    .clip(Formas.ficha)
+                    .background(if (activa) suave else ds.superficie)
+                    .border(if (activa) 1.5.dp else 1.dp, if (activa) linea else ds.linea, Formas.ficha)
+                    .selectable(selected = activa, role = Role.RadioButton, onClick = { onTipo(o.valor) })
+                    .padding(horizontal = 14.dp)
+                    .testTag("tipo-${o.texto}"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                androidx.compose.foundation.Canvas(Modifier.size(11.dp)) {
+                    val w = size.width
+                    when (o.valor) {
+                        ActivityKind.CLASE -> drawCircle(linea, w / 2)
+                        ActivityKind.TRABAJO -> drawRect(linea)
+                        ActivityKind.PUNTUAL -> drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(w / 2, 0f); lineTo(w, w); lineTo(0f, w); close() }, linea)
+                        ActivityKind.EXAMEN -> drawPath(androidx.compose.ui.graphics.Path().apply { moveTo(w / 2, 0f); lineTo(w, w / 2); lineTo(w / 2, w); lineTo(0f, w / 2); close() }, linea)
+                        ActivityKind.OTRO -> drawCircle(linea, w / 2 - 1.dp.toPx(), style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+                    }
+                }
+                Spacer(Modifier.width(AgendaSpacing.s8))
+                Text(o.texto, style = AgendaTheme.tipo.cuerpoFuerte, color = ds.tinta)
+            }
+        }
+    }
 }
 
 /** Dos campos lado a lado, separados por el medianil de la retícula (C4.2). */

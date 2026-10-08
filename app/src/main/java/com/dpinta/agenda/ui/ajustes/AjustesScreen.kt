@@ -32,6 +32,14 @@ import com.dpinta.agenda.avisos.ProgramadorAvisos
 import com.dpinta.agenda.data.ajustes.AjusteResumen
 import com.dpinta.agenda.data.ajustes.AjustesAvisos
 import com.dpinta.agenda.ui.components.CampoTexto
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.unit.dp
+import com.dpinta.agenda.ui.components.DivisorAjustes
+import com.dpinta.agenda.ui.components.FilaInterruptor
+import com.dpinta.agenda.ui.components.FilaAjuste
+import com.dpinta.agenda.ui.components.GrupoAjustes
+import com.dpinta.agenda.ui.components.NotaPrivacidad
 import com.dpinta.agenda.ui.components.Opcion
 import com.dpinta.agenda.ui.components.Segmentado
 import com.dpinta.agenda.ui.components.banda.formatearHora
@@ -96,6 +104,7 @@ internal fun resumenSemestre(s: SemestreGuardado): String {
 
 @Composable
 fun AjustesRuta(
+    onLugares: () -> Unit = {},
     onAtras: () -> Unit,
     onSemestre: (Long?) -> Unit,
     onDemoBanda: () -> Unit,
@@ -105,7 +114,7 @@ fun AjustesRuta(
     val resumen by viewModel.resumen.collectAsStateWithLifecycle()
     val perfil by viewModel.perfil.collectAsStateWithLifecycle()
     AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen,
-        perfil = perfil, onPerfil = viewModel::perfil)
+        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares)
 }
 
 /** Ajustes (anexo §7). Por ahora: Semestre. En compilaciones depurables enlaza la demostración de la banda. */
@@ -120,38 +129,66 @@ fun AjustesPantalla(
     onResumen: (AjusteResumen) -> Unit = {},
     perfil: com.dpinta.agenda.data.perfil.Perfil = com.dpinta.agenda.data.perfil.Perfil(),
     onPerfil: (com.dpinta.agenda.data.perfil.Perfil) -> Unit = {},
+    onLugares: () -> Unit = {},
 ) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
     val m = AgendaTheme.reticula.margen
     val contexto = LocalContext.current
     val depurable = remember(contexto) { (contexto.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0 }
+    var confirmarBorrado by remember { mutableStateOf(false) }
     Column(modifier.fillMaxSize().background(c.papel)) {
         Cabecera("Ajustes", onAtras = onAtras)
-        Column(Modifier.verticalScroll(rememberScrollState())) {
+        // PantallaAjustes del sistema: nota de privacidad arriba y grupos Perfil, Agenda, Avisos y Datos.
+        Column(
+            Modifier.verticalScroll(rememberScrollState()).padding(horizontal = m, vertical = AgendaSpacing.s8),
+            verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s24),
+        ) {
+            NotaPrivacidad("Tus datos permanecen en este dispositivo.", "No necesitas cuenta. Puedes borrar todo cuando quieras desde Datos.")
             TuPerfil(perfil, onPerfil)
-            Text(
-                "Semestre",
-                style = t.seccion,
-                color = c.tinta,
-                modifier = Modifier.padding(start = m, end = m, top = AgendaSpacing.s24, bottom = AgendaSpacing.s8).semantics { heading() },
-            )
-            when {
-                semestres == null -> Unit
-                semestres.isEmpty() -> NotaPantalla("Sin semestre, cada clase se repite 17 semanas y no se saltan festivos.")
-                else -> for (s in semestres) FilaSemestre(s) { onSemestre(s.id) }
+            GrupoAjustes("Agenda") {
+                when {
+                    semestres == null -> Unit
+                    semestres.isEmpty() -> FilaAjuste("Semestre", "Sin semestre", ayuda = "Sin semestre, cada clase se repite 17 semanas y no se saltan festivos.") { onSemestre(null) }
+                    else -> semestres.forEachIndexed { i, s ->
+                        if (i > 0) DivisorAjustes()
+                        FilaAjuste(if (semestres.size == 1) "Semestre" else s.nombre, if (semestres.size == 1) s.nombre else null, ayuda = resumenSemestre(s)) { onSemestre(s.id) }
+                    }
+                }
+                DivisorAjustes()
+                FilaAjuste("Añadir semestre") { onSemestre(null) }
+                DivisorAjustes()
+                FilaAjuste("Lugares y traslados", ayuda = "Minutos entre tus lugares guardados") { onLugares() }
             }
-            BotonSubrayado("Añadir semestre", tinta = c.tinta, modifier = Modifier.padding(start = m), onClick = { onSemestre(null) })
             ResumenMatutino(resumen, onResumen)
-            if (depurable) {
-                BotonSubrayado(
-                    "Demostración de la banda",
-                    tinta = c.tinta,
-                    modifier = Modifier.padding(start = m, top = AgendaSpacing.s32),
-                    onClick = onDemoBanda,
-                )
+            GrupoAjustes("Datos") {
+                FilaAjuste("Borrar todos mis datos", ayuda = "Actividades, lugares, semestres, perfil y ajustes de este teléfono.", peligro = true) { confirmarBorrado = true }
+                if (depurable) {
+                    DivisorAjustes()
+                    FilaAjuste("Demostración de la banda", ayuda = "Solo en la compilación de prueba") { onDemoBanda() }
+                }
             }
+            Spacer(Modifier.height(AgendaSpacing.s24))
         }
+    }
+    if (confirmarBorrado) {
+        val ds = AgendaTheme.ds
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirmarBorrado = false },
+            containerColor = ds.superficie,
+            title = { Text("¿Borrar todos tus datos?", style = t.encabezado, color = ds.tinta) },
+            text = { Text("Se borran de este teléfono tus actividades, lugares, semestres, perfil y ajustes, y se quitan los avisos. No se puede deshacer. La app se cerrará.", style = t.cuerpo, color = ds.tinta) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    confirmarBorrado = false
+                    // Derecho de supresión: Android borra todos los datos de la app (base cifrada, preferencias, alarmas).
+                    contexto.getSystemService(android.app.ActivityManager::class.java).clearApplicationUserData()
+                }) { Text("Borrar todo", style = t.cuerpoFuerte, color = ds.critico) }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar", style = t.cuerpoFuerte, color = ds.ruta) }
+            },
+        )
     }
 }
 
@@ -168,12 +205,13 @@ private fun TuPerfil(perfil: com.dpinta.agenda.data.perfil.Perfil, onCambio: (co
     var carrera by rememberSaveable { mutableStateOf(perfil.carrera) }
     var universidad by rememberSaveable { mutableStateOf(perfil.universidad) }
     fun guardar() = onCambio(com.dpinta.agenda.data.perfil.Perfil(nombre, carrera, universidad))
-    Column(Modifier.padding(horizontal = m), verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s12)) {
-        Text("Tu perfil", style = t.seccion, color = c.tinta, modifier = Modifier.padding(top = AgendaSpacing.s24).semantics { heading() })
-        Text("Cuenta local: estos datos se guardan solo en este teléfono, sin servidor ni copia en la nube.", style = t.meta, color = AgendaTheme.ds.tintaSuave)
-        CampoTexto("Tu nombre", nombre, { nombre = it; guardar() }, error = null, ayuda = "Diego")
-        CampoTexto("Carrera (opcional)", carrera, { carrera = it; guardar() }, error = null, ayuda = "Ingeniería de Software")
-        CampoTexto("Universidad (opcional)", universidad, { universidad = it; guardar() }, error = null)
+    GrupoAjustes("Tu perfil") {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s12)) {
+            Text("Cuenta local: se guarda solo en este teléfono, sin servidor ni copia en la nube.", style = t.meta, color = AgendaTheme.ds.tintaSuave)
+            CampoTexto("Tu nombre", nombre, { nombre = it; guardar() }, error = null, ayuda = "Diego")
+            CampoTexto("Carrera (opcional)", carrera, { carrera = it; guardar() }, error = null, ayuda = "Ingeniería de Software")
+            CampoTexto("Universidad (opcional)", universidad, { universidad = it; guardar() }, error = null)
+        }
     }
 }
 
@@ -187,33 +225,28 @@ private fun ResumenMatutino(ajuste: AjusteResumen, onCambio: (AjusteResumen) -> 
     // Sin clave de la hora: guardar mientras se escribe no debe reescribir el campo.
     var texto by rememberSaveable { mutableStateOf(formatearHora(ajuste.hora, es24h).enLinea) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
-    Column(Modifier.padding(horizontal = m), verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s12)) {
-        Text(
-            "Resumen matutino",
-            style = t.seccion,
-            color = c.tinta,
-            modifier = Modifier.padding(top = AgendaSpacing.s32).semantics { heading() },
-        )
-        Text("Una notificación en silencio con lo del día y la primera salida.", style = t.cuerpo, color = c.tinta)
-        Segmentado(
-            opciones = listOf(Opcion(true, "Activado"), Opcion(false, "Apagado")),
-            seleccion = ajuste.activo,
-            onSeleccion = { onCambio(ajuste.copy(activo = it)) },
-            etiquetaPrueba = "resumen",
-        )
+    GrupoAjustes("Avisos") {
+        FilaInterruptor(
+            "Resumen de la mañana",
+            if (ajuste.activo) "Todos los días a las ${formatearHora(ajuste.hora, es24h).enLinea}: lo del día y la primera salida" else "Apagado",
+            ajuste.activo,
+        ) { onCambio(ajuste.copy(activo = it)) }
         if (ajuste.activo) {
-            CampoTexto(
-                etiqueta = "Hora",
-                valor = texto,
-                onCambio = { nuevo ->
-                    texto = nuevo
-                    val hora = Interprete.hora(nuevo)
-                    error = if (hora == null && nuevo.isNotBlank()) "Escribe la hora como 6 o 6:30" else null
-                    if (hora != null) onCambio(ajuste.copy(hora = hora))
-                },
-                error = error,
-                ayuda = "6:00",
-            )
+            DivisorAjustes()
+            Column(Modifier.padding(16.dp)) {
+                CampoTexto(
+                    etiqueta = "Hora del resumen",
+                    valor = texto,
+                    onCambio = { nuevo ->
+                        texto = nuevo
+                        val hora = Interprete.hora(nuevo)
+                        error = if (hora == null && nuevo.isNotBlank()) "Escribe la hora como 6 o 6:30" else null
+                        if (hora != null) onCambio(ajuste.copy(hora = hora))
+                    },
+                    error = error,
+                    ayuda = "6:00",
+                )
+            }
         }
     }
 }

@@ -75,7 +75,7 @@ fun SemestrePantalla(e: SemestreUiState, vm: SemestreViewModel, onCerrar: () -> 
                 CampoTexto("Termina", f.fin, vm::fin, e.errores.fin, Modifier.weight(1f), ayuda = "28/11", teclado = fecha)
             }
 
-            Text("Días sin clase", style = t.seccion, color = c.tinta, modifier = Modifier.padding(top = AgendaSpacing.s16).semantics { heading() })
+            Text("Días sin clase", style = t.encabezado, color = c.tinta, modifier = Modifier.padding(top = AgendaSpacing.s16).semantics { heading() })
             if (f.dias.isEmpty()) {
                 Text(
                     if (f.inicio.isBlank() || f.fin.isBlank()) "Escribe las fechas y te propongo los festivos." else "Ningún día sin clase.",

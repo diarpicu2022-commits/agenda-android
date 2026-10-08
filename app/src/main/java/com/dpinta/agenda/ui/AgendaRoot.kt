@@ -110,6 +110,7 @@ fun AgendaRoot(
                         onAtras = { nav.popBackStack() },
                         onSemestre = { id -> nav.navigate(RutaSemestre(id ?: -1L)) },
                         onDemoBanda = { nav.navigate(RutaDemoBanda) },
+                        onLugares = { nav.navigate(RutaActividades) },
                     )
                 }
                 composable<RutaSemestre> { SemestreRuta(onCerrar = { nav.popBackStack() }) }

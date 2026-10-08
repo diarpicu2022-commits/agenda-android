@@ -170,7 +170,7 @@ fun LugarPantalla(
             if (e.otros.isNotEmpty()) {
                 Text(
                     "Desde otros lugares",
-                    style = AgendaTheme.tipo.seccion,
+                    style = AgendaTheme.tipo.encabezado,
                     color = c.tinta,
                     modifier = Modifier.padding(top = AgendaSpacing.s16).semantics { heading() },
                 )
