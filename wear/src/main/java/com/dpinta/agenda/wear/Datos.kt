@@ -18,6 +18,8 @@ object Rutas {
     const val DIA = "/campuswatch/dia"
     const val ACCION = "/campuswatch/accion"
     const val CLAVE_DIA = "dia"
+    const val TEMA = "/campuswatch/tema"
+    const val CLAVE_OSCURO = "oscuro"
 }
 
 /**
@@ -53,6 +55,7 @@ object AlmacenDia {
             try {
                 for (item in items) {
                     if (item.uri.path == Rutas.DIA) DataMapItem.fromDataItem(item).dataMap.getString(Rutas.CLAVE_DIA)?.let { guardar(contexto, it) }
+                    if (item.uri.path == Rutas.TEMA) PreferenciaTema.guardarTelefono(contexto, DataMapItem.fromDataItem(item).dataMap.getBoolean(Rutas.CLAVE_OSCURO))
                 }
             } finally {
                 items.release()
@@ -66,6 +69,9 @@ class ReceptorDia : WearableListenerService() {
         for (e in eventos) {
             if (e.type == DataEvent.TYPE_CHANGED && e.dataItem.uri.path == Rutas.DIA) {
                 DataMapItem.fromDataItem(e.dataItem).dataMap.getString(Rutas.CLAVE_DIA)?.let { AlmacenDia.guardar(this, it) }
+            }
+            if (e.type == DataEvent.TYPE_CHANGED && e.dataItem.uri.path == Rutas.TEMA) {
+                PreferenciaTema.guardarTelefono(this, DataMapItem.fromDataItem(e.dataItem).dataMap.getBoolean(Rutas.CLAVE_OSCURO))
             }
         }
     }
@@ -86,10 +92,54 @@ object Telefono {
         for (n in nodos) Wearable.getMessageClient(contexto).sendMessage(n.id, Rutas.ACCION, datos).await()
         nodos.isNotEmpty()
     }.getOrDefault(false)
+
+    /** «¿Fuiste?» (W6): asistí o falté a la sesión que empezó en [inicio]. El teléfono la guarda y vuelve a publicar. */
+    suspend fun asistencia(contexto: Context, actividad: Long, inicio: java.time.LocalDateTime, fui: Boolean): Boolean = runCatching {
+        val nodos = Wearable.getNodeClient(contexto).connectedNodes.await()
+        val datos = "${if (fui) "asisti" else "falte"}|$actividad|$inicio".toByteArray(Charsets.UTF_8)
+        for (n in nodos) Wearable.getMessageClient(contexto).sendMessage(n.id, Rutas.ACCION, datos).await()
+        nodos.isNotEmpty()
+    }.getOrDefault(false)
 }
 
 /** Pie de estado de los datos locales: «Actualizado 07:12» si es reciente; si no, «Datos locales · 07:12». */
 fun pieDatos(dia: WatchDay, ahora: LocalDateTime): String {
     val hora = Formato.hora(dia.computedAt.toLocalTime())
     return if (java.time.Duration.between(dia.computedAt, ahora).toMinutes() <= 15) "Actualizado $hora" else "Datos locales · $hora"
+}
+
+/**
+ * Tema elegido en el reloj (anexo 2026-11-09-campuswatch-claro, W2): Claro · Oscuro · Como el teléfono. Vive en su propio
+ * archivo para que el día que llega del teléfono no lo pise. No es un dato personal.
+ */
+object PreferenciaTema {
+    enum class Opcion { CLARO, OSCURO, TELEFONO }
+    private const val PREFS = "campuswatch_tema"
+    private const val CLAVE = "tema"
+    /** Modo oscuro del teléfono, que publica la app (paso 4). Mientras no llegue, la app está en claro por defecto. */
+    private const val TELEFONO_OSCURO = "telefono_oscuro"
+
+    fun opcion(c: Context): Opcion = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(CLAVE, null)
+        ?.let { runCatching { Opcion.valueOf(it) }.getOrNull() } ?: Opcion.TELEFONO
+
+    /** Sube cada vez que cambia la opción o el modo del teléfono: la pantalla vuelve a calcular el tema. */
+    val cambio = MutableStateFlow(0)
+
+    fun guardar(c: Context, o: Opcion) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(CLAVE, o.name).apply()
+        cambio.value++
+    }
+
+    /** El teléfono avisa si está en modo oscuro (ruta /campuswatch/tema). */
+    fun guardarTelefono(c: Context, oscuro: Boolean) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(TELEFONO_OSCURO, oscuro).apply()
+        cambio.value++
+    }
+
+    /** Tema de la pantalla activa según la opción. «Siempre activo» no pasa por aquí: siempre es oscuro (W3). */
+    fun efectivo(c: Context): TemaReloj = when (opcion(c)) {
+        Opcion.CLARO -> TemaReloj.CLARO
+        Opcion.OSCURO -> TemaReloj.OSCURO
+        Opcion.TELEFONO -> if (c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(TELEFONO_OSCURO, false)) TemaReloj.OSCURO else TemaReloj.CLARO
+    }
 }

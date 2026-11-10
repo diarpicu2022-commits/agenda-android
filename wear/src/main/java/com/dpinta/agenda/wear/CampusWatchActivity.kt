@@ -1,5 +1,6 @@
 package com.dpinta.agenda.wear
 
+import androidx.compose.runtime.SideEffect
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,7 +49,14 @@ class CampusWatchActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         lifecycle.addObserver(observador)
         lifecycleScope.launch { AlmacenDia.sincronizar(this@CampusWatchActivity) }
-        setContent { CampusWatch(ambiente) }
+        setContent {
+            // W2/W3: el tema elegido en pantalla activa; «siempre activo» siempre en el tema «reloj» (negro).
+            val cambio by PreferenciaTema.cambio.collectAsState()
+            val elegido = remember(cambio) { PreferenciaTema.efectivo(this@CampusWatchActivity) }
+            val tema = if (ambiente) TemaReloj.OSCURO else elegido
+            SideEffect { Reloj.tema = tema }
+            CampusWatch(ambiente)
+        }
     }
 }
 
@@ -74,6 +82,7 @@ fun CampusWatch(ambiente: Boolean) {
     val ahora = minutoActual()
     val zona = ZoneId.systemDefault()
     var confirmacion by remember { mutableStateOf<Confirmacion?>(null) }
+    var respondidas by remember { mutableStateOf(setOf<Pair<Long, LocalDateTime>>()) }
     val alcance = rememberCoroutineScope()
 
     Box(Modifier.fillMaxSize().background(Reloj.fondo)) {
@@ -106,14 +115,28 @@ fun CampusWatch(ambiente: Boolean) {
                         val u = siguiente.urgency(ahora, zona)
                         val salir = siguiente.leaveAt != null && (u == Urgency.LEAVE_NOW || u == Urgency.URGENT)
                         add {
-                            if (salir) PantallaSalir(siguiente, ahora, zona, ambiente) { accion(siguiente, it) }
-                            else PantallaProxima(siguiente, ahora, zona, ambiente)
+                            if (salir) PantallaSalir(siguiente, ahora, zona, ambiente, d.rhythmFor(siguiente)) { accion(siguiente, it) }
+                            else PantallaProxima(siguiente, ahora, zona, ambiente, d.rhythmFor(siguiente))
                         }
                         if (!ambiente && u != Urgency.MISSED) add { PantallaAcciones(siguiente, Reloj.urgencia(u, siguiente.exam)) { accion(siguiente, it) } }
+                    }
+                    // «¿Fuiste?» (W6): una clase de hoy terminada sin marca. Se oculta al responder, hasta que el teléfono republique.
+                    val pendiente = d.attendance.firstOrNull { it.pendingStart != null && it.activityId to it.pendingStart !in respondidas }
+                    if (!ambiente && pendiente != null) add {
+                        PantallaFuiste(pendiente) { fui ->
+                            respondidas = respondidas + (pendiente.activityId to pendiente.pendingStart!!)
+                            alcance.launch {
+                                val ok = Telefono.asistencia(contexto, pendiente.activityId, pendiente.pendingStart!!, fui)
+                                confirmacion = if (ok) Confirmacion(if (fui) "Asistencia anotada" else "Falta anotada", pendiente.title)
+                                else Confirmacion("Sin conexión", "No llegó al teléfono. Hazlo desde allá.", ok = false)
+                            }
+                        }
                     }
                     if (!ambiente) {
                         add { PantallaHorario(d, ahora.toLocalDate(), ahora, zona) }
                         add { PantallaHorario(d, ahora.toLocalDate().plusDays(1), ahora, zona) }
+                        add { PantallaAsistencia(d.attendance) }
+                        add { PantallaTema { PreferenciaTema.guardar(contexto, it) } }
                     }
                 }
                 val estado = rememberPagerState { paginas.size }

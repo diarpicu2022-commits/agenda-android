@@ -1,5 +1,10 @@
 package com.dpinta.agenda.avisos
 
+import com.dpinta.agenda.domain.DepartureSample
+import kotlinx.coroutines.flow.first
+import com.dpinta.agenda.domain.ActivityKind
+import com.dpinta.agenda.domain.AttendanceRecord
+import com.dpinta.agenda.domain.AttendanceMark
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -49,14 +54,49 @@ enum class AccionAviso(val etiqueta: String) {
     }
 }
 
+/** Asistencia que llega del reloj («¿Fuiste?» · Sí / No). No son botones de la notificación (W6). */
+object AccionesAsistencia {
+    const val ASISTI = "com.dpinta.agenda.ASISTENCIA_ASISTI"
+    const val FALTE = "com.dpinta.agenda.ASISTENCIA_FALTE"
+}
+
 @AndroidEntryPoint
 class AccionAvisoReceiver : BroadcastReceiver() {
 
     @Inject lateinit var repositorio: AgendaRepository
     @Inject lateinit var sesiones: SesionesEnCurso
     @Inject lateinit var reloj: Clock
+    @Inject lateinit var programador: ProgramadorAvisos
+
+    /** Marca la asistencia solo si la actividad es una clase o un examen, y vuelve a publicar el día al reloj. */
+    private fun marcar(id: Long, inicio: LocalDateTime, marca: AttendanceMark) = enSegundoPlano {
+        val tipo = repositorio.agenda().first().actividades[id]?.tipo
+        if (tipo == ActivityKind.CLASE || tipo == ActivityKind.EXAMEN) {
+            repositorio.marcarAsistencia(AttendanceRecord(id, inicio.toLocalDate(), marca))
+            programador.reprogramar()
+        }
+    }
+
+    /**
+     * «Tu ritmo» (anexo 2026-11-10-agenda-ia): guarda cuándo se salió de verdad frente a la hora planeada
+     * (inicio − margen − trayecto, igual que DepartureCalculator). Sin trayecto no hay hora de salida y no se guarda.
+     */
+    private fun guardarSalida(id: Long, inicio: LocalDateTime) = enSegundoPlano {
+        val act = repositorio.agenda().first().actividades[id] ?: return@enSegundoPlano
+        val lugar = act.lugarId ?: return@enSegundoPlano
+        val estimacion = repositorio.estimacion(lugar, act.modo) ?: return@enSegundoPlano
+        val ahora = reloj.instant()
+        val planeada = inicio.atZone(reloj.zone).toInstant() - act.margen - estimacion.duration
+        repositorio.guardarSalidaReal(DepartureSample(id, lugar, ahora.atZone(reloj.zone).dayOfWeek, planeada, ahora))
+    }
 
     override fun onReceive(contexto: Context, intent: Intent) {
+        if (intent.action == AccionesAsistencia.ASISTI || intent.action == AccionesAsistencia.FALTE) {
+            val id = intent.getLongExtra(ProgramadorAvisos.EXTRA_ACTIVIDAD, -1)
+            val inicio = intent.getStringExtra(ProgramadorAvisos.EXTRA_INICIO)?.let(LocalDateTime::parse) ?: return
+            marcar(id, inicio, if (intent.action == AccionesAsistencia.ASISTI) AttendanceMark.ASISTI else AttendanceMark.FALTE)
+            return
+        }
         val accion = AccionAviso.entries.firstOrNull { it.accion == intent.action } ?: return
         val id = intent.getLongExtra(ProgramadorAvisos.EXTRA_ACTIVIDAD, -1)
         val inicio = intent.getStringExtra(ProgramadorAvisos.EXTRA_INICIO)?.let(LocalDateTime::parse) ?: return
@@ -64,7 +104,12 @@ class AccionAvisoReceiver : BroadcastReceiver() {
         NotificationManagerCompat.from(contexto).cancel(codigo)
         val sesion = SesionesEnCurso.Sesion(id, inicio)
         when (accion) {
-            AccionAviso.VoySaliendo -> sesiones.salida.value = sesion to reloj.instant()
+            AccionAviso.VoySaliendo -> {
+                sesiones.salida.value = sesion to reloj.instant()
+                // Salir hacia una clase cuenta como asistencia (W6); se corrige desde el reloj si no fue así.
+                marcar(id, inicio, AttendanceMark.ASISTI)
+                guardarSalida(id, inicio)
+            }
             AccionAviso.MasCinco -> {
                 val cuando = reloj.instant() + Duration.ofMinutes(5)
                 sesiones.pospuesto.value = cuando
@@ -73,6 +118,11 @@ class AccionAvisoReceiver : BroadcastReceiver() {
             // Cancela solo esta sesión; al cambiar la agenda se quitan sus alarmas.
             AccionAviso.HoyNoVoy -> enSegundoPlano {
                 repositorio.guardarExcepcion(SessionException.Cancelled(id, inicio.toLocalDate()))
+                // En una clase, «Hoy no voy» es una falta (W6).
+                val tipo = repositorio.agenda().first().actividades[id]?.tipo
+                if (tipo == ActivityKind.CLASE || tipo == ActivityKind.EXAMEN) {
+                    repositorio.marcarAsistencia(AttendanceRecord(id, inicio.toLocalDate(), AttendanceMark.FALTE))
+                }
             }
         }
     }

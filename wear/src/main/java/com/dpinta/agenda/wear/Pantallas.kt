@@ -1,5 +1,10 @@
 package com.dpinta.agenda.wear
 
+import com.dpinta.agenda.domain.WatchRhythm
+import androidx.compose.foundation.shape.CircleShape
+import com.dpinta.agenda.domain.WatchAttendance
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -52,11 +57,12 @@ private val llegada = CubicBezierEasing(0.2f, 0.7f, 0.2f, 1f) // ease-llegada
 
 /** 1 · Próxima (WatchNextActivity): anillo, «Empieza en», cifra, nombre y aula. Nunca más de tres datos. */
 @Composable
-fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean) {
+fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean, ritmo: WatchRhythm? = null) {
     val u = s.urgency(ahora, zona)
     val color = Reloj.urgencia(u, s.exam)
     val restante = Duration.between(ahora, s.start)
     Box(Modifier.fillMaxSize().background(Reloj.fondo), contentAlignment = Alignment.Center) {
+        if (!ambiente) PaisajeGaleras(Modifier.fillMaxSize())
         AnilloCuenta(restante, s.leaveAt?.let { Duration.between(it, s.start) }, color, Modifier.fillMaxSize(), ambiente)
         Column(
             Modifier.padding(horizontal = 30.dp).semantics(mergeDescendants = true) {},
@@ -67,7 +73,7 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
             Text(
                 Formato.cuenta(if (u == Urgency.MISSED) Duration.between(s.start, ahora) else restante),
                 style = Tipo.hora,
-                color = if (u == Urgency.MISSED) Color(CW.urgPerdida) else Reloj.tinta,
+                color = if (u == Urgency.MISSED) Reloj.urgencia(Urgency.MISSED) else Reloj.tinta,
                 maxLines = 1,
             )
             Text(
@@ -75,7 +81,8 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
                 textDecoration = if (u == Urgency.MISSED) TextDecoration.LineThrough else null,
             )
             Text(listOf(s.room.ifBlank { s.place }, Formato.hora(s.start.toLocalTime())).filter { it.isNotBlank() }.joinToString(" · "),
-                style = Tipo.apoyo, color = Reloj.tintaSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                style = Tipo.apoyo, color = Reloj.aula, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (!ambiente) LineaRitmo(s, ritmo)
         }
     }
 }
@@ -101,14 +108,14 @@ fun PantallaEnCurso(s: WatchSession, ahora: LocalDateTime, ambiente: Boolean) {
             Text("Termina en", style = Tipo.apoyo, color = Reloj.tintaSuave)
             Text(Formato.cuenta(queda), style = Tipo.hora, color = Reloj.tinta, maxLines = 1)
             Text(listOf(s.room.ifBlank { s.place }, "hasta " + Formato.hora(s.end.toLocalTime())).filter { it.isNotBlank() }.joinToString(" · "),
-                style = Tipo.apoyo, color = Reloj.tintaSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                style = Tipo.apoyo, color = Reloj.aula, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
 
 /** 2 · Es hora de salir (WatchLeaveNow): rótulo, destino y cuenta; «Ya voy» debajo y el resto de acciones al bajar. */
 @Composable
-fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean, onAccion: (Accion) -> Unit) {
+fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean, ritmo: WatchRhythm? = null, onAccion: (Accion) -> Unit) {
     val u = s.urgency(ahora, zona)
     val color = Reloj.urgencia(u, s.exam)
     Box(Modifier.fillMaxSize().background(Reloj.fondo), contentAlignment = Alignment.Center) {
@@ -117,7 +124,8 @@ fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente:
             Text(if (u == Urgency.URGENT) "SAL YA" else "ES HORA DE SALIR", style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else color,
                 modifier = Modifier.semantics { heading() })
             Text(s.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("comienza en ${Formato.cuenta(Duration.between(ahora, s.start))}", style = Tipo.apoyo, color = Reloj.tintaSuave)
+            Text("comienza en ${Formato.cuenta(Duration.between(ahora, s.start))}", style = Tipo.apoyo, color = Reloj.cifraApoyo)
+            if (!ambiente) LineaRitmo(s, ritmo, conHora = false)
             Spacer(Modifier.height(10.dp))
             if (!ambiente) BotonReloj(Accion.YaVoy.etiqueta, principal = true, color = color) { onAccion(Accion.YaVoy) }
         }
@@ -136,6 +144,123 @@ fun PantallaAcciones(s: WatchSession, color: Color, onAccion: (Accion) -> Unit) 
         BotonReloj(Accion.YaVoy.etiqueta, principal = true, color = color) { onAccion(Accion.YaVoy) }
         BotonReloj(Accion.Aplazar.etiqueta) { onAccion(Accion.Aplazar) }
         BotonReloj(Accion.Cancelar.etiqueta) { onAccion(Accion.Cancelar) }
+    }
+}
+
+/**
+ * «Tu ritmo» (anexo 2026-11-10-agenda-ia): lo que aprendió el teléfono de las salidas reales. Una línea de apoyo, con la
+ * hora corregida; va en `cifraApoyo` porque es una hora que se lee para decidir (tinta en claro, AAA).
+ */
+@Composable
+fun LineaRitmo(s: WatchSession, ritmo: WatchRhythm?, conHora: Boolean = true) {
+    val salida = s.leaveAt ?: return
+    val r = ritmo ?: return
+    val hora = Formato.hora(salida.minusMinutes(r.lateMinutes.toLong()).toLocalTime())
+    // Dos líneas: en una sola se cortaba justo la hora («sal 0…»). En «Es hora de salir» la hora corregida ya pasó.
+    val texto = if (conHora) "Sueles salir ${r.lateMinutes} min tarde\nsal a las $hora" else "Sueles salir ${r.lateMinutes} min tarde"
+    Text(texto, style = Tipo.apoyo, color = Reloj.cifraApoyo, maxLines = 2, overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.semantics {
+            contentDescription = "Tu ritmo: sueles salir ${r.lateMinutes} minutos tarde." + if (conHora) " Sal a las $hora" else ""
+        })
+}
+
+/**
+ * El Galeras al fondo (anexo 2026-11-10-campuswatch-vivo, A): silueta del volcán con su cráter, en `superficieFuerte`
+ * (apenas distinta del fondo, 1,11 a 1,24:1). Es paisaje, no información: el texto se mide sobre él.
+ */
+@Composable
+fun PaisajeGaleras(modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(modifier) {
+        val w = size.width; val h = size.height
+        val volcan = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, h)
+            lineTo(0f, h * 0.86f)
+            cubicTo(w * 0.18f, h * 0.84f, w * 0.30f, h * 0.76f, w * 0.40f, h * 0.70f)
+            lineTo(w * 0.46f, h * 0.715f)
+            lineTo(w * 0.52f, h * 0.70f)
+            cubicTo(w * 0.62f, h * 0.75f, w * 0.78f, h * 0.83f, w, h * 0.85f)
+            lineTo(w, h)
+            close()
+        }
+        drawPath(volcan, Reloj.superficieFuerte)
+    }
+}
+
+/** «¿Fuiste?» (W6): la clase de hoy ya terminó y no tiene marca. Repertorio de Acciones: dos botones de 48 dp. */
+@Composable
+fun PantallaFuiste(a: WatchAttendance, onRespuesta: (Boolean) -> Unit) {
+    Column(
+        Modifier.fillMaxSize().background(Reloj.fondo).padding(horizontal = 26.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("¿Fuiste?", style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        Text(a.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(4.dp))
+        BotonReloj("Sí, fui", principal = true, color = Reloj.exito, ancho = 0.9f) { onRespuesta(true) }
+        BotonReloj("No fui", ancho = 0.9f) { onRespuesta(false) }
+    }
+}
+
+/**
+ * Asistencia (W6): faltas por materia, con el repertorio del Horario (una fila por materia). La cifra de faltas es lo que
+ * se lee para decidir: va en tinta; si la materia tiene límite y se está cerca o pasado, en `aviso` o `critico`.
+ */
+@Composable
+fun PantallaAsistencia(lista: List<WatchAttendance>) {
+    Column(
+        Modifier.fillMaxSize().background(Reloj.fondo).padding(horizontal = 30.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("Asistencia", style = Tipo.apoyo, color = Reloj.ruta, modifier = Modifier.semantics { heading() })
+        if (lista.isEmpty()) {
+            Text("Todavía no hay clases que contar", style = Tipo.apoyo, color = Reloj.tintaSuave, textAlign = TextAlign.Center)
+        }
+        for (a in lista.take(3)) {
+            val faltas = if (a.absences == 1) "1 falta" else "${a.absences} faltas"
+            val limite = a.maxAbsences?.let { " de $it" }.orEmpty()
+            val max = a.maxAbsences
+            val color = when {
+                max != null && a.absences > max -> Reloj.critico
+                max != null && max - a.absences <= 1 -> Reloj.aviso
+                else -> Reloj.tinta
+            }
+            // Un bloque centrado por materia (nombre y, debajo, las faltas): en la esfera redonda una fila de dos columnas
+            // cortaba los nombres.
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 2.dp)) {
+                Text(a.title, style = Tipo.apoyo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (color != Reloj.tinta) {
+                        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+                        Spacer(Modifier.width(5.dp))
+                    }
+                    Text(faltas + limite, style = Tipo.apoyo.copy(fontWeight = Tipo.titulo.fontWeight),
+                        color = if (Reloj.tema == TemaReloj.CLARO) Reloj.tinta else color)
+                }
+            }
+        }
+        if (lista.size > 3) Text("y ${lista.size - 3} más", style = Tipo.apoyo, color = Reloj.tintaSuave)
+    }
+}
+
+/** Tema del reloj (anexo 2026-11-09-campuswatch-claro, W2): Claro · Oscuro · Como el teléfono, con el repertorio de
+ *  Acciones (un botón de 48 dp por fila); el elegido va como principal. */
+@Composable
+fun PantallaTema(onElegir: (PreferenciaTema.Opcion) -> Unit) {
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    val cambio by PreferenciaTema.cambio.collectAsState()
+    val elegida = remember(cambio) { PreferenciaTema.opcion(contexto) }
+    Column(
+        Modifier.fillMaxSize().background(Reloj.fondo).padding(horizontal = 26.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("Tema", style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        for ((o, texto) in listOf(PreferenciaTema.Opcion.CLARO to "Claro", PreferenciaTema.Opcion.OSCURO to "Oscuro", PreferenciaTema.Opcion.TELEFONO to "Como el teléfono")) {
+            // Mismo ancho para las tres: la elegida se distingue por el color, no cambia de tamaño (y «Como el teléfono» cabe).
+            BotonReloj(texto, principal = o == elegida, color = Reloj.ruta, ancho = 0.9f) { onElegir(o) }
+        }
     }
 }
 
@@ -172,7 +297,7 @@ private fun FilaHorario(s: WatchSession, actual: Boolean, hecha: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(Formato.hora(s.start.toLocalTime()), style = Tipo.apoyo.copy(fontWeight = Tipo.titulo.fontWeight),
-            color = if (actual) Reloj.hora else Reloj.tintaSuave)
+            color = if (actual) Reloj.horaFila else Reloj.cifraApoyo)
         Spacer(Modifier.width(8.dp))
         MarcaTipo(s, hecha, actual)
         Spacer(Modifier.width(8.dp))
@@ -222,7 +347,7 @@ fun PantallaConfirmacion(texto: String, detalle: String?, ok: Boolean = true, on
         Canvas(Modifier.size(56.dp)) {
             val w = size.width
             // Si no llegó al teléfono no hay check: un aviso (no se confirma lo que no pasó).
-            val color = if (ok) Reloj.exito else Color(CW.aviso)
+            val color = if (ok) Reloj.exito else Reloj.aviso
             drawCircle(color, w / 2, style = Stroke(3.dp.toPx()))
             val p = if (ok) Path().apply { moveTo(w * 0.28f, w * 0.52f); lineTo(w * 0.44f, w * 0.68f); lineTo(w * 0.74f, w * 0.36f) }
             else Path().apply { moveTo(w * 0.5f, w * 0.26f); lineTo(w * 0.5f, w * 0.58f) }
@@ -266,10 +391,10 @@ fun PantallaLibre(dia: WatchDay, ahora: LocalDateTime) {
 
 /** Botón del reloj: pastilla de 48 dp de alto. El principal lleva el color de la urgencia; los demás, superficie. */
 @Composable
-fun BotonReloj(texto: String, principal: Boolean = false, color: Color = Reloj.hora, onClick: () -> Unit) {
+fun BotonReloj(texto: String, principal: Boolean = false, color: Color = Reloj.hora, ancho: Float? = null, onClick: () -> Unit) {
     Box(
         Modifier
-            .fillMaxWidth(if (principal) 0.62f else 0.9f)
+            .fillMaxWidth(ancho ?: if (principal) 0.62f else 0.9f)
             .heightIn(min = Reloj.toque)
             .clip(RoundedCornerShape(50))
             .background(if (principal) color else Reloj.superficie)

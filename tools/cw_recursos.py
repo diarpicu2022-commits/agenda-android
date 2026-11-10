@@ -16,6 +16,17 @@ bloque = bloque[:bloque.index('}')]
 for nombre, valor in re.findall(r'--(urg-[a-z]+):\s*([^;]+);', bloque):
     m = re.match(r'var\(--([a-z-]+)\)', valor.strip())
     cols[nombre] = cols[m.group(1)] if m else valor.strip()
+# Tema «claro» de la app para el reloj (enmienda del 2026-11-09, anexo 2026-11-09-campuswatch-claro, W1): los mismos
+# nombres con los valores claros; los alias de urgencia salen del bloque «:root, [data-theme="claro"]».
+claro = {c['name']: c['value']['claro'] for c in t['color']['tokens'] if isinstance(c.get('value'), dict) and 'claro' in c['value']}
+bc = css[css.index(':root, [data-theme="claro"]'):]
+bc = bc[:bc.index('}')]
+for nombre, valor in re.findall(r'--(urg-[a-z]+):\s*([^;]+);', bc):
+    m = re.match(r'var\(--([a-z-]+)\)', valor.strip())
+    claro[nombre] = claro[m.group(1)] if m else valor.strip()
+for k, v in list(claro.items()):
+    m = re.match(r'\{([a-z-]+)\}', v)
+    if m: claro[k] = claro[m.group(1)]
 lineas = ['<?xml version="1.0" encoding="utf-8"?>', '<!-- GENERADO desde tokens.json / tokens.css (tema «reloj»). No editar a mano. -->', '<resources>']
 for n, v in cols.items():
     lineas.append(f'    <color name="cw_{n.replace("-", "_")}">{v}</color>')
@@ -29,6 +40,12 @@ for n, v in cols.items():
     partes = n.split('-')
     nombre = partes[0] + ''.join(p.capitalize() for p in partes[1:])
     kt.append(f'    const val {nombre}: Long = 0xFF{v.lstrip("#").upper()}')
+kt.append('}')
+kt += ['', '// Tema «claro» de la app (W1 del anexo 2026-11-09). Mismos nombres que CW.', 'object CWClaro {']
+for n in cols:
+    partes = n.split('-')
+    nombre = partes[0] + ''.join(p.capitalize() for p in partes[1:])
+    kt.append(f'    const val {nombre}: Long = 0xFF{claro[n].lstrip("#").upper()}')
 kt.append('}')
 os.makedirs('wear/src/main/java/com/dpinta/agenda/wear', exist_ok=True)
 open('wear/src/main/java/com/dpinta/agenda/wear/ColoresReloj.kt', 'w', encoding='utf8').write('\n'.join(kt) + '\n')

@@ -27,6 +27,11 @@ abstract class AgendaDao {
     @Query("SELECT * FROM semestre ORDER BY inicio") abstract fun semestres(): Flow<List<SemestreEntidad>>
     @Query("SELECT * FROM dia_sin_clase ORDER BY fecha") abstract fun diasSinClase(): Flow<List<DiaSinClaseEntidad>>
     @Query("SELECT * FROM traslado") abstract fun traslados(): Flow<List<TrasladoEntidad>>
+    @Query("SELECT * FROM asistencia ORDER BY fecha") abstract fun asistencias(): Flow<List<AsistenciaEntidad>>
+    /** Una marca por materia y día: la nueva reemplaza a la anterior. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE) abstract suspend fun marcarAsistencia(a: AsistenciaEntidad): Long
+    @Query("SELECT * FROM salida_real ORDER BY real_ms DESC LIMIT 200") abstract fun salidasReales(): Flow<List<SalidaRealEntidad>>
+    @Insert abstract suspend fun guardarSalidaReal(s: SalidaRealEntidad): Long
 
     // ---------- lugares ----------
     @Query("SELECT * FROM lugar WHERE nombre_clave = :clave LIMIT 1") abstract suspend fun lugarPorClave(clave: String): LugarEntidad?
@@ -111,6 +116,8 @@ abstract class AgendaDao {
         DiaSinClaseEntidad::class,
         TrayectoEntidad::class,
         TrasladoEntidad::class,
+        AsistenciaEntidad::class,
+        SalidaRealEntidad::class,
     ],
     version = AgendaDatabase.VERSION,
     exportSchema = true,
@@ -120,7 +127,7 @@ abstract class AgendaDatabase : RoomDatabase() {
     abstract fun agendaDao(): AgendaDao
 
     companion object {
-        const val VERSION = 2
+        const val VERSION = 4
         const val NOMBRE = "agenda.db"
 
         /** v2: tiempos de trayecto escritos a mano (sin Routes API). */
@@ -130,7 +137,23 @@ abstract class AgendaDatabase : RoomDatabase() {
             }
         }
 
+        /** v3: asistencia por materia (anexo 2026-11-09-campuswatch-claro, W6). Mismo SQL que exporta Room. */
+        val DE_2_A_3 = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `asistencia` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `actividad_id` INTEGER NOT NULL, `fecha` INTEGER NOT NULL, `marca` TEXT NOT NULL, FOREIGN KEY(`actividad_id`) REFERENCES `actividad`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_asistencia_actividad_id_fecha` ON `asistencia` (`actividad_id`, `fecha`)")
+            }
+        }
+
+        /** v4: salidas reales para «Tu ritmo» (anexo 2026-11-10-agenda-ia). Mismo SQL que exporta Room. */
+        val DE_3_A_4 = object : androidx.room.migration.Migration(3, 4) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `salida_real` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `actividad_id` INTEGER NOT NULL, `lugar_id` INTEGER, `planeada_ms` INTEGER NOT NULL, `real_ms` INTEGER NOT NULL, FOREIGN KEY(`actividad_id`) REFERENCES `actividad`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_salida_real_actividad_id` ON `salida_real` (`actividad_id`)")
+            }
+        }
+
         /** Migraciones no destructivas, en orden. */
-        val MIGRACIONES: Array<androidx.room.migration.Migration> = arrayOf(DE_1_A_2)
+        val MIGRACIONES: Array<androidx.room.migration.Migration> = arrayOf(DE_1_A_2, DE_2_A_3, DE_3_A_4)
     }
 }

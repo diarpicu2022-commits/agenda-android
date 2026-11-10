@@ -1,5 +1,11 @@
 package com.dpinta.agenda.data.agenda
 
+import com.dpinta.agenda.data.db.SalidaRealEntidad
+import com.dpinta.agenda.domain.DepartureSample
+import kotlinx.coroutines.flow.map
+import com.dpinta.agenda.data.db.AsistenciaEntidad
+import com.dpinta.agenda.domain.AttendanceMark
+import com.dpinta.agenda.domain.AttendanceRecord
 import com.dpinta.agenda.data.db.ActividadEntidad
 import com.dpinta.agenda.data.db.AgendaDao
 import com.dpinta.agenda.data.db.ExcepcionEntidad
@@ -136,4 +142,24 @@ class AgendaRoom @Inject constructor(private val dao: AgendaDao, private val rel
         val dias: List<com.dpinta.agenda.data.db.DiaSinClaseEntidad>,
         val traslados: List<TrasladoEntidad>,
     )
+
+    override fun asistencias(): Flow<List<AttendanceRecord>> = dao.asistencias().map { filas ->
+        filas.mapNotNull { f -> runCatching { AttendanceRecord(f.actividadId, f.fecha, AttendanceMark.valueOf(f.marca)) }.getOrNull() }
+    }
+
+    override suspend fun marcarAsistencia(registro: AttendanceRecord) {
+        dao.marcarAsistencia(AsistenciaEntidad(actividadId = registro.activityId, fecha = registro.date, marca = registro.mark.name))
+    }
+
+    override fun salidasReales(): Flow<List<DepartureSample>> = dao.salidasReales().map { filas ->
+        filas.map { f ->
+            val real = java.time.Instant.ofEpochMilli(f.realMs)
+            DepartureSample(f.actividadId, f.lugarId, real.atZone(reloj.zone).dayOfWeek, java.time.Instant.ofEpochMilli(f.planeadaMs), real)
+        }
+    }
+
+    override suspend fun guardarSalidaReal(salida: DepartureSample) {
+        dao.guardarSalidaReal(SalidaRealEntidad(actividadId = salida.activityId, lugarId = salida.placeId,
+            planeadaMs = salida.planned.toEpochMilli(), realMs = salida.actual.toEpochMilli()))
+    }
 }

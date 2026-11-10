@@ -1,5 +1,5 @@
 """Deja en el reloj (build de depuración) un día de prueba relativo a la hora del emulador, y abre CampusWatch.
-Uso: python tools/verificacion/reloj_dia.py <escenario>   escenarios: proxima · salir · urgente · parcial · horario · vacio"""
+Uso: python tools/verificacion/reloj_dia.py <escenario> [claro|oscuro|telefono]   escenarios: proxima · salir · urgente · parcial · horario · vacio · asistencia · ritmo · ritmo-salir"""
 import datetime as dt, os, subprocess, sys
 
 ADB = os.path.expandvars(r'%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe')
@@ -28,7 +28,23 @@ siguiente = {
 if esc == 'proxima':  # sin trayecto: la siguiente empieza donde ya está
     siguiente['proxima'] = fila(3, 18, 108, 'Cálculo diferencial', 'B-204', 'Campus', None, 'CLASE')
 filas = [] if esc == 'vacio' else base + [siguiente.get(esc, siguiente['proxima'])]
-texto = 'cw1\t' + t(-3) + '\n' + '\n'.join(filas) + '\n'
+# Escenario «asistencia» (W6): formato cw2 con tres materias; Cálculo tiene una clase de hoy terminada sin marca.
+version = 'cw1'
+if esc == 'asistencia':
+    filas = base + [fila(2, -100, -10, 'Cálculo diferencial', 'B-204', 'Campus', -130, 'CLASE')]
+    filas += ['\t'.join(['A', '2', 'Cálculo diferencial', '10', '2', '4', t(-100)]),
+              '\t'.join(['A', '6', 'Programación', '12', '0', '', '']),
+              '\t'.join(['A', '9', 'Física mecánica', '7', '4', '4', ''])]
+    version = 'cw2'
+# Escenario «ritmo» (anexo 2026-11-10-agenda-ia): la próxima con el consejo «sueles salir 6 min tarde» (cw3).
+if esc in ('ritmo', 'ritmo-salir'):
+    nueva = fila(3, 55, 145, 'Cálculo diferencial', 'B-204', 'Campus', 25, 'CLASE') if esc == 'ritmo' else siguiente['salir']
+    filas = base + [nueva]
+    c = nueva.split('\t')
+    filas.append('\t'.join(['R', c[0], c[1], '6', '9']))
+    version = 'cw3'
+texto = version + '\t' + t(-3) + '\n' + '\n'.join(filas) + '\n'
+
 xml_txt = texto.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\t', '&#9;').replace('\n', '&#10;')
 xml = f"<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <string name=\"dia\">{xml_txt}</string>\n</map>\n"
 sh('am', 'force-stop', PKG)
@@ -37,5 +53,9 @@ if esc == 'sin-datos':
 else:
     p = subprocess.run([ADB, 'shell', 'run-as', PKG, 'sh', '-c', '"mkdir -p shared_prefs && cat > shared_prefs/campuswatch.xml"'], input=xml.encode('utf8'), capture_output=True)
     if p.returncode: print(p.stderr.decode())
+# Tema del reloj (anexo 2026-11-09-campuswatch-claro, W2), en su propio archivo de preferencias.
+if len(sys.argv) > 2:
+    xt = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <string name=\"tema\">" + sys.argv[2].upper() + "</string>\n</map>\n"
+    subprocess.run([ADB, 'shell', 'run-as', PKG, 'sh', '-c', '"cat > shared_prefs/campuswatch_tema.xml"'], input=xt.encode('utf8'), capture_output=True)
 sh('am', 'start', '-n', f'{PKG}/com.dpinta.agenda.wear.CampusWatchActivity')
 print(esc, ahora.strftime('%H:%M'))
