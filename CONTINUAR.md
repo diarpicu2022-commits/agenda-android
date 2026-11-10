@@ -239,3 +239,21 @@ inglés (`values-en`, textos que hoy están en el código), política de privaci
 líneas de asistencia, salidas reales y el horario en el reloj), «Tu ritmo» y asistencia visibles en el teléfono, y el widget
 que pase a «Vas tarde» después de la hora de salida.
 
+## 10. Madrugada del 2026-11-10 · decisiones de Diego y la app del teléfono
+
+- Diego aprobó mis recomendaciones (asistencia, «Tu ritmo» solo aconseja, dirección A «El camino a clase») y pidió
+  mergear: PR #3 → `feature/campuswatch-claro` y PR #2 → `develop`.
+- Rama `feature/agenda-tema-y-legal` (PR #4):
+  - **Tema a elección** en Ajustes › Apariencia (Claro · Oscuro · Como el sistema); el reloj lo sigue en «Como el
+    teléfono».
+  - **Política 0.2** dentro de la app y **consentimiento** en el primer uso (versión y fecha).
+  - **Exportar mis datos** a `.ics` (723 eventos en el emulador).
+  - Los scripts de capturas de pasos anteriores necesitan aceptar primero el consentimiento en una instalación limpia.
+
+**Lo que falta de la app del teléfono** (no necesita decisión de Diego, salvo lo marcado):
+1. Inglés (`values-en`). Muchos textos están en el código y hay que pasarlos a recursos.
+2. «Tu ritmo» y la asistencia visibles en el teléfono (Hoy y Actividades).
+3. Widget que pase a «Vas tarde» después de la hora de salida.
+4. Límite de faltas por materia en el formulario (el reloj ya lo muestra si existe).
+5. Revisión de la política por un abogado.
+
