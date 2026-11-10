@@ -270,7 +270,7 @@ que pase a «Vas tarde» después de la hora de salida.
   consentimiento.
 
 **Lo que falta:**
-1. `BarraInferiorTest` falla en inglés («Today» desborda dentro de la prueba, en la app real cabe). Ver el anexo.
+1. ~~`BarraInferiorTest` en inglés~~ arreglado en `fix/barra-y-completada`. Ahí también: Hoy dice «Faltaste» (no «Completada») en una clase con falta marcada.
 2. ~~CampusWatch en inglés~~ hecho en `feature/campuswatch-ingles`: sigue el idioma de Agenda (ver el anexo). Falta probarlo emparejado.
 3. ~~«Tu ritmo» y la asistencia en el teléfono~~ hecho en `feature/ritmo-asistencia-telefono` (dirección A, ver el anexo de la IA).
 4. ~~Límite de faltas por materia~~ hecho en `feature/limite-faltas` (base v5, ver el anexo de la IA).

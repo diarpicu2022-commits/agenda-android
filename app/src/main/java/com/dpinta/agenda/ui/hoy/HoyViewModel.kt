@@ -147,6 +147,9 @@ class HoyViewModel @Inject constructor(
             )
         }
 
+        // Marcas de asistencia de hoy: una clase con «falté» no se muestra como completada.
+        val faltas = repositorio.asistencias().first()
+            .filter { it.mark == com.dpinta.agenda.domain.AttendanceMark.FALTE && it.date == hoy }.map { it.activityId }.toSet()
         val filas = deHoy.map { s ->
             val act = agenda.actividades.getValue(s.activityId)
             FilaHoy(
@@ -160,6 +163,7 @@ class HoyViewModel @Inject constructor(
                 lugar = act.lugarId?.let { agenda.lugares[it]?.nombre }.orEmpty(),
                 pasada = !s.end.isAfter(ahoraLocal),
                 conflicto = conflictoDe(s, conflictos, agenda),
+                falte = s.activityId in faltas,
             )
         }
         val indiceAhora = deHoy.indexOfFirst { it.start.isAfter(ahoraLocal) }.let { if (it < 0) filas.size else it }
