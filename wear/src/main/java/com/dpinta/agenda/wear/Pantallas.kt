@@ -62,6 +62,7 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
     val color = Reloj.urgencia(u, s.exam)
     val restante = Duration.between(ahora, s.start)
     Box(Modifier.fillMaxSize().background(Reloj.fondo), contentAlignment = Alignment.Center) {
+        if (!ambiente) PaisajeGaleras(Modifier.fillMaxSize())
         AnilloCuenta(restante, s.leaveAt?.let { Duration.between(it, s.start) }, color, Modifier.fillMaxSize(), ambiente)
         Column(
             Modifier.padding(horizontal = 30.dp).semantics(mergeDescendants = true) {},
@@ -161,6 +162,28 @@ fun LineaRitmo(s: WatchSession, ritmo: WatchRhythm?, conHora: Boolean = true) {
         modifier = Modifier.semantics {
             contentDescription = "Tu ritmo: sueles salir ${r.lateMinutes} minutos tarde." + if (conHora) " Sal a las $hora" else ""
         })
+}
+
+/**
+ * El Galeras al fondo (anexo 2026-11-10-campuswatch-vivo, A): silueta del volcán con su cráter, en `superficieFuerte`
+ * (apenas distinta del fondo, 1,11 a 1,24:1). Es paisaje, no información: el texto se mide sobre él.
+ */
+@Composable
+fun PaisajeGaleras(modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(modifier) {
+        val w = size.width; val h = size.height
+        val volcan = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, h)
+            lineTo(0f, h * 0.86f)
+            cubicTo(w * 0.18f, h * 0.84f, w * 0.30f, h * 0.76f, w * 0.40f, h * 0.70f)
+            lineTo(w * 0.46f, h * 0.715f)
+            lineTo(w * 0.52f, h * 0.70f)
+            cubicTo(w * 0.62f, h * 0.75f, w * 0.78f, h * 0.83f, w, h * 0.85f)
+            lineTo(w, h)
+            close()
+        }
+        drawPath(volcan, Reloj.superficieFuerte)
+    }
 }
 
 /** «¿Fuiste?» (W6): la clase de hoy ya terminó y no tiene marca. Repertorio de Acciones: dos botones de 48 dp. */
