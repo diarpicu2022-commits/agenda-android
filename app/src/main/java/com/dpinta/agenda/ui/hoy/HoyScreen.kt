@@ -138,7 +138,7 @@ fun HoyPantalla(
                         TarjetaAhora(enCurso, estado.ahora, onEditar = { onEditar(enCurso.actividadId) }, modifier = Modifier.padding(horizontal = 16.dp))
                     } else {
                         estado.banda?.let {
-                            BoletoSalida(it, onAccion = onAccion, onCambiarModo = onCambiarModo, modifier = Modifier.padding(horizontal = 16.dp))
+                            BoletoSalida(it, onAccion = onAccion, onCambiarModo = onCambiarModo, modifier = Modifier.padding(horizontal = 16.dp), ritmo = estado.ritmo)
                         }
                     }
                 }

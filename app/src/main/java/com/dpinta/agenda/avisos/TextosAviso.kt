@@ -22,9 +22,11 @@ object TextosAviso {
         margen: Duration,
         es24h: Boolean,
         l: Lengua = Lengua.ES,
+        ritmoMinutos: Int? = null,
     ): TextoAviso {
         val hora = formatearHora(salirA, es24h, l).enLinea + if (estimacion.fromCache) l(" aprox.", " approx.") else ""
-        return TextoAviso(l("Sal a las $hora · $actividad", "Leave at $hora · $actividad"), unir(salon, trayecto(estimacion, margen, l)))
+        val ritmo = ritmoMinutos?.let { l("sueles salir $it min tarde", "you usually leave $it min late") }.orEmpty()
+        return TextoAviso(l("Sal a las $hora · $actividad", "Leave at $hora · $actividad"), unir(salon, trayecto(estimacion, margen, l), ritmo))
     }
 
     /** «Sal ya · Cálculo empieza 8:00» / «B-204 · 23 min en bus + 7 de margen». */

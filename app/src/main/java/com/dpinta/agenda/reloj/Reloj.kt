@@ -96,28 +96,8 @@ class PublicadorReloj @Inject constructor(
     private val repositorio: AgendaRepository,
     private val reloj: Clock,
     private val ajustesTema: com.dpinta.agenda.data.ajustes.AjustesTema,
+    private val resumenAsistencia: com.dpinta.agenda.data.agenda.ResumenAsistencia,
 ) {
-    /**
-     * Asistencia por materia para el reloj (W6), con [Attendance.summary] desde el inicio del semestre (o 120 días) hasta
-     * hoy. «Hoy no voy» cancela la sesión; en una clase con marca «falté» esa sesión sí cuenta como sesión que hubo.
-     */
-    private suspend fun asistencia(agenda: Agenda, sesiones: (Agenda, LocalDate, LocalDate) -> List<Occurrence>, ahora: LocalDateTime): List<WatchAttendance> {
-        val hoy = ahora.toLocalDate()
-        val marcas = repositorio.asistencias().first()
-        val faltas = marcas.filter { it.mark == AttendanceMark.FALTE }.map { it.activityId to it.date }.toSet()
-        val sinMisFaltas = agenda.copy(excepciones = agenda.excepciones.filterNot { it is SessionException.Cancelled && (it.activityId to it.date) in faltas })
-        val desde = agenda.semestreEn(hoy)?.start ?: hoy.minusDays(120)
-        val hubo = sesiones(sinMisFaltas, desde, hoy)
-        return agenda.actividades.values.filter { it.tipo == ActivityKind.CLASE || it.tipo == ActivityKind.EXAMEN }.mapNotNull { act ->
-            val propias = hubo.filter { it.activityId == act.id }
-            if (propias.none { !it.start.isAfter(ahora) }) return@mapNotNull null
-            val r = Attendance.summary(act.id, propias, marcas, hoy, null)
-            val pendiente = propias.firstOrNull { it.start.toLocalDate() == hoy && !it.end.isAfter(ahora) &&
-                marcas.none { m -> m.activityId == act.id && m.date == hoy } }
-            WatchAttendance(act.id, act.titulo, r.attended, r.absences, r.maxAbsences, pendiente?.start)
-        }.sortedBy { it.title }
-    }
-
     suspend fun publicar(agenda: Agenda, sesiones: (Agenda, LocalDate, LocalDate) -> List<Occurrence>) {
         val ahora = LocalDateTime.now(reloj)
         val lista = sesiones(agenda, ahora.toLocalDate(), ahora.toLocalDate().plusDays(1))
@@ -132,7 +112,7 @@ class PublicadorReloj @Inject constructor(
             val act = agenda.actividades[s.activityId] ?: return@mapNotNull null
             PersonalRhythm.advice(historial, act.lugarId, s.start.dayOfWeek)?.let { WatchRhythm(s.activityId, s.start, it.lateMinutes, it.samples) }
         }
-        val dia = MapeadorReloj.dia(agenda, lista, ahora, reloj.zone, { trayectos[it] }, asistencia(agenda, sesiones, ahora), ritmo)
+        val dia = MapeadorReloj.dia(agenda, lista, ahora, reloj.zone, { trayectos[it] }, resumenAsistencia.porMateria(agenda, sesiones, ahora), ritmo)
         // Sin reloj emparejado o sin Play Services la app sigue igual: el reloj es un acompañante.
         runCatching {
             val pedido = PutDataMapRequest.create(RutasReloj.DIA).apply { dataMap.putString(RutasReloj.CLAVE_DIA, dia.encode()) }

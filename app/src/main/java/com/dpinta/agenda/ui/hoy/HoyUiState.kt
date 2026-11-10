@@ -74,6 +74,8 @@ sealed interface HoyUiState {
         val enCurso: EnCurso? = null,
         /** Primer nombre del perfil local para el saludo; null si no lo ha escrito. */
         val nombre: String? = null,
+        /** «Tu ritmo» para la salida del boleto: solo antes de la hora de salida y con historial suficiente. */
+        val ritmo: RitmoSalida? = null,
     ) : HoyUiState
 }
 
@@ -89,3 +91,8 @@ data class EnCurso(
     val fin: LocalTime,
     val despues: SiguienteDia?,
 )
+
+/** Consejo de «Tu ritmo» (anexo 2026-11-10-agenda-ia): sueles salir [minutos] tarde, así que conviene salir a [salirA]. */
+@Immutable
+data class RitmoSalida(val minutos: Int, val salirA: LocalTime)
+

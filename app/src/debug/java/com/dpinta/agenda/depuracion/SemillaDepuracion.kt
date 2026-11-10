@@ -45,6 +45,22 @@ class SemillaDepuracion @Inject constructor(
             val fisica = agenda.actividades.values.firstOrNull { it.titulo == "Física mecánica" } ?: return
             repositorio.guardar(serie(fisica.id, "Física mecánica", ActivityKind.CLASE, "L-3", "Campus", 7, hoy, LocalTime.of(9, 0), LocalTime.of(10, 30)))
         }
+        // «ejemplo=ritmo»: cuatro salidas reales hacia la Tienda, de 5 a 8 min tarde (mediana 6), y una falta hoy en Cálculo,
+        // para ver «Tu ritmo» en el boleto y la asistencia en Actividades (anexo 2026-11-10-agenda-ia).
+        if (ejemplo == "ritmo") {
+            val agenda = repositorio.agenda().first()
+            val turno = agenda.actividades.values.firstOrNull { it.titulo == "Turno" } ?: return
+            val calculo = agenda.actividades.values.firstOrNull { it.titulo == "Cálculo diferencial" } ?: return
+            val zona = reloj.zone
+            listOf(5L, 6L, 7L, 8L).forEachIndexed { i, tarde ->
+                val dia = hoy.minusWeeks(i + 1L)
+                val planeada = dia.atTime(11, 40).atZone(zona).toInstant()
+                repositorio.guardarSalidaReal(
+                    com.dpinta.agenda.domain.DepartureSample(turno.id, turno.lugarId, dia.dayOfWeek, planeada, planeada.plusSeconds(tarde * 60)),
+                )
+            }
+            repositorio.marcarAsistencia(com.dpinta.agenda.domain.AttendanceRecord(calculo.id, hoy, com.dpinta.agenda.domain.AttendanceMark.FALTE))
+        }
     }
 
     private suspend fun sembrar(hoy: LocalDate) {

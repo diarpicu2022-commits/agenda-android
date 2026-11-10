@@ -56,6 +56,7 @@ object EtiquetasBoleto {
     const val PRIMARIA = "boleto-primaria"
     const val SECUNDARIA = "boleto-secundaria"
     const val MODO = "boleto-modo"
+    const val RITMO = "boleto-ritmo"
 }
 
 /** Nivel de urgencia de cada estado de la salida (02-urgencia.md). */
@@ -122,6 +123,7 @@ fun BoletoSalida(
     onCambiarModo: () -> Unit,
     modifier: Modifier = Modifier,
     es24h: Boolean = rememberEs24h(),
+    ritmo: com.dpinta.agenda.ui.hoy.RitmoSalida? = null,
 ) {
     val ds = AgendaTheme.ds
     val t = AgendaTheme.tipo
@@ -180,6 +182,16 @@ fun BoletoSalida(
             Text(antes, style = t.apoyo, color = ds.tintaSuave)
             Text(cifra, style = t.horaHero, color = if (enCamino || modelo.estado == EstadoBanda.SinTraslado) ds.tinta else color, maxLines = 1)
             if (despues != null) Text(despues, style = t.apoyo, color = ds.tintaSuave)
+            // «Tu ritmo» (dirección A): una línea más del pasaje, en tinta; el rombo es la marca del consejo, como en el reloj.
+            ritmo?.let { r ->
+                val hora = formatearHora(r.salirA, es24h, l).enLinea.inseparable()
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    l("◆ Sueles salir ${r.minutos} min tarde: sal a las $hora", "◆ You usually leave ${r.minutos} min late: leave at $hora"),
+                    style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.tinta,
+                    modifier = Modifier.testTag(EtiquetasBoleto.RITMO),
+                )
+            }
             if (modelo.hayTrayecto) {
                 Spacer(Modifier.height(12.dp))
                 Tramo(

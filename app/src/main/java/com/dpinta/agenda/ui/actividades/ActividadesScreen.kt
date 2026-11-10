@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui.actividades
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
 import com.dpinta.agenda.ui.components.Mensajes
 import com.dpinta.agenda.ui.components.Lengua
 import com.dpinta.agenda.ui.components.lengua
@@ -126,7 +128,8 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
         TipoFila.Trabajo -> l("trabajo", "work")
         TipoFila.Puntual -> l("puntual", "one-off")
     }
-    val frase = listOf(fila.titulo, tipo, fila.salon.takeIf { it.isNotBlank() }?.let { l("salón $it", "room $it") }, detalleHablado)
+    val frase = listOf(fila.titulo, tipo, fila.salon.takeIf { it.isNotBlank() }?.let { l("salón $it", "room $it") }, detalleHablado,
+        fila.asistencia?.let { textoAsistencia(it, l) })
         .filterNotNull().filter { it.isNotBlank() }.joinToString(", ")
     val interaccion = remember { MutableInteractionSource() }
     Column(
@@ -156,6 +159,7 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
             }
             // Lleva horas: en tinta, AAA (C9.1).
             if (detalle.isNotEmpty()) Text(detalle, style = t.meta, color = c.tinta)
+            fila.asistencia?.let { a -> LineaAsistencia(a) }
         }
         HorizontalDivider(thickness = AgendaMedidas.filete, color = c.filete)
     }
@@ -200,3 +204,28 @@ private fun textoCuando(c: Cuando, es24h: Boolean, l: Lengua): Pair<String, Stri
     }
     return cuando to rango
 }
+
+/** «2 faltas de 4» · «Sin faltas». Con límite y ya en él, va con el punto de aviso (como el reloj, W6). */
+private fun textoAsistencia(a: com.dpinta.agenda.domain.WatchAttendance, l: Lengua): String {
+    val faltas = when (a.absences) {
+        0 -> l("Sin faltas", "No absences")
+        1 -> l("1 falta", "1 absence")
+        else -> l("${a.absences} faltas", "${a.absences} absences")
+    }
+    return faltas + (a.maxAbsences?.let { l(" de $it", " of $it") }.orEmpty())
+}
+
+@Composable
+private fun LineaAsistencia(a: com.dpinta.agenda.domain.WatchAttendance) {
+    val ds = AgendaTheme.ds
+    val enLimite = a.maxAbsences != null && a.absences >= a.maxAbsences!!
+    val color = if (enLimite) ds.aviso else ds.tintaSuave
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
+        if (enLimite) {
+            androidx.compose.foundation.Canvas(Modifier.size(8.dp)) { drawCircle(color) }
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(textoAsistencia(a, lengua()), style = AgendaTheme.tipo.meta, color = color)
+    }
+}
+

@@ -42,6 +42,8 @@ data class ActividadFila(
     val cuando: List<Cuando>,
     /** Puntual que ya pasó: va al final de su sección; no cambia de color. */
     val pasada: Boolean,
+    /** Clases: faltas y límite (si la materia lo tiene). Nulo si todavía no hubo sesiones que contar. */
+    val asistencia: com.dpinta.agenda.domain.WatchAttendance? = null,
 )
 
 @Immutable
