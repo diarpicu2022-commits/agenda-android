@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui.formulario
 
+import com.dpinta.agenda.ui.components.lengua
+import com.dpinta.agenda.ui.components.Lengua
 import com.dpinta.agenda.ui.theme.Formas
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
@@ -106,22 +108,26 @@ data class AccionesFormulario(
     val onMapa: () -> Unit,
 )
 
-private val TIPOS = listOf(
-    Opcion(ActivityKind.CLASE, "Clase"),
-    Opcion(ActivityKind.TRABAJO, "Trabajo"),
-    Opcion(ActivityKind.PUNTUAL, "Puntual"),
-    Opcion(ActivityKind.EXAMEN, "Examen"),
-    Opcion(ActivityKind.OTRO, "Otro"),
+private fun tipos(l: Lengua) = listOf(
+    Opcion(ActivityKind.CLASE, l("Clase", "Class")),
+    Opcion(ActivityKind.TRABAJO, l("Trabajo", "Work")),
+    Opcion(ActivityKind.PUNTUAL, l("Puntual", "One-off")),
+    Opcion(ActivityKind.EXAMEN, l("Examen", "Exam")),
+    Opcion(ActivityKind.OTRO, l("Otro", "Other")),
 )
 
-private val MODOS = listOf(
+private fun modos(l: Lengua) = listOf(
     Opcion(TransportMode.TRANSPORTE_PUBLICO, "Bus", Icono.Bus),
-    Opcion(TransportMode.A_PIE, "A pie", Icono.APie),
-    Opcion(TransportMode.CARRO, "Carro", Icono.Carro),
-    Opcion(TransportMode.MOTO, "Moto", Icono.Moto),
+    Opcion(TransportMode.A_PIE, l("A pie", "Walk"), Icono.APie),
+    Opcion(TransportMode.CARRO, l("Carro", "Car"), Icono.Carro),
+    Opcion(TransportMode.MOTO, l("Moto", "Motorbike"), Icono.Moto),
 )
 
-private val LETRAS = listOf(
+/** Iniciales de los días. En inglés se repiten (T, S): TalkBack lee el nombre completo. */
+private fun letras(l: Lengua) = if (l == Lengua.EN) listOf(
+    DayOfWeek.MONDAY to "M", DayOfWeek.TUESDAY to "T", DayOfWeek.WEDNESDAY to "W", DayOfWeek.THURSDAY to "T",
+    DayOfWeek.FRIDAY to "F", DayOfWeek.SATURDAY to "S", DayOfWeek.SUNDAY to "S",
+) else listOf(
     DayOfWeek.MONDAY to "L", DayOfWeek.TUESDAY to "M", DayOfWeek.WEDNESDAY to "X", DayOfWeek.THURSDAY to "J",
     DayOfWeek.FRIDAY to "V", DayOfWeek.SATURDAY to "S", DayOfWeek.SUNDAY to "D",
 )
@@ -135,23 +141,24 @@ private val LETRAS = listOf(
 fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, modifier: Modifier = Modifier) {
     val c = AgendaTheme.colores
     val m = AgendaTheme.reticula.margen
+    val l = lengua()
     val f = estado.formulario
-    val e = estado.errores
+    val e = estado.errores.mapValues { Validador.mensaje(it.value, l) }
     val es24h = rememberEs24h()
     val hora = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next)
     val fecha = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next)
     val numero = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next)
 
     Column(modifier.fillMaxSize().background(c.papel).imePadding()) {
-        Cabecera(if (estado.esNueva) "Nueva actividad" else "Editar actividad", onAtras = acciones.onCancelar)
+        Cabecera(if (estado.esNueva) l("Nueva actividad", "New activity") else l("Editar actividad", "Edit activity"), onAtras = acciones.onCancelar)
         when {
             estado.cargando -> {
-                NotaPantalla("Cargando la actividad…")
+                NotaPantalla(l("Cargando la actividad…", "Loading the activity…"))
                 return@Column
             }
             estado.noEncontrada -> {
-                NotaPantalla("Esta actividad ya no existe. Puede que se haya borrado.")
-                BotonSubrayado("Volver", tinta = c.tinta, modifier = Modifier.padding(start = m), onClick = acciones.onCancelar)
+                NotaPantalla(l("Esta actividad ya no existe. Puede que se haya borrado.", "This activity no longer exists. It may have been deleted."))
+                BotonSubrayado(l("Volver", "Back"), tinta = c.tinta, modifier = Modifier.padding(start = m), onClick = acciones.onCancelar)
                 return@Column
             }
         }
@@ -161,50 +168,50 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = m),
         ) {
-            Seccion("¿Qué es?")
+            Seccion(l("¿Qué es?", "What is it?"))
             FichasTipo(f.tipo, acciones.onTipo)
             Spacer(Modifier.height(AgendaSpacing.s16))
             CampoTexto(
-                "Nombre",
+                l("Nombre", "Name"),
                 f.titulo,
                 { v -> acciones.onCambio { it.copy(titulo = v) } },
                 e[Campo.TITULO],
-                ayuda = "Cálculo diferencial",
+                ayuda = l("Cálculo diferencial", "Calculus"),
                 teclado = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
             )
 
-            Seccion("Cuándo")
+            Seccion(l("Cuándo", "When"))
             Segmentado(
-                listOf(Opcion(true, "Cada semana"), Opcion(false, "Una vez")),
+                listOf(Opcion(true, l("Cada semana", "Every week")), Opcion(false, l("Una vez", "Once"))),
                 f.semanal,
                 acciones.onSemanal,
                 etiquetaPrueba = "cuando",
             )
             Spacer(Modifier.height(AgendaSpacing.s16))
             if (f.semanal) {
-                Text("Días", style = AgendaTheme.tipo.meta, color = c.tinta)
+                Text(l("Días", "Days"), style = AgendaTheme.tipo.meta, color = c.tinta)
                 Spacer(Modifier.height(AgendaSpacing.s4))
-                SelectorDias(LETRAS, f.dias, ::nombreDia, acciones.onDia)
+                SelectorDias(letras(l), f.dias, { nombreDia(it, l) }, acciones.onDia)
                 e[Campo.DIAS]?.let { MensajeError(it) }
             } else {
-                CampoTexto("Fecha", f.fecha, { v -> acciones.onCambio { it.copy(fecha = v) } }, e[Campo.FECHA], ayuda = "24/9/2026", teclado = fecha)
+                CampoTexto(l("Fecha", "Date"), f.fecha, { v -> acciones.onCambio { it.copy(fecha = v) } }, e[Campo.FECHA], ayuda = "24/9/2026", teclado = fecha)
             }
             Spacer(Modifier.height(AgendaSpacing.s16))
             Pareja(
-                { CampoTexto("Empieza", f.inicio, { v -> acciones.onCambio { it.copy(inicio = v) } }, e[Campo.INICIO], it, ayuda = "8:00", teclado = hora) },
-                { CampoTexto("Termina", f.fin, { v -> acciones.onCambio { it.copy(fin = v) } }, e[Campo.FIN], it, ayuda = "10:00", teclado = hora) },
+                { CampoTexto(l("Empieza", "Starts"), f.inicio, { v -> acciones.onCambio { it.copy(inicio = v) } }, e[Campo.INICIO], it, ayuda = "8:00", teclado = hora) },
+                { CampoTexto(l("Termina", "Ends"), f.fin, { v -> acciones.onCambio { it.copy(fin = v) } }, e[Campo.FIN], it, ayuda = "10:00", teclado = hora) },
             )
             if (f.semanal) {
                 Spacer(Modifier.height(AgendaSpacing.s16))
                 Pareja(
-                    { CampoTexto("Desde", f.desde, { v -> acciones.onCambio { it.copy(desde = v) } }, e[Campo.DESDE], it, teclado = fecha) },
-                    { CampoTexto("Hasta", f.hasta, { v -> acciones.onCambio { it.copy(hasta = v) } }, e[Campo.HASTA], it, teclado = fecha) },
+                    { CampoTexto(l("Desde", "From"), f.desde, { v -> acciones.onCambio { it.copy(desde = v) } }, e[Campo.DESDE], it, teclado = fecha) },
+                    { CampoTexto(l("Hasta", "Until"), f.hasta, { v -> acciones.onCambio { it.copy(hasta = v) } }, e[Campo.HASTA], it, teclado = fecha) },
                 )
             }
 
-            Seccion("Dónde")
+            Seccion(l("Dónde", "Where"))
             CampoTexto(
-                "Lugar",
+                l("Lugar", "Place"),
                 f.lugar,
                 { v -> acciones.onCambio { it.copy(lugar = v) } },
                 null,
@@ -213,24 +220,24 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
             )
             BotonSubrayado("Elegir en el mapa", tinta = c.tinta, modifier = Modifier.testTag(EtiquetasFormulario.MAPA), onClick = acciones.onMapa)
             CampoTexto(
-                "Salón",
+                l("Salón", "Room"),
                 f.salon,
                 { v -> acciones.onCambio { it.copy(salon = v) } },
                 null,
-                ayuda = "B-204, piso 3, oficina 12",
+                ayuda = l("B-204, piso 3, oficina 12", "B-204, 3rd floor, office 12"),
                 teclado = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, imeAction = ImeAction.Next),
             )
 
-            Seccion("Cómo llegas")
-            Segmentado(MODOS, f.modo, acciones.onModo, columnas = 2, etiquetaPrueba = "modo")
+            Seccion(l("Cómo llegas", "How you get there"))
+            Segmentado(modos(l), f.modo, acciones.onModo, columnas = 2, etiquetaPrueba = "modo")
             Spacer(Modifier.height(AgendaSpacing.s16))
             Pareja(
-                { CampoTexto("Margen (min)", f.margen, { v -> acciones.onCambio { it.copy(margen = v) } }, e[Campo.MARGEN], it, teclado = numero) },
-                { CampoTexto("Aviso (min antes)", f.aviso, { v -> acciones.onCambio { it.copy(aviso = v) } }, e[Campo.AVISO], it, teclado = numero) },
+                { CampoTexto(l("Margen (min)", "Buffer (min)"), f.margen, { v -> acciones.onCambio { it.copy(margen = v) } }, e[Campo.MARGEN], it, teclado = numero) },
+                { CampoTexto(l("Aviso (min antes)", "Reminder (min before)"), f.aviso, { v -> acciones.onCambio { it.copy(aviso = v) } }, e[Campo.AVISO], it, teclado = numero) },
             )
 
             if (estado.conflictos.isNotEmpty()) {
-                Seccion("Conflictos")
+                Seccion(l("Conflictos", "Conflicts"))
                 Column(
                     Modifier
                         .fillMaxWidth()
@@ -240,15 +247,15 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
                         .testTag(EtiquetasFormulario.CONFLICTOS)
                         .semantics { liveRegion = LiveRegionMode.Polite },
                 ) {
-                    estado.conflictos.distinct().forEach { MensajeError(textoAviso(it, es24h)) }
+                    estado.conflictos.distinct().forEach { MensajeError(textoAviso(it, es24h, l)) }
                     Spacer(Modifier.height(AgendaSpacing.s4))
-                    Text("Puedes guardar igual.", style = AgendaTheme.tipo.meta, color = c.tinta)
+                    Text(l("Puedes guardar igual.", "You can save anyway."), style = AgendaTheme.tipo.meta, color = c.tinta)
                 }
             }
 
-            Seccion("Resumen")
+            Seccion(l("Resumen", "Summary"))
             Text(
-                estado.borradorValido?.let { resumen(it, es24h) } ?: "Completa el nombre, los días y las horas para ver el resumen.",
+                estado.borradorValido?.let { resumen(it, es24h, l) } ?: l("Completa el nombre, los días y las horas para ver el resumen.", "Fill in the name, the days and the times to see the summary."),
                 style = AgendaTheme.tipo.cuerpo,
                 color = if (estado.borradorValido != null) AgendaTheme.ds.tinta else AgendaTheme.ds.tintaSuave,
                 modifier = Modifier
@@ -268,13 +275,14 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
 /** Acciones fijas abajo, al alcance del pulgar (C1.2): cancelar a la izquierda, guardar a la derecha. */
 @Composable
 private fun PieAcciones(estado: FormularioUiState, acciones: AccionesFormulario) {
+    val l = lengua()
     val c = AgendaTheme.colores
     Column(Modifier.fillMaxWidth().background(AgendaTheme.ds.superficie).windowInsetsPadding(WindowInsets.navigationBars)) {
         HorizontalDivider(thickness = 1.dp, color = AgendaTheme.ds.linea)
         val errores = estado.errores.size
         val mensaje = when (val fase = estado.fase) {
-            is FaseGuardado.Error -> fase.mensaje
-            else -> if (errores > 0) (if (errores == 1) "Revisa el campo marcado." else "Revisa los $errores campos marcados.") else null
+            is FaseGuardado.Error -> Validador.mensaje(fase.mensaje, l)
+            else -> if (errores > 0) (if (errores == 1) l("Revisa el campo marcado.", "Check the marked field.") else l("Revisa los $errores campos marcados.", "Check the $errores marked fields.")) else null
         }
         mensaje?.let {
             MensajeError(it, Modifier.padding(horizontal = AgendaTheme.reticula.margen).semantics { liveRegion = LiveRegionMode.Assertive })
@@ -284,12 +292,12 @@ private fun PieAcciones(estado: FormularioUiState, acciones: AccionesFormulario)
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BotonSubrayado("Cancelar", tinta = c.tinta, onClick = acciones.onCancelar)
+            BotonSubrayado(l("Cancelar", "Cancel"), tinta = c.tinta, onClick = acciones.onCancelar)
             val texto = when {
-                estado.fase == FaseGuardado.Guardando -> "Guardando…"
-                estado.fase is FaseGuardado.Error -> "Reintentar"
-                estado.conflictos.isNotEmpty() -> "Guardar igual"
-                else -> "Guardar"
+                estado.fase == FaseGuardado.Guardando -> l("Guardando…", "Saving…")
+                estado.fase is FaseGuardado.Error -> l("Reintentar", "Try again")
+                estado.conflictos.isNotEmpty() -> l("Guardar igual", "Save anyway")
+                else -> l("Guardar", "Save")
             }
             BotonRelleno(
                 texto,
@@ -321,7 +329,7 @@ private fun FichasTipo(actual: ActivityKind, onTipo: (ActivityKind) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(AgendaSpacing.s8),
         verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s8),
     ) {
-        TIPOS.forEach { o ->
+        tipos(lengua()).forEach { o ->
             val activa = o.valor == actual
             val (linea, suave) = when (o.valor) {
                 ActivityKind.CLASE -> ds.lineaUniversidad to ds.rutaSuave

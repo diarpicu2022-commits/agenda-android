@@ -1,5 +1,8 @@
 package com.dpinta.agenda.ui.actividades
 
+import com.dpinta.agenda.ui.components.Mensajes
+import com.dpinta.agenda.ui.components.Lengua
+import com.dpinta.agenda.ui.components.lengua
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -47,6 +50,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val FORMATO_FECHA = DateTimeFormatter.ofPattern("EEE d MMM", Locale.forLanguageTag("es"))
+private val FORMATO_FECHA_EN = DateTimeFormatter.ofPattern("EEE, MMM d", Locale.forLanguageTag("en"))
 
 @Composable
 fun ActividadesRuta(onCrear: () -> Unit, onEditar: (Long) -> Unit, onLugar: (Long) -> Unit, viewModel: ActividadesViewModel = hiltViewModel()) {
@@ -64,9 +68,9 @@ fun ActividadesPantalla(
     onLugar: (Long) -> Unit = {},
 ) {
     Column(modifier.fillMaxSize().background(AgendaTheme.colores.papel)) {
-        Cabecera("Actividades")
+        Cabecera(lengua()("Actividades", "Activities"))
         when (estado) {
-            ActividadesUiState.Cargando -> EsqueletoCarga("Cargando actividades")
+            ActividadesUiState.Cargando -> EsqueletoCarga(lengua()("Cargando actividades", "Loading activities"))
             ActividadesUiState.Vacia -> EstadoPrimerUso(onAnadir = onCrear)
             is ActividadesUiState.Lista -> Lista(estado, onEditar, onLugar)
         }
@@ -77,11 +81,11 @@ fun ActividadesPantalla(
 private fun Lista(estado: ActividadesUiState.Lista, onEditar: (Long) -> Unit, onLugar: (Long) -> Unit) {
     LazyColumn(Modifier.fillMaxSize()) {
         for (seccion in estado.secciones) {
-            item(key = "s-${seccion.grupo}") { TituloSeccion(seccion.grupo.titulo) }
+            item(key = "s-${seccion.grupo}") { TituloSeccion(lengua()(seccion.grupo.titulo, seccion.grupo.tituloEn)) }
             items(seccion.filas, key = { "a-${it.id}" }) { FilaActividad(it, onEditar = { onEditar(it.id) }) }
         }
         if (estado.lugares.isNotEmpty()) {
-            item(key = "s-lugares") { TituloSeccion("Lugares guardados") }
+            item(key = "s-lugares") { TituloSeccion(lengua()("Lugares guardados", "Saved places")) }
             items(estado.lugares, key = { "l-${it.id}" }) { FilaLugar(it, onEditar = { onLugar(it.id) }) }
         }
     }
@@ -104,7 +108,8 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
     val es24h = rememberEs24h()
-    val cuando = fila.cuando.map { textoCuando(it, es24h) }
+    val l = lengua()
+    val cuando = fila.cuando.map { textoCuando(it, es24h, l) }
     // C2.2: el rango (con «→», que Atkinson no tiene) va en Archivo, con el estilo fila-hora.
     val rango = t.horaSm.toSpanStyle().copy(color = c.tinta)
     val detalle = buildAnnotatedString {
@@ -115,24 +120,24 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
         }
         if (fila.lugar.isNotBlank()) append(if (cuando.isEmpty()) fila.lugar else " · ${fila.lugar}")
     }
-    val detalleHablado = detalle.text.replace(" → ", " a ")
+    val detalleHablado = detalle.text.replace(" → ", l(" a ", " to "))
     val tipo = when (fila.tipo) {
-        TipoFila.Clase -> "clase"
-        TipoFila.Trabajo -> "trabajo"
-        TipoFila.Puntual -> "puntual"
+        TipoFila.Clase -> l("clase", "class")
+        TipoFila.Trabajo -> l("trabajo", "work")
+        TipoFila.Puntual -> l("puntual", "one-off")
     }
-    val frase = listOf(fila.titulo, tipo, fila.salon.takeIf { it.isNotBlank() }?.let { "salón $it" }, detalleHablado)
+    val frase = listOf(fila.titulo, tipo, fila.salon.takeIf { it.isNotBlank() }?.let { l("salón $it", "room $it") }, detalleHablado)
         .filterNotNull().filter { it.isNotBlank() }.joinToString(", ")
     val interaccion = remember { MutableInteractionSource() }
     Column(
         Modifier
             .fillMaxWidth()
             .anilloFoco(interaccion, c.tinta)
-            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = "Editar", role = Role.Button, onClick = onEditar)
+            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = l("Editar", "Edit"), role = Role.Button, onClick = onEditar)
             .clearAndSetSemantics {
                 contentDescription = frase
                 role = Role.Button
-                onClick(label = "Editar") { onEditar(); true }
+                onClick(label = l("Editar", "Edit")) { onEditar(); true }
             },
     ) {
         Column(
@@ -159,13 +164,14 @@ private fun FilaActividad(fila: ActividadFila, onEditar: () -> Unit) {
 @Composable
 private fun FilaLugar(lugar: LugarFila, onEditar: () -> Unit) {
     val c = AgendaTheme.colores
-    val uso = if (lugar.actividades == 1) "1 actividad" else "${lugar.actividades} actividades"
+    val l = lengua()
+    val uso = if (lugar.actividades == 1) l("1 actividad", "1 activity") else l("${lugar.actividades} actividades", "${lugar.actividades} activities")
     val interaccion = remember { MutableInteractionSource() }
     Column(
         Modifier
             .fillMaxWidth()
             .anilloFoco(interaccion, c.tinta)
-            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = "Tiempos de trayecto", role = Role.Button, onClick = onEditar)
+            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = l("Tiempos de trayecto", "Travel times"), role = Role.Button, onClick = onEditar)
             .semantics(mergeDescendants = true) {},
     ) {
         Row(
@@ -183,14 +189,14 @@ private fun FilaLugar(lugar: LugarFila, onEditar: () -> Unit) {
 }
 
 /** («lun, mié y vie», «8:00 → 10:00 a. m.») o («vie 26 sep», «9:00 → 9:30 p. m.»); rango con flecha (referente Timepage). */
-private fun textoCuando(c: Cuando, es24h: Boolean): Pair<String, String> {
-    val desde = formatearHora(c.inicio, es24h)
-    val hasta = formatearHora(c.fin, es24h)
+private fun textoCuando(c: Cuando, es24h: Boolean, l: Lengua): Pair<String, String> {
+    val desde = formatearHora(c.inicio, es24h, l)
+    val hasta = formatearHora(c.fin, es24h, l)
     // Misma franja (a. m./p. m.): el sufijo va una vez, al final.
     val rango = if (desde.sufijo12h == hasta.sufijo12h) "${desde.cifra} → ${hasta.enLinea}" else "${desde.enLinea} → ${hasta.enLinea}"
     val cuando = when (c) {
-        is Cuando.Semanal -> textoDias(c.dias)
-        is Cuando.Fecha -> FORMATO_FECHA.format(c.fecha).replace(".", "")
+        is Cuando.Semanal -> textoDias(c.dias, l)
+        is Cuando.Fecha -> (if (l == Lengua.EN) FORMATO_FECHA_EN else FORMATO_FECHA).format(c.fecha).replace(".", "")
     }
     return cuando to rango
 }
