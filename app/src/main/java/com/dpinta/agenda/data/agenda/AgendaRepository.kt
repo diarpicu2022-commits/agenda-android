@@ -30,6 +30,8 @@ data class Actividad(
     val modo: TransportMode,
     /** Cuánto antes de empezar se avisa «empieza X» (C10). */
     val aviso: Duration = Duration.ofMinutes(15),
+    /** Faltas permitidas en la materia; nulo = sin límite. */
+    val faltasMax: Int? = null,
 )
 
 data class Lugar(val id: Long, val nombre: String)
@@ -59,6 +61,7 @@ data class ActividadAGuardar(
     val modo: TransportMode,
     val margen: Duration,
     val aviso: Duration,
+    val faltasMax: Int? = null,
 )
 
 /** Todo lo que hace falta para construir el día: series, puntuales, excepciones, semestres y traslados. */

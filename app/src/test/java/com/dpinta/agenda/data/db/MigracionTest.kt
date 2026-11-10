@@ -109,4 +109,36 @@ class MigracionTest {
         assertEquals(0, db.agendaDao().salidasReales().first().size)
         db.close()
     }
+
+    @Test fun deCuatroACincoAgregaLasFaltasSinTocarLoQueHabia() = runTest {
+        val contexto = ApplicationProvider.getApplicationContext<Application>()
+        val archivo = contexto.getDatabasePath("migracion5.db").apply { parentFile?.mkdirs(); delete() }
+        val esquema = JSONObject(File("schemas/com.dpinta.agenda.data.db.AgendaDatabase/4.json").readText()).getJSONObject("database")
+        SQLiteDatabase.openOrCreateDatabase(archivo, null).use { v4 ->
+            val tablas = esquema.getJSONArray("entities")
+            for (i in 0 until tablas.length()) {
+                val t = tablas.getJSONObject(i)
+                v4.execSQL(t.getString("createSql").replace("\${TABLE_NAME}", t.getString("tableName")))
+                val indices = t.optJSONArray("indices") ?: continue
+                for (j in 0 until indices.length()) {
+                    v4.execSQL(indices.getJSONObject(j).getString("createSql").replace("\${TABLE_NAME}", t.getString("tableName")))
+                }
+            }
+            val setup = esquema.getJSONArray("setupQueries")
+            for (i in 0 until setup.length()) v4.execSQL(setup.getString(i))
+            v4.execSQL("INSERT INTO actividad (id, titulo, tipo, salon, lugar_id, margen_min, modo, aviso_min) VALUES (1, 'Cálculo', 'CLASE', 'B-204', NULL, 10, 'TRANSPORTE_PUBLICO', 15)")
+            v4.version = 4
+        }
+        val db = Room.databaseBuilder(contexto, AgendaDatabase::class.java, archivo.absolutePath)
+            .addMigrations(*AgendaDatabase.MIGRACIONES)
+            .allowMainThreadQueries()
+            .build()
+        // Room valida el esquema al abrir; la actividad que ya existía sigue ahí y queda sin límite.
+        db.openHelper.readableDatabase.query("SELECT titulo, faltas_max FROM actividad").use { c ->
+            assertEquals(true, c.moveToFirst())
+            assertEquals("Cálculo", c.getString(0))
+            assertEquals(true, c.isNull(1))
+        }
+        db.close()
+    }
 }

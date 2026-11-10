@@ -273,5 +273,5 @@ que pase a «Vas tarde» después de la hora de salida.
 1. `BarraInferiorTest` falla en inglés («Today» desborda dentro de la prueba, en la app real cabe). Ver el anexo.
 2. ~~CampusWatch en inglés~~ hecho en `feature/campuswatch-ingles`: sigue el idioma de Agenda (ver el anexo). Falta probarlo emparejado.
 3. ~~«Tu ritmo» y la asistencia en el teléfono~~ hecho en `feature/ritmo-asistencia-telefono` (dirección A, ver el anexo de la IA).
-4. Límite de faltas por materia en el formulario.
+4. ~~Límite de faltas por materia~~ hecho en `feature/limite-faltas` (base v5, ver el anexo de la IA).
 5. Revisión de la política por un abogado (ahora también la versión en inglés de `values-en/strings.xml`).

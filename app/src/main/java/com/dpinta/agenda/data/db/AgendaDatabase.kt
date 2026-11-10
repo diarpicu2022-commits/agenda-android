@@ -127,7 +127,7 @@ abstract class AgendaDatabase : RoomDatabase() {
     abstract fun agendaDao(): AgendaDao
 
     companion object {
-        const val VERSION = 4
+        const val VERSION = 5
         const val NOMBRE = "agenda.db"
 
         /** v2: tiempos de trayecto escritos a mano (sin Routes API). */
@@ -153,7 +153,14 @@ abstract class AgendaDatabase : RoomDatabase() {
             }
         }
 
+        /** v5: faltas permitidas por materia (límite de asistencia). Nula para las actividades que ya existían. */
+        val DE_4_A_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `actividad` ADD COLUMN `faltas_max` INTEGER")
+            }
+        }
+
         /** Migraciones no destructivas, en orden. */
-        val MIGRACIONES: Array<androidx.room.migration.Migration> = arrayOf(DE_1_A_2, DE_2_A_3, DE_3_A_4)
+        val MIGRACIONES: Array<androidx.room.migration.Migration> = arrayOf(DE_1_A_2, DE_2_A_3, DE_3_A_4, DE_4_A_5)
     }
 }
