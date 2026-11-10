@@ -1,5 +1,7 @@
 package com.dpinta.agenda.wear
 
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -51,7 +53,54 @@ fun AnilloCuenta(
             drawCircle(Reloj.fondo, grosor * 0.55f, c)
             drawCircle(Reloj.hora, grosor * 0.35f, c)
         }
+        // «El camino a clase» (anexo 2026-11-10-campuswatch-vivo, dirección A): el edificio de la actividad a las 12 y
+        // una figura que camina por dentro del riel, en la punta de la cuenta. Avanza un paso por minuto; sin animación
+        // continua (batería) y nada de esto en siempre activo.
+        if (!ambiente) {
+            val r = tam.width / 2 - grosor * 2.1f
+            fun punto(grados: Double) = Offset(
+                size.width / 2 + (r * cos(Math.toRadians(grados))).toFloat(),
+                size.height / 2 + (r * sin(Math.toRadians(grados))).toFloat(),
+            )
+            edificio(punto(-90.0), color)
+            if (fraccion > 0.04f) caminante(punto(-90.0 + 360.0 * fraccion), restante.toMinutes() % 2 == 0L)
+        }
     }
+}
+
+/** El destino: la fachada del campus (frontón, tres columnas y escalinata), en el color de la urgencia (marca, no texto). */
+private fun DrawScope.edificio(c: Offset, color: Color) {
+    val u = 1.dp.toPx()
+    val ancho = 18 * u
+    val suelo = c.y + 7 * u
+    val izq = c.x - ancho / 2
+    // Escalinata y base.
+    drawRect(color, Offset(izq - u, suelo - 2 * u), Size(ancho + 2 * u, 2 * u))
+    // Tres columnas.
+    for (k in 0..2) drawRect(color, Offset(izq + 2 * u + k * 6 * u, suelo - 10 * u), Size(2.6f * u, 8 * u))
+    // Entablamento y frontón.
+    drawRect(color, Offset(izq, suelo - 12.5f * u), Size(ancho, 2.5f * u))
+    val fronton = Path().apply {
+        moveTo(izq - u, suelo - 12.5f * u)
+        lineTo(c.x, suelo - 18.5f * u)
+        lineTo(izq + ancho + u, suelo - 12.5f * u)
+        close()
+    }
+    drawPath(fronton, color)
+}
+
+/** La figura que camina: cabeza, tronco y piernas con trazo redondo en tinta. [paso] alterna la zancada cada minuto. */
+private fun DrawScope.caminante(p: Offset, paso: Boolean) {
+    val u = 1.dp.toPx()
+    val trazo = Stroke(2.6f * u, cap = StrokeCap.Round)
+    val cadera = p + Offset(0f, 2 * u)
+    val hombro = p + Offset(0.6f * u, -5 * u)
+    drawCircle(Reloj.tinta, 3.4f * u, p + Offset(1.2f * u, -10 * u))
+    drawLine(Reloj.tinta, hombro, cadera, trazo.width, StrokeCap.Round)
+    val z = if (paso) 1f else -1f
+    drawLine(Reloj.tinta, cadera, cadera + Offset(4 * u * z, 7 * u), trazo.width, StrokeCap.Round)
+    drawLine(Reloj.tinta, cadera, cadera + Offset(-3 * u * z, 7 * u), trazo.width, StrokeCap.Round)
+    drawLine(Reloj.tinta, hombro, hombro + Offset(-3.5f * u * z, 5 * u), trazo.width * 0.85f, StrokeCap.Round)
 }
 
 /** Anillo de la sesión en curso: fracción que queda de la sesión, en el color de su línea; en siempre activo, contorno. */
