@@ -98,5 +98,5 @@ fun AnilloSesion(queda: Float, color: Color, modifier: Modifier = Modifier, ambi
     }
 }
 
-/** Dónde va el viajero: dentro del riel (dirección A aprobada) o encima de él. Pendiente de Diego. */
+/** Dónde va el viajero: dentro del riel (dirección A aprobada) o encima de él. Encima, aprobado por Diego el 2026-11-10 (anexo campuswatch-vivo §5). */
 const val VIAJERO_SOBRE_RIEL = true

@@ -200,7 +200,11 @@ fun PantallaFuiste(a: WatchAttendance, onRespuesta: (Boolean) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(t("¿Fuiste?", "Did you go?"), style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+            Cuy(PoseCuy.PREGUNTA, Modifier.size(34.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(t("¿Fuiste?", "Did you go?"), style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        }
         Text(a.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(4.dp))
         BotonReloj(t("Sí, fui", "Yes, I went"), principal = true, color = Reloj.exito, ancho = 0.9f) { onRespuesta(true) }
@@ -219,7 +223,12 @@ fun PantallaAsistencia(lista: List<WatchAttendance>) {
         verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(t("Asistencia", "Attendance"), style = Tipo.apoyo, color = Reloj.ruta, modifier = Modifier.semantics { heading() })
+        androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+            val enLimite = lista.any { a -> a.maxAbsences != null && a.absences >= a.maxAbsences!! }
+            Cuy(if (enLimite) PoseCuy.PREOCUPADO else PoseCuy.FELIZ, Modifier.size(30.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(t("Asistencia", "Attendance"), style = Tipo.apoyo, color = Reloj.ruta, modifier = Modifier.semantics { heading() })
+        }
         if (lista.isEmpty()) {
             Text(t("Todavía no hay clases que contar", "No classes to count yet"), style = Tipo.apoyo, color = Reloj.tintaSuave, textAlign = TextAlign.Center)
         }
@@ -350,19 +359,7 @@ fun PantallaConfirmacion(texto: String, detalle: String?, ok: Boolean = true, on
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Canvas(Modifier.size(56.dp)) {
-            val w = size.width
-            // Si no llegó al teléfono no hay check: un aviso (no se confirma lo que no pasó).
-            val color = if (ok) Reloj.exito else Reloj.aviso
-            drawCircle(color, w / 2, style = Stroke(3.dp.toPx()))
-            val p = if (ok) Path().apply { moveTo(w * 0.28f, w * 0.52f); lineTo(w * 0.44f, w * 0.68f); lineTo(w * 0.74f, w * 0.36f) }
-            else Path().apply { moveTo(w * 0.5f, w * 0.26f); lineTo(w * 0.5f, w * 0.58f) }
-            val medida = androidx.compose.ui.graphics.PathMeasure().apply { setPath(p, false) }
-            val parcial = Path()
-            medida.getSegment(0f, medida.length * trazo.value, parcial, true)
-            drawPath(parcial, color, style = Stroke(4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-            if (!ok && trazo.value >= 1f) drawCircle(color, 2.6.dp.toPx(), Offset(w * 0.5f, w * 0.73f))
-        }
+        Cuy(if (ok) PoseCuy.FELIZ else PoseCuy.PREOCUPADO, Modifier.size(64.dp), insignia = ok, progreso = trazo.value)
         Spacer(Modifier.height(10.dp))
         Text(texto, style = Tipo.titulo, color = Reloj.tinta)
         if (detalle != null) Text(detalle, style = Tipo.apoyo, color = Reloj.tintaSuave)
@@ -377,6 +374,8 @@ fun PantallaSinDatos() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Cuy(PoseCuy.DORMIDO, Modifier.size(52.dp))
+        Spacer(Modifier.height(4.dp))
         Text(t("Sin horario", "No schedule"), style = Tipo.titulo, color = Reloj.tinta)
         Text(t("Abre Agenda en el teléfono para traerlo.", "Open Agenda on the phone to bring it."), style = Tipo.apoyo, color = Reloj.tintaSuave)
     }
@@ -390,6 +389,8 @@ fun PantallaLibre(dia: WatchDay, ahora: LocalDateTime) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Cuy(PoseCuy.DORMIDO, Modifier.size(52.dp))
+        Spacer(Modifier.height(4.dp))
         Text(t("Nada fijo por ahora", "Nothing fixed for now"), style = Tipo.titulo, color = Reloj.tinta)
         Text(pieDatos(dia, ahora), style = Tipo.apoyo, color = Reloj.tintaSuave)
     }
