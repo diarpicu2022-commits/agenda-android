@@ -213,3 +213,29 @@ dependencia. Si no hay Internet ni analítica: **sin cookies ni rastreo**, y la 
 6. En el anexo de diseño, estas pantallas y estados entran en el alcance y usan el repertorio del contrato.
 
 - **Pedido del profe (2026-10-07), pendiente**: modo claro/oscuro a elección y cambio de idioma (es/en). Detalle en `Proyectos Finales/PENDIENTES-PROFE.md`. CampusWatch: colores de la app y modo claro.
+
+## 9. Noche del 2026-11-09 · CampusWatch terminado, IA y propuesta de diseño (por revisar con Diego)
+
+Diego autorizó trabajar toda la noche y dejar las decisiones juntas. Rama `feature/campuswatch-claro` (PR #2 hacia
+`develop`, sin mergear) y `feature/campuswatch-vivo` (PR #3 en borrador, sobre la anterior).
+
+- **CampusWatch claro, pasos 1 a 6 hechos** (`docs/ux/anexos/2026-11-09-campuswatch-claro.md`): paleta clara de la app,
+  selector Claro · Oscuro · Como el teléfono, el teléfono publica su modo, asistencia local con «¿Fuiste?» (Room v3,
+  formato `cw2`), 22 pantallas medidas en dos temas sin fallos y siempre activo en negro medido.
+- **IA «Tu ritmo»** (`docs/ux/anexos/2026-11-10-agenda-ia.md`): aprende en el teléfono, sin Internet, el retraso típico
+  de las salidas reales (Room v4, `PersonalRhythm` con pruebas, formato `cw3`) y el reloj lo dice en Próxima y en Es hora
+  de salir.
+- **Más vida, propuesta A «El camino a clase»** (`docs/ux/anexos/2026-11-10-campuswatch-vivo.md`): figura que camina por
+  el anillo hacia el campus y el Galeras al fondo. B y C quedan descritas.
+
+**Decisiones que esperan a Diego** (todas marcadas [por confirmar] en los anexos):
+1. Asistencia: «Voy saliendo» = asistí y «Hoy no voy» = falté en clases; límite de faltas por materia (no existe aún).
+2. IA: «Tu ritmo» solo aconseja y no cambia las alarmas sola.
+3. Diseño: A, B o C; si A, figura dentro o encima del riel, tamaño cerca de «Empieza en», destino distinto por tipo.
+4. Mergear PR #2 (y #3 si elige A).
+
+**Siguiente (la app del teléfono, segunda prioridad de Diego):** selector de tema en Ajustes (que también mande al reloj),
+inglés (`values-en`, textos que hoy están en el código), política de privacidad y consentimiento (`docs/legal/`, con las
+líneas de asistencia, salidas reales y el horario en el reloj), «Tu ritmo» y asistencia visibles en el teléfono, y el widget
+que pase a «Vas tarde» después de la hora de salida.
+
