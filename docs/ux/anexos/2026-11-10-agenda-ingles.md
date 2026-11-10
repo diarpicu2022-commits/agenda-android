@@ -66,9 +66,10 @@ notificación con su nombre traducido.
 
 ## Pendiente
 
-- `BarraInferiorTest` falla en inglés. Dentro de la prueba «Today» se mide como si cupiera a 14 sp y luego desborda
-  el ancho. En la app real, con el mismo ancho y la misma letra, cabe. La prueba cambia la escala de letra por código,
-  y algo de esa forma de medir no coincide con el dibujo real. Falta averiguar por qué antes de tocar la etiqueta.
+- ~~`BarraInferiorTest` falla en inglés~~. Arreglado el 10 de noviembre. La etiqueta medía con su estilo y `Text` dibujaba
+  con ese estilo mezclado con `LocalTextStyle`, así que la medida y el dibujo no coincidían. Ahora mide con el estilo
+  mezclado y, si al dibujar todavía desborda el ancho, baja medio punto más sin pasar de 14 sp efectivos. Con los dos
+  cambios la prueba pasa. No aislé cuál de los dos lo resolvió.
 - Android 10 a 12 no se probó (no hay emulador con esas versiones). Ahí el idioma se aplica envolviendo el contexto de
   la actividad, los avisos y el widget.
 - El widget y las notificaciones en inglés solo se probaron con pruebas unitarias de texto, no en pantalla.

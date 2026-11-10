@@ -31,6 +31,8 @@ data class FilaHoy(
     val pasada: Boolean,
     /** Conflicto inline bajo la fila (C10). */
     val conflicto: ConflictoFila?,
+    /** Ya pasó y tiene marca «falté» («Hoy no voy» o «No fui» en el reloj): no se dice «Completada». */
+    val falte: Boolean = false,
 )
 
 /** Conflictos de C10. La hora se formatea en la UI (12/24 h, C1.1). */

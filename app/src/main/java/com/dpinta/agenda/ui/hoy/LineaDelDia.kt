@@ -92,7 +92,7 @@ internal fun EstacionDelDia(
         append(l("${inicio.enLinea} a ${fin.enLinea}", "${inicio.enLinea} to ${fin.enLinea}") + ", ${fila.titulo}, $tipoHablado")
         if (fila.salon.isNotBlank()) append(l(", salón ", ", room ") + fila.salon)
         if (fila.lugar.isNotBlank()) append(", ${fila.lugar}")
-        if (fila.pasada) append(l(", completada", ", completed"))
+        if (fila.pasada) append(if (fila.falte) l(", faltaste", ", you missed it") else l(", completada", ", completed"))
         conflicto?.let { append(l(". Conflicto: ", ". Conflict: ") + it) }
     }
     val interaccion = remember { MutableInteractionSource() }
@@ -131,7 +131,10 @@ internal fun EstacionDelDia(
                     }
                     val r = ESTACION.toPx() / 2
                     val c = Offset(x, y)
-                    if (fila.pasada) {
+                    if (fila.pasada && fila.falte) {
+                        // Falta: la estación queda vacía (sin «✓»), solo el aro.
+                        drawCircle(ds.tintaSuave, r, c, style = Stroke(2.dp.toPx()))
+                    } else if (fila.pasada) {
                         drawCircle(ds.superficieFuerte, r, c)
                         val p = Path().apply { moveTo(c.x - r * 0.45f, c.y); lineTo(c.x - r * 0.1f, c.y + r * 0.38f); lineTo(c.x + r * 0.5f, c.y - r * 0.4f) }
                         drawPath(p, ds.tintaSuave, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
@@ -162,7 +165,7 @@ internal fun EstacionDelDia(
             Text(fila.titulo, style = t.cuerpoFuerte, color = if (fila.pasada) ds.tintaSuave else ds.tinta, maxLines = 2)
             val detalle = listOf("${inicio.enLinea} – ${fin.enLinea}", fila.salon, fila.lugar).filter { it.isNotBlank() }.joinToString(" · ")
             Text(detalle, style = t.apoyo, color = ds.tintaSuave)
-            if (fila.pasada) Text(l("✓ Completada", "✓ Completed"), style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.tintaSuave)
+            if (fila.pasada) Text(if (fila.falte) l("Faltaste", "You missed it") else l("✓ Completada", "✓ Completed"), style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.tintaSuave)
             conflicto?.let {
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {

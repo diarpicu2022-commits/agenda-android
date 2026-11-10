@@ -240,7 +240,7 @@ private fun FilaDelDia(fila: FilaHoy, antesDeAhora: Boolean, es24h: Boolean, onE
         append(l("${inicio.enLinea} a ${fin.enLinea}", "${inicio.enLinea} to ${fin.enLinea}") + ", ${fila.titulo}, $tipoHablado")
         if (fila.salon.isNotBlank()) append(l(", salón ", ", room ") + fila.salon)
         if (fila.lugar.isNotBlank()) append(", ${fila.lugar}")
-        if (fila.pasada) append(l(", terminada", ", finished"))
+        if (fila.pasada) append(if (fila.falte) l(", faltaste", ", you missed it") else l(", terminada", ", finished"))
         conflicto?.let { append(l(". Conflicto: ", ". Conflict: ") + it) }
     }
     val interaccion = remember { MutableInteractionSource() }

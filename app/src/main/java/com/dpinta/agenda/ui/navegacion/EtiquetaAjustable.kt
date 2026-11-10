@@ -1,5 +1,9 @@
 package com.dpinta.agenda.ui.navegacion
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,19 +50,25 @@ internal fun tamanoQueCabe(
 internal fun EtiquetaAjustable(texto: String, estilo: TextStyle, color: Color, modifier: Modifier = Modifier) {
     val medidor = rememberTextMeasurer()
     val escala = LocalDensity.current.fontScale
+    // Se mide con el mismo estilo con que `Text` dibuja (mezclado con LocalTextStyle); si no, la medida y el dibujo
+    // pueden no coincidir y la etiqueta desborda aunque «quepa» (BarraInferiorTest, «Today» con fuente 2,0).
+    val estiloFinal = LocalTextStyle.current.merge(estilo)
     BoxWithConstraints(modifier) {
         val disponible = constraints.maxWidth
-        val tamano = remember(texto, disponible, escala, estilo) {
-            tamanoQueCabe(estilo.fontSize.value, escala) { sp ->
-                medidor.measure(texto, estilo.copy(fontSize = sp.sp), softWrap = false, maxLines = 1).size.width <= disponible
-            }
+        val minimo = minOf(estiloFinal.fontSize.value, MINIMO_EFECTIVO_SP / escala)
+        var tamano by remember(texto, disponible, escala, estiloFinal) {
+            mutableFloatStateOf(
+                tamanoQueCabe(estiloFinal.fontSize.value, escala) { sp ->
+                    medidor.measure(texto, estiloFinal.copy(fontSize = sp.sp), softWrap = false, maxLines = 1).size.width <= disponible
+                },
+            )
         }
-        val factor = tamano / estilo.fontSize.value
+        val factor = tamano / estiloFinal.fontSize.value
         Text(
             texto,
-            style = estilo.copy(
+            style = estiloFinal.copy(
                 fontSize = tamano.sp,
-                lineHeight = (estilo.lineHeight.value * factor).sp,
+                lineHeight = (estiloFinal.lineHeight.value * factor).sp,
                 hyphens = Hyphens.None,
                 textAlign = TextAlign.Center,
             ),
@@ -67,6 +77,8 @@ internal fun EtiquetaAjustable(texto: String, estilo: TextStyle, color: Color, m
             softWrap = false,
             // Último recurso si ni a 14 sp efectivos cabe: se recorta con elipsis, nunca se parte.
             overflow = TextOverflow.Ellipsis,
+            // Red de seguridad: si al dibujar todavía desborda el ancho, medio punto menos, sin bajar del mínimo.
+            onTextLayout = { r -> if (r.didOverflowWidth && tamano > minimo) tamano = maxOf(minimo, tamano - 0.5f) },
         )
     }
 }
