@@ -27,7 +27,8 @@
 - **Tus derechos** (Ley 1581 de 2012 y Decreto 1377 de 2013, compilado en el Decreto 1074 de 2015): conocer,
   actualizar, rectificar y suprimir tus datos y revocar la autorización. En la app: Ajustes › Tu perfil (corregir o
   borrar), borrar una actividad la elimina, y Ajustes › Datos › «Borrar todos mis datos» borra todo de una vez. Revocar
-  la autorización es dejar de usar la app y borrar los datos. Pendiente: «Exportar mis datos».
+  la autorización es dejar de usar la app y borrar los datos. Ajustes › Datos › «Exportar mis datos» guarda tu horario de
+  un año (seis meses atrás y seis adelante, con la asistencia) en un archivo .ics, en el lugar que elijas.
 - **Menores:** la app está pensada para estudiantes universitarios. Si la usa un menor de edad, con autorización de sus
   padres o representantes.
 - **Cambios:** una nueva versión de esta política se muestra en la app con su fecha y se vuelve a pedir que la aceptes.

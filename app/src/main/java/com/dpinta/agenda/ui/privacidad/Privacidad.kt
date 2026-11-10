@@ -50,7 +50,7 @@ object PoliticaPrivacidad {
         "Qué no hace" to "No hay publicidad, analítica, rastreo ni cookies, y no hay copia en la nube.",
         "Cuánto tiempo" to "Hasta que borres los datos o desinstales la app.",
         "Tus derechos" to "Conocer, actualizar, rectificar y suprimir tus datos y revocar la autorización (Ley 1581 de 2012 y Decreto 1377 " +
-            "de 2013, compilado en el Decreto 1074 de 2015). Corriges tu perfil en Ajustes y borras todo en Ajustes, Datos.",
+            "de 2013, compilado en el Decreto 1074 de 2015). Corriges tu perfil en Ajustes. En Ajustes, Datos exportas tu horario a un archivo .ics y borras todo.",
         "Cambios" to "Si esta política cambia, la app te muestra la nueva versión con su fecha y te pide aceptarla otra vez.",
     )
 }

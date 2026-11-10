@@ -1,5 +1,6 @@
 package com.dpinta.agenda.ui.ajustes
 
+import kotlinx.coroutines.flow.first
 import android.content.pm.ApplicationInfo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -68,13 +69,42 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AjustesViewModel @Inject constructor(
-    repositorio: AgendaRepository,
+    private val repositorio: AgendaRepository,
     private val ajustes: AjustesAvisos,
     private val programador: ProgramadorAvisos,
     private val perfilLocal: com.dpinta.agenda.data.perfil.PerfilLocal,
     private val ajustesTema: com.dpinta.agenda.data.ajustes.AjustesTema,
 ) : ViewModel() {
     val tema: StateFlow<com.dpinta.agenda.data.ajustes.TemaApp> = ajustesTema.tema
+
+    /**
+     * «Exportar mis datos» (derecho a conocer, Ley 1581): las sesiones de seis meses atrás a seis meses adelante como
+     * eventos .ics que abre cualquier calendario, con salón y lugar, y la asistencia en las clases pasadas.
+     */
+    suspend fun exportarIcs(): String {
+        val agenda = repositorio.agenda().first()
+        val hoy = java.time.LocalDate.now()
+        val marcas = repositorio.asistencias().first().associateBy { it.activityId to it.date }
+        val eventos = programador.sesiones(agenda, hoy.minusMonths(6), hoy.plusMonths(6)).mapNotNull { s ->
+            val act = agenda.actividades[s.activityId] ?: return@mapNotNull null
+            val lugar = act.lugarId?.let { agenda.lugares[it]?.nombre }
+            val donde = listOfNotNull(act.salon.ifBlank { null }, lugar).joinToString(" · ").ifBlank { null }
+            val asistencia = when (marcas[s.activityId to s.start.toLocalDate()]?.mark) {
+                com.dpinta.agenda.domain.AttendanceMark.ASISTI -> "Asististe"
+                com.dpinta.agenda.domain.AttendanceMark.FALTE -> "Faltaste"
+                null -> null
+            }
+            com.dpinta.agenda.domain.ics.IcsEvent(
+                uid = "agenda-${s.activityId}-${s.start}@dpinta",
+                summary = act.titulo,
+                location = donde,
+                description = asistencia,
+                start = s.start,
+                end = s.end,
+            )
+        }
+        return com.dpinta.agenda.domain.ics.IcsWriter.write(eventos, java.time.ZoneId.systemDefault(), java.time.Instant.now())
+    }
 
     /** Cambia el tema y vuelve a publicar el día: el reloj en «Como el teléfono» sigue este tema. */
     fun tema(t: com.dpinta.agenda.data.ajustes.TemaApp) {
@@ -121,12 +151,26 @@ fun AjustesRuta(
     onPrivacidad: () -> Unit = {},
     viewModel: AjustesViewModel = hiltViewModel(),
 ) {
+    // «Exportar mis datos»: el selector de archivos del sistema (sin permisos); se escribe donde la persona elija.
+    val contexto = LocalContext.current
+    val alcance = androidx.compose.runtime.rememberCoroutineScope()
+    val exportar = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("text/calendar"),
+    ) { uri ->
+        if (uri != null) alcance.launch {
+            val texto = viewModel.exportarIcs()
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                contexto.contentResolver.openOutputStream(uri)?.use { it.write(texto.toByteArray(Charsets.UTF_8)) }
+            }
+        }
+    }
     val semestres by viewModel.semestres.collectAsStateWithLifecycle()
     val resumen by viewModel.resumen.collectAsStateWithLifecycle()
     val perfil by viewModel.perfil.collectAsStateWithLifecycle()
     val tema by viewModel.tema.collectAsStateWithLifecycle()
     AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen,
-        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares, tema = tema, onTema = viewModel::tema, onPrivacidad = onPrivacidad)
+        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares, tema = tema, onTema = viewModel::tema, onPrivacidad = onPrivacidad,
+        onExportar = { exportar.launch("Agenda.ics") })
 }
 
 /** Ajustes (anexo §7). Por ahora: Semestre. En compilaciones depurables enlaza la demostración de la banda. */
@@ -145,6 +189,7 @@ fun AjustesPantalla(
     tema: com.dpinta.agenda.data.ajustes.TemaApp = com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA,
     onTema: (com.dpinta.agenda.data.ajustes.TemaApp) -> Unit = {},
     onPrivacidad: () -> Unit = {},
+    onExportar: () -> Unit = {},
 ) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
@@ -192,6 +237,7 @@ fun AjustesPantalla(
             }
             ResumenMatutino(resumen, onResumen)
             GrupoAjustes("Datos") {
+                FilaAjuste("Exportar mis datos", ayuda = "Tu horario de un año en un archivo .ics que abre cualquier calendario") { onExportar() }
                 FilaAjuste("Política de privacidad", ayuda = "Versión ${com.dpinta.agenda.ui.privacidad.PoliticaPrivacidad.VERSION} · qué se guarda y tus derechos") { onPrivacidad() }
                 FilaAjuste("Borrar todos mis datos", ayuda = "Actividades, lugares, semestres, perfil y ajustes de este teléfono.", peligro = true) { confirmarBorrado = true }
                 if (depurable) {

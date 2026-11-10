@@ -110,5 +110,7 @@ demostración); queda probado por compilación, no por recorrido.
   consentimiento quedó guardado con versión 0.2 y fecha 2026-11-10.
 - **Ojo** con los scripts de capturas de pasos anteriores (`capturas_paso4.sh` y `capturas_paso5.sh`). En una instalación
   limpia ahora aparece primero el consentimiento y hay que aceptarlo antes de correrlos.
-- **Pendiente.** «Exportar mis datos».
+- **Exportar mis datos** (hecho después, la misma noche). Ajustes › Datos abre el selector de archivos del sistema, sin
+  permisos, y guarda `Agenda.ics` con las sesiones de seis meses atrás a seis adelante, con salón, lugar y asistencia.
+  Probado en el emulador: 723 eventos, 150 KB.
 
