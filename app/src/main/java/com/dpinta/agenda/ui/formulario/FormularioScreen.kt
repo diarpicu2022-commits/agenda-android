@@ -218,7 +218,7 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
                 ayuda = "Campus",
                 teclado = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
             )
-            BotonSubrayado("Elegir en el mapa", tinta = c.tinta, modifier = Modifier.testTag(EtiquetasFormulario.MAPA), onClick = acciones.onMapa)
+            BotonSubrayado(l("Elegir en el mapa", "Choose on the map"), tinta = c.tinta, modifier = Modifier.testTag(EtiquetasFormulario.MAPA), onClick = acciones.onMapa)
             CampoTexto(
                 l("Salón", "Room"),
                 f.salon,

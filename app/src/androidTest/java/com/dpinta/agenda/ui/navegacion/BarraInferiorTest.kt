@@ -39,7 +39,7 @@ class BarraInferiorTest {
                 .fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action?.invoke(resultados)
             val texto = resultados.single()
             assertEquals("${etiqueta(p)} en una línea", 1, texto.lineCount)
-            assertTrue("${etiqueta(p)} sin recorte", !texto.hasVisualOverflow)
+            assertTrue("${etiqueta(p)} sin recorte (ancho=${texto.didOverflowWidth} alto=${texto.didOverflowHeight} tam=${texto.size} sp=${texto.layoutInput.style.fontSize})", !texto.hasVisualOverflow)
             // Nunca por debajo de 14 sp efectivos.
             assertTrue(texto.layoutInput.style.fontSize.value * 2f >= 14f)
         }
