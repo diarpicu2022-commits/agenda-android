@@ -73,4 +73,20 @@ notificación con su nombre traducido.
   la actividad, los avisos y el widget.
 - El widget y las notificaciones en inglés solo se probaron con pruebas unitarias de texto, no en pantalla.
 - La pantalla de demostración de la banda (solo depuración) sigue en español.
-- CampusWatch sigue en español porque es otro módulo y lleva su propio paso.
+
+## CampusWatch en inglés
+
+El reloj sigue el idioma que se eligió en Agenda. El teléfono lo manda junto con el tema por `/campuswatch/tema`
+(clave `idioma`, «es» o «en»), y el reloj lo guarda en `campuswatch_tema`. Si todavía no ha llegado, usa el idioma del
+reloj. Así la persona elige una sola vez, en el teléfono.
+
+- `wear/.../Idioma.kt` tiene `IdiomaReloj` y `t("es", "en")`. Es estado de Compose, así que al llegar otro idioma la
+  pantalla se vuelve a componer. La tile y la complicación lo cargan al pedir sus datos.
+- `values-en/strings.xml` del reloj traduce el nombre de la tile y de la complicación.
+- `tools/verificacion/reloj_dia.py` acepta un tercer argumento (`es` o `en`) que simula el idioma del teléfono.
+
+En el emulador del reloj (454 px) los 8 escenarios de la pantalla principal y las páginas de acciones,
+«Did you go?», horario de hoy y mañana, asistencia y tema salen en inglés y caben, incluido «Cancel today's session».
+En español sigue igual. Falta probar con un teléfono emparejado que el idioma llega de verdad, y ver la tile y la
+complicación en inglés.
+
