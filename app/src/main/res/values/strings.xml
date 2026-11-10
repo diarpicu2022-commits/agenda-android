@@ -98,4 +98,6 @@
     <string name="permiso_sin_avisos">Sin avisos: no te llegará nada</string>
     <string name="guardado">Guardado: %1$s</string>
     <string name="deshacer">Deshacer</string>
+    <string name="ajustes_horas">Horas trabajadas</string>
+    <string name="ajustes_horas_ayuda">Esta semana, las últimas dos y la quincena</string>
 </resources>

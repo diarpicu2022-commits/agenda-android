@@ -98,4 +98,6 @@
     <string name="permiso_sin_avisos">Reminders off: you won\'t get anything</string>
     <string name="guardado">Saved: %1$s</string>
     <string name="deshacer">Undo</string>
+    <string name="ajustes_horas">Hours worked</string>
+    <string name="ajustes_horas_ayuda">This week, the last two and the pay period</string>
 </resources>

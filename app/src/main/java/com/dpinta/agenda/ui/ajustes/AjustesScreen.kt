@@ -151,6 +151,7 @@ internal fun resumenSemestre(s: SemestreGuardado): String {
 @Composable
 fun AjustesRuta(
     onLugares: () -> Unit = {},
+    onHoras: () -> Unit = {},
     onAtras: () -> Unit,
     onSemestre: (Long?) -> Unit,
     onDemoBanda: () -> Unit,
@@ -180,7 +181,7 @@ fun AjustesRuta(
     var idioma by remember { mutableStateOf(com.dpinta.agenda.data.ajustes.Idioma.elegido(contexto)) }
     val archivo = stringResource(R.string.ajustes_exportar_archivo)
     AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen,
-        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares, tema = tema, onTema = viewModel::tema, onPrivacidad = onPrivacidad,
+        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares, onHoras = onHoras, tema = tema, onTema = viewModel::tema, onPrivacidad = onPrivacidad,
         onExportar = { exportar.launch(archivo) },
         idioma = idioma,
         onIdioma = { nuevo ->
@@ -206,6 +207,7 @@ fun AjustesPantalla(
     perfil: com.dpinta.agenda.data.perfil.Perfil = com.dpinta.agenda.data.perfil.Perfil(),
     onPerfil: (com.dpinta.agenda.data.perfil.Perfil) -> Unit = {},
     onLugares: () -> Unit = {},
+    onHoras: () -> Unit = {},
     tema: com.dpinta.agenda.data.ajustes.TemaApp = com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA,
     onTema: (com.dpinta.agenda.data.ajustes.TemaApp) -> Unit = {},
     onPrivacidad: () -> Unit = {},
@@ -269,6 +271,8 @@ fun AjustesPantalla(
                 FilaAjuste(stringResource(R.string.ajustes_anadir_semestre)) { onSemestre(null) }
                 DivisorAjustes()
                 FilaAjuste(stringResource(R.string.ajustes_lugares), ayuda = stringResource(R.string.ajustes_lugares_ayuda)) { onLugares() }
+                DivisorAjustes()
+                FilaAjuste(stringResource(R.string.ajustes_horas), ayuda = stringResource(R.string.ajustes_horas_ayuda)) { onHoras() }
             }
             ResumenMatutino(resumen, onResumen)
             GrupoAjustes(stringResource(R.string.ajustes_datos)) {
