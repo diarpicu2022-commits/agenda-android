@@ -257,3 +257,21 @@ que pase a «Vas tarde» después de la hora de salida.
 4. Límite de faltas por materia en el formulario (el reloj ya lo muestra si existe).
 5. Revisión de la política por un abogado.
 
+
+## 11. 2026-11-10 · Agenda en inglés (rama `feature/agenda-ingles`)
+
+- Diego mergeó el PR #4 y aprobó los pasos 1 a 3 del inglés. Fechas en inglés: se quedan día/mes/año (decisión suya).
+- Idioma en Ajustes › Apariencia (Español · English · Como el sistema). Toda la app del teléfono está en inglés:
+  pantallas, boleto, avisos, canales, widget y TalkBack. Detalle, términos y verificación en
+  `docs/ux/anexos/2026-11-10-agenda-ingles.md`.
+- Red de restos: `python tools/verificacion/restos_espanol.py` con el emulador encendido. Hoy da 0 restos.
+- El punto 3 de la sección 10 ya estaba hecho: el widget pasa a «vas tarde · salida» con el estado del plan.
+- Ojo: `connectedDebugAndroidTest` desinstala la app al terminar; después hay que reinstalar y aceptar el
+  consentimiento.
+
+**Lo que falta:**
+1. `BarraInferiorTest` falla en inglés («Today» desborda dentro de la prueba, en la app real cabe). Ver el anexo.
+2. CampusWatch en inglés (`wear/`, `values-en`).
+3. «Tu ritmo» y la asistencia visibles en el teléfono (Hoy y Actividades).
+4. Límite de faltas por materia en el formulario.
+5. Revisión de la política por un abogado (ahora también la versión en inglés de `values-en/strings.xml`).

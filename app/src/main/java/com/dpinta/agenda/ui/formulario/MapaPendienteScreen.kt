@@ -1,5 +1,6 @@
 package com.dpinta.agenda.ui.formulario
 
+import com.dpinta.agenda.ui.components.lengua
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,10 +30,11 @@ import com.dpinta.agenda.ui.theme.AgendaTheme
  */
 @Composable
 fun MapaPendientePantalla(onVolver: () -> Unit, modifier: Modifier = Modifier) {
+    val l = lengua()
     val c = AgendaTheme.colores
     val m = AgendaTheme.reticula.margen
     Column(modifier.fillMaxSize().background(c.papel)) {
-        Cabecera("Elegir en el mapa", onAtras = onVolver)
+        Cabecera(l("Elegir en el mapa", "Choose on the map"), onAtras = onVolver)
         Box(
             Modifier
                 .fillMaxWidth()
@@ -47,25 +49,27 @@ fun MapaPendientePantalla(onVolver: () -> Unit, modifier: Modifier = Modifier) {
                     drawLine(c.tinta, Offset(x, y - 3 * lado), Offset(x, y), AgendaMedidas.hilo.toPx())
                     drawRect(c.tinta, topLeft = Offset(x - lado / 2, y - 3 * lado - lado / 2), size = Size(lado, lado))
                 }
-                .semantics { contentDescription = "Mapa pendiente: todavía no está configurado" },
+                .semantics { contentDescription = l("Mapa pendiente: todavía no está configurado", "Map pending: not set up yet") },
             contentAlignment = Alignment.BottomStart,
         ) {
             Text(
-                "Mapa pendiente",
+                l("Mapa pendiente", "Map pending"),
                 style = AgendaTheme.tipo.seccion,
                 color = c.tinta,
                 modifier = Modifier.padding(m),
             )
         }
         Text(
-            "El mapa llega cuando se configure Google Maps. Mientras tanto, escribe el nombre del lugar en el formulario; " +
+            l("El mapa llega cuando se configure Google Maps. Mientras tanto, escribe el nombre del lugar en el formulario; " +
                 "si coincide con uno que ya usas, se reutiliza.",
+                "The map arrives once Google Maps is set up. Meanwhile, write the place name in the form; " +
+                    "if it matches one you already use, it is reused."),
             style = AgendaTheme.tipo.cuerpo,
             color = c.tinta,
             modifier = Modifier.padding(horizontal = m, vertical = AgendaSpacing.s16),
         )
         BotonRelleno(
-            "Escribir el lugar",
+            l("Escribir el lugar", "Write the place"),
             relleno = c.tinta,
             tinta = c.papel,
             modifier = Modifier.padding(horizontal = m).align(Alignment.End),

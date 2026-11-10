@@ -1,5 +1,6 @@
 package com.dpinta.agenda.ui.lugar
 
+import com.dpinta.agenda.ui.components.lengua
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -143,23 +144,24 @@ fun LugarPantalla(
     onCerrar: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val l = lengua()
     val c = AgendaTheme.colores
     val m = AgendaTheme.reticula.margen
     Column(modifier.fillMaxSize().background(c.papel).imePadding()) {
-        Cabecera(e.nombre.ifBlank { "Lugar" }, onAtras = onCerrar)
+        Cabecera(e.nombre.ifBlank { l("Lugar", "Place") }, onAtras = onCerrar)
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = m, vertical = AgendaSpacing.s16),
             verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s16),
         ) {
             Text(
-                "Cuánto tardas desde casa. Con esto calculo a qué hora salir; sin tráfico en vivo.",
+                l("Cuánto tardas desde casa. Con esto calculo a qué hora salir; sin tráfico en vivo.", "How long it takes from home. I use it to work out when to leave; no live traffic."),
                 style = AgendaTheme.tipo.cuerpo,
                 color = c.tinta,
             )
             for (modo in TransportMode.entries) {
-                val etiqueta = BandaMapeador.aModoUi(modo).etiqueta.replaceFirstChar { it.uppercase() }
+                val etiqueta = BandaMapeador.aModoUi(modo).etiqueta(l).replaceFirstChar { it.uppercase() }
                 CampoTexto(
-                    etiqueta = "$etiqueta, en minutos",
+                    etiqueta = l("$etiqueta, en minutos", "$etiqueta, in minutes"),
                     valor = e.minutos[modo].orEmpty(),
                     onCambio = { onMinutos(modo, it) },
                     error = e.errores[modo],
@@ -169,19 +171,19 @@ fun LugarPantalla(
             }
             if (e.otros.isNotEmpty()) {
                 Text(
-                    "Desde otros lugares",
+                    l("Desde otros lugares", "From other places"),
                     style = AgendaTheme.tipo.encabezado,
                     color = c.tinta,
                     modifier = Modifier.padding(top = AgendaSpacing.s16).semantics { heading() },
                 )
                 Text(
-                    "Si vienes de otra actividad, la salida se calcula con este tiempo.",
+                    l("Si vienes de otra actividad, la salida se calcula con este tiempo.", "If you come from another activity, departure is worked out with this time."),
                     style = AgendaTheme.tipo.cuerpo,
                     color = c.tinta,
                 )
                 for ((otro, nombre) in e.otros) {
                     CampoTexto(
-                        etiqueta = "Desde $nombre, en minutos",
+                        etiqueta = l("Desde $nombre, en minutos", "From $nombre, in minutes"),
                         valor = e.traslados[otro].orEmpty(),
                         onCambio = { onTraslado(otro, it) },
                         error = e.erroresTraslado[otro],
@@ -199,8 +201,8 @@ fun LugarPantalla(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                BotonSubrayado("Cancelar", tinta = c.tinta, onClick = onCerrar)
-                BotonRelleno("Guardar", relleno = c.tinta, tinta = c.papel, onClick = onGuardar)
+                BotonSubrayado(l("Cancelar", "Cancel"), tinta = c.tinta, onClick = onCerrar)
+                BotonRelleno(l("Guardar", "Save"), relleno = c.tinta, tinta = c.papel, onClick = onGuardar)
             }
         }
     }

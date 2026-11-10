@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui.permisos
 
+import com.dpinta.agenda.R
+import androidx.compose.ui.res.stringResource
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -116,7 +118,7 @@ fun PantallaPermisoAvisos(onActivar: () -> Unit, onAhoraNo: () -> Unit, modifier
             .padding(horizontal = m, vertical = AgendaSpacing.s32),
     ) {
         Text(
-            "Para avisarte «Empieza Cálculo en B-204» necesito enviarte notificaciones.",
+            stringResource(R.string.permiso_explica),
             style = AgendaTheme.tipo.seccion,
             color = c.tinta,
             modifier = Modifier.semantics { heading() },
@@ -125,8 +127,8 @@ fun PantallaPermisoAvisos(onActivar: () -> Unit, onAhoraNo: () -> Unit, modifier
         EjemploAviso()
         Spacer(Modifier.weight(1f))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            BotonSubrayado("Ahora no", tinta = c.tinta, onClick = onAhoraNo)
-            BotonRelleno("Activar", relleno = c.tinta, tinta = c.papel, onClick = onActivar)
+            BotonSubrayado(stringResource(R.string.ahora_no), tinta = c.tinta, onClick = onAhoraNo)
+            BotonRelleno(stringResource(R.string.activar), relleno = c.tinta, tinta = c.papel, onClick = onActivar)
         }
     }
 }
@@ -134,6 +136,7 @@ fun PantallaPermisoAvisos(onActivar: () -> Unit, onAhoraNo: () -> Unit, modifier
 /** Una notificación dibujada con los tokens de la app: sin radio ni sombra (C11). */
 @Composable
 private fun EjemploAviso() {
+    val ejemplo = stringResource(R.string.permiso_ejemplo_desc)
     val c = AgendaTheme.colores
     // Sin icono: el repertorio no tiene uno de notificación y el de aviso significa conflicto.
     Column(
@@ -142,11 +145,11 @@ private fun EjemploAviso() {
             .background(c.papel2)
             .border(AgendaMedidas.filete, c.filete)
             .padding(AgendaSpacing.s16)
-            .clearAndSetSemantics { contentDescription = "Ejemplo de aviso: Empieza Cálculo, B-204" },
+            .clearAndSetSemantics { contentDescription = ejemplo },
     ) {
-        Text("Agenda · en 15 min", style = AgendaTheme.tipo.meta, color = c.tinta2)
+        Text(stringResource(R.string.permiso_ejemplo_meta), style = AgendaTheme.tipo.meta, color = c.tinta2)
         Spacer(Modifier.height(AgendaSpacing.s4))
-        Text("Empieza Cálculo · B-204", style = AgendaTheme.tipo.cuerpo, color = c.tinta)
+        Text(stringResource(R.string.permiso_ejemplo_texto), style = AgendaTheme.tipo.cuerpo, color = c.tinta)
     }
 }
 
@@ -162,7 +165,7 @@ fun FranjaSinAvisos(onActivar: () -> Unit, modifier: Modifier = Modifier) {
             .padding(start = AgendaTheme.reticula.margen),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Sin avisos: no te llegará nada", style = AgendaTheme.tipo.meta, color = c.tinta, modifier = Modifier.weight(1f))
-        BotonSubrayado("Activar", tinta = c.tinta, onClick = onActivar)
+        Text(stringResource(R.string.permiso_sin_avisos), style = AgendaTheme.tipo.meta, color = c.tinta, modifier = Modifier.weight(1f))
+        BotonSubrayado(stringResource(R.string.activar), tinta = c.tinta, onClick = onActivar)
     }
 }

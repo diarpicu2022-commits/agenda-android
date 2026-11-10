@@ -18,7 +18,7 @@ sealed interface ActividadesUiState {
 }
 
 /** Arquitectura de información del anexo: Clases · Trabajo · Puntuales; después, Lugares guardados. */
-enum class Grupo(val titulo: String) { Clases("Clases"), Trabajo("Trabajo"), Puntuales("Puntuales") }
+enum class Grupo(val titulo: String, val tituloEn: String) { Clases("Clases", "Classes"), Trabajo("Trabajo", "Work"), Puntuales("Puntuales", "One-off") }
 
 @Immutable
 data class Seccion(val grupo: Grupo, val filas: List<ActividadFila>)
@@ -98,11 +98,16 @@ private val DIAS = mapOf(
     DayOfWeek.FRIDAY to "vie", DayOfWeek.SATURDAY to "sáb", DayOfWeek.SUNDAY to "dom",
 )
 
+private val DIAS_EN = mapOf(
+    DayOfWeek.MONDAY to "Mon", DayOfWeek.TUESDAY to "Tue", DayOfWeek.WEDNESDAY to "Wed", DayOfWeek.THURSDAY to "Thu",
+    DayOfWeek.FRIDAY to "Fri", DayOfWeek.SATURDAY to "Sat", DayOfWeek.SUNDAY to "Sun",
+)
+
 /** «lun, mié y vie» · «lun a vie» · «todos los días». */
-fun textoDias(dias: List<DayOfWeek>): String {
+fun textoDias(dias: List<DayOfWeek>, l: com.dpinta.agenda.ui.components.Lengua = com.dpinta.agenda.ui.components.Lengua.ES): String {
     val orden = dias.distinct().sorted()
-    if (orden.size == 7) return "todos los días"
-    if (orden == DayOfWeek.entries.take(5)) return "lun a vie"
-    val nombres = orden.map { DIAS.getValue(it) }
-    return if (nombres.size == 1) nombres[0] else nombres.dropLast(1).joinToString(", ") + " y " + nombres.last()
+    if (orden.size == 7) return l("todos los días", "every day")
+    if (orden == DayOfWeek.entries.take(5)) return l("lun a vie", "Mon to Fri")
+    val nombres = orden.map { if (l == com.dpinta.agenda.ui.components.Lengua.EN) DIAS_EN.getValue(it) else DIAS.getValue(it) }
+    return if (nombres.size == 1) nombres[0] else nombres.dropLast(1).joinToString(", ") + l(" y ", " and ") + nombres.last()
 }

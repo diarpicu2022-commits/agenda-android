@@ -40,10 +40,10 @@ sealed interface ConflictoFila {
 }
 
 /** Texto literal de C10: «25 min de traslado, necesitas 35» / «Se cruza con Física 9:00». */
-fun textoConflicto(c: ConflictoFila, es24h: Boolean): String = when (c) {
-    is ConflictoFila.Traslado -> "${c.disponibles} min de traslado, necesitas ${c.necesarios}"
-    is ConflictoFila.Cruce ->
-        "Se cruza con ${c.actividad} ${com.dpinta.agenda.ui.components.banda.formatearHora(c.hora, es24h).enLinea}"
+fun textoConflicto(c: ConflictoFila, es24h: Boolean, l: com.dpinta.agenda.ui.components.Lengua = com.dpinta.agenda.ui.components.Lengua.ES): String = when (c) {
+    is ConflictoFila.Traslado -> l("${c.disponibles} min de traslado, necesitas ${c.necesarios}", "${c.disponibles} min to get there, you need ${c.necesarios}")
+    is ConflictoFila.Cruce -> l("Se cruza con ", "Overlaps with ") +
+        "${c.actividad} ${com.dpinta.agenda.ui.components.banda.formatearHora(c.hora, es24h, l).enLinea}"
 }
 
 /** Primera sesión de los próximos días cuando hoy no hay nada (C10 «día sin nada»). */

@@ -1,5 +1,6 @@
 package com.dpinta.agenda.ui.components.banda
 
+import com.dpinta.agenda.ui.components.lengua
 import android.content.res.Configuration
 import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedContent
@@ -125,7 +126,8 @@ fun BandaSalida(
         label = "estado-banda",
         contentKey = { it.estado },
     ) { m ->
-        val textos = remember(m, es24h) { textosBanda(m, es24h) }
+        val l = lengua()
+        val textos = remember(m, es24h, l) { textosBanda(m, es24h, l) }
         val colores = AgendaTheme.colores.coloresBanda(m.estado)
         if (m.estado == EstadoBanda.SinTraslado) {
             FilaSinTraslado(textos, colores, reducirMovimiento, bajoBarraDeEstado)
@@ -219,6 +221,7 @@ private fun FilaTrayecto(t: TextosBanda, c: ColoresBanda, onCambiarModo: () -> U
     val tipo = AgendaTheme.tipo
     Row(verticalAlignment = Alignment.CenterVertically) {
         val interaccion = remember { MutableInteractionSource() }
+        val descripcionModo = lengua()("Modo: $modo. Toca para cambiarlo", "Mode: $modo. Tap to change it")
         Row(
             Modifier
                 .then(with(focos) { Modifier.enModo() })
@@ -228,11 +231,11 @@ private fun FilaTrayecto(t: TextosBanda, c: ColoresBanda, onCambiarModo: () -> U
                     interactionSource = interaccion,
                     indication = ripple(color = c.frente),
                     role = Role.Button,
-                    onClickLabel = "Cambiar modo de transporte",
+                    onClickLabel = lengua()("Cambiar modo de transporte", "Change transport mode"),
                     onClick = onCambiarModo,
                 )
                 .testTag(EtiquetasBanda.MODO)
-                .semantics { contentDescription = "Modo: $modo. Toca para cambiarlo" },
+                .semantics { contentDescription = descripcionModo },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconoAgenda(modeIcono(modo), c.frente, tamano = AgendaMedidas.iconoEnLinea)
@@ -252,7 +255,7 @@ private fun FilaTrayecto(t: TextosBanda, c: ColoresBanda, onCambiarModo: () -> U
 }
 
 private fun modeIcono(etiqueta: String) =
-    ModoTransporte.entries.first { it.etiqueta == etiqueta }.icono
+    ModoTransporte.entries.first { it.etiqueta == etiqueta || it.etiquetaEn == etiqueta }.icono
 
 /**
  * Acciones y trayecto. El orden de foco de C9.4 (primaria, secundaria, modo) no coincide con
@@ -353,11 +356,11 @@ private fun FilaAcciones(t: TextosBanda, c: ColoresBanda, onAccion: (AccionBanda
 
 @Composable
 private fun BotonPrimario(accion: AccionBanda, c: ColoresBanda, modifier: Modifier, onClick: () -> Unit) =
-    BotonRelleno(accion.etiqueta, relleno = c.frente, tinta = c.fondo, modifier = modifier, onClick = onClick)
+    BotonRelleno(accion.etiqueta(lengua()), relleno = c.frente, tinta = c.fondo, modifier = modifier, onClick = onClick)
 
 @Composable
 private fun BotonSecundario(accion: AccionBanda, c: ColoresBanda, modifier: Modifier, onClick: () -> Unit) =
-    BotonSubrayado(accion.etiqueta, tinta = c.frente, modifier = modifier, onClick = onClick)
+    BotonSubrayado(accion.etiqueta(lengua()), tinta = c.frente, modifier = modifier, onClick = onClick)
 
 /** C10 «sin traslado»: sin campo; la hora baja a tamaño de salón. */
 @Composable

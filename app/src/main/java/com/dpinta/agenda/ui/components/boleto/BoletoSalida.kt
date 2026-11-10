@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui.components.boleto
 
+import com.dpinta.agenda.ui.components.lengua
+import com.dpinta.agenda.ui.components.Lengua
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -83,20 +85,20 @@ private fun AgendaDs.suaveUrgencia(u: Urgency): Color = when (u) {
     else -> rutaSuave
 }
 
-fun Urgency.palabra(): String = when (this) {
-    Urgency.CALM -> "Calma"
-    Urgency.UPCOMING -> "Próxima"
-    Urgency.SOON -> "Pronto"
-    Urgency.LEAVE_NOW -> "Salir ahora"
-    Urgency.URGENT -> "Urgente"
-    Urgency.MISSED -> "Perdida"
+fun Urgency.palabra(l: Lengua = Lengua.ES): String = when (this) {
+    Urgency.CALM -> l("Calma", "Calm")
+    Urgency.UPCOMING -> l("Próxima", "Upcoming")
+    Urgency.SOON -> l("Pronto", "Soon")
+    Urgency.LEAVE_NOW -> l("Salir ahora", "Leave now")
+    Urgency.URGENT -> l("Urgente", "Urgent")
+    Urgency.MISSED -> l("Perdida", "Missed")
 }
 
 /** Etiqueta de la acción en el sistema nuevo (02-urgencia.md · «Acciones de aviso»). */
-private fun AccionBanda.texto(): String = when (this) {
-    AccionBanda.VoySaliendo -> "Ya voy"
-    AccionBanda.MasCinco -> "Aplazar 5 min"
-    AccionBanda.YaLlegue -> "Ya llegué"
+private fun AccionBanda.texto(l: Lengua): String = when (this) {
+    AccionBanda.VoySaliendo -> l("Ya voy", "On my way")
+    AccionBanda.MasCinco -> l("Aplazar 5 min", "Snooze 5 min")
+    AccionBanda.YaLlegue -> l("Ya llegué", "I'm here")
 }
 
 /** «8:07 a. m.» nunca se parte en dos líneas en el boleto (medido con fuente 2,0). */
@@ -125,29 +127,31 @@ fun BoletoSalida(
     val t = AgendaTheme.tipo
     val u = modelo.estado.urgencia()
     val color = ds.colorUrgencia(u)
-    val salida = formatearHora(modelo.horaSalida, es24h).enLinea.inseparable()
-    val inicio = formatearHora(modelo.horaInicio, es24h).enLinea.inseparable()
-    val llegada = formatearHora(modelo.horaLlegada, es24h).enLinea.inseparable()
+    val l = lengua()
+    val salida = formatearHora(modelo.horaSalida, es24h, l).enLinea.inseparable()
+    val inicio = formatearHora(modelo.horaInicio, es24h, l).enLinea.inseparable()
+    val llegada = formatearHora(modelo.horaLlegada, es24h, l).enLinea.inseparable()
     val enCamino = modelo.estado == EstadoBanda.EnCamino
 
     val rotulo = when (modelo.estado) {
-        EstadoBanda.EnCamino -> "EN CAMINO"
-        EstadoBanda.SinTraslado -> "PRÓXIMA"
-        else -> "BOLETO DE SALIDA"
+        EstadoBanda.EnCamino -> l("EN CAMINO", "ON THE WAY")
+        EstadoBanda.SinTraslado -> l("PRÓXIMA", "UP NEXT")
+        else -> l("BOLETO DE SALIDA", "DEPARTURE TICKET")
     }
     val (antes, cifra, despues) = when (modelo.estado) {
-        EstadoBanda.Espera, EstadoBanda.Preparate -> Triple("Debes salir en", cuenta(modelo.minutosParaSalir), "Hora de salida $salida")
-        EstadoBanda.SalYa -> Triple("Es hora de salir", "Sal ya", "$salida · llegas $llegada")
-        EstadoBanda.VasTarde -> Triple("Vas tarde", "Sal ya", "Si sales ahora llegas $llegada")
-        EstadoBanda.EnCamino -> Triple("Llegada estimada", llegada, null)
-        EstadoBanda.SinTraslado -> Triple("Empieza a las", inicio, null)
+        EstadoBanda.Espera, EstadoBanda.Preparate ->
+            Triple(l("Debes salir en", "Leave in"), cuenta(modelo.minutosParaSalir), l("Hora de salida $salida", "Departure time $salida"))
+        EstadoBanda.SalYa -> Triple(l("Es hora de salir", "Time to leave"), l("Sal ya", "Leave now"), l("$salida · llegas $llegada", "$salida · you arrive $llegada"))
+        EstadoBanda.VasTarde -> Triple(l("Vas tarde", "Running late"), l("Sal ya", "Leave now"), l("Si sales ahora llegas $llegada", "If you leave now you arrive $llegada"))
+        EstadoBanda.EnCamino -> Triple(l("Llegada estimada", "Estimated arrival"), llegada, null)
+        EstadoBanda.SinTraslado -> Triple(l("Empieza a las", "Starts at"), inicio, null)
     }
     val detalle = buildList {
-        add("${modelo.actividad} comienza a las $inicio")
+        add(l("${modelo.actividad} comienza a las $inicio", "${modelo.actividad} starts at $inicio"))
         if (modelo.salon.isNotBlank()) add(modelo.salon)
         if (modelo.hayTrayecto) {
-            add("Viaje ${modelo.duracion.toMinutes()} min")
-            add("Margen ${modelo.margen.toMinutes()} min")
+            add(l("Viaje ${modelo.duracion.toMinutes()} min", "Travel ${modelo.duracion.toMinutes()} min"))
+            add(l("Margen ${modelo.margen.toMinutes()} min", "Buffer ${modelo.margen.toMinutes()} min"))
         }
     }.joinToString(" · ")
     val viejo = modelo.hayTrayecto && modelo.datoViejo && !modelo.manual
@@ -166,11 +170,11 @@ fun BoletoSalida(
                 .fillMaxWidth()
                 .background(ds.suaveUrgencia(u))
                 .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 16.dp)
-                .semantics(mergeDescendants = true) { contentDescription = fraseTalkBack(modelo, es24h) },
+                .semantics(mergeDescendants = true) { contentDescription = fraseTalkBack(modelo, es24h, l) },
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(rotulo, style = t.etiqueta, color = ds.tintaSuave, modifier = Modifier.weight(1f).semantics { heading() })
-                InsigniaUrgencia(if (enCamino) null else u, if (enCamino) "Ya saliste" else u.palabra())
+                InsigniaUrgencia(if (enCamino) null else u, if (enCamino) l("Ya saliste", "You left") else u.palabra(l))
             }
             Spacer(Modifier.height(10.dp))
             Text(antes, style = t.apoyo, color = ds.tintaSuave)
@@ -179,9 +183,9 @@ fun BoletoSalida(
             if (modelo.hayTrayecto) {
                 Spacer(Modifier.height(12.dp))
                 Tramo(
-                    origen = "Salida",
+                    origen = l("Salida", "Departure"),
                     destino = modelo.lugar.ifBlank { modelo.salon },
-                    centro = "${modelo.duracion.toMinutes()} min ${modelo.modo.etiqueta}",
+                    centro = "${modelo.duracion.toMinutes()} min ${modelo.modo.etiqueta(l)}",
                     onCentro = onCambiarModo,
                 )
             }
@@ -192,7 +196,7 @@ fun BoletoSalida(
             Text(detalle, style = t.apoyo, color = ds.tintaSuave)
             if (viejo) {
                 Spacer(Modifier.height(6.dp))
-                Text("Tiempo de viaje estimado hace ${antiguedad(modelo.calculadoHace)}: puede haber cambiado.", style = t.apoyo, color = ds.aviso)
+                Text(l("Tiempo de viaje estimado hace ${antiguedad(modelo.calculadoHace, l)}: puede haber cambiado.", "Travel time estimated ${antiguedad(modelo.calculadoHace, l)} ago: it may have changed."), style = t.apoyo, color = ds.aviso)
             }
             val primaria = when (modelo.estado) {
                 EstadoBanda.Espera, EstadoBanda.Preparate, EstadoBanda.SalYa, EstadoBanda.VasTarde -> AccionBanda.VoySaliendo
@@ -213,7 +217,7 @@ fun BoletoSalida(
                             .testTag(EtiquetasBoleto.PRIMARIA),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(primaria.texto(), style = t.cuerpoFuerte, color = if (primaria == AccionBanda.YaLlegue) ds.sobreRuta else ds.sobreHora)
+                        Text(primaria.texto(lengua()), style = t.cuerpoFuerte, color = if (primaria == AccionBanda.YaLlegue) ds.sobreRuta else ds.sobreHora)
                     }
                     if (secundaria != null) {
                         Box(
@@ -226,7 +230,7 @@ fun BoletoSalida(
                                 .testTag(EtiquetasBoleto.SECUNDARIA),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(secundaria.texto(), style = t.cuerpoFuerte, color = ds.ruta)
+                            Text(secundaria.texto(lengua()), style = t.cuerpoFuerte, color = ds.ruta)
                         }
                     }
                 }
@@ -281,7 +285,7 @@ private fun Tramo(origen: String, destino: String, centro: String, onCentro: () 
     if (androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f) {
         Column {
             Text(centro, style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.ruta,
-                modifier = Modifier.heightIn(min = 48.dp).clip(Formas.ficha).clickable(role = Role.Button, onClickLabel = "Cambiar el modo de transporte", onClick = onCentro)
+                modifier = Modifier.heightIn(min = 48.dp).clip(Formas.ficha).clickable(role = Role.Button, onClickLabel = lengua()("Cambiar el modo de transporte", "Change the transport mode"), onClick = onCentro)
                     .padding(vertical = 10.dp).testTag(EtiquetasBoleto.MODO))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(origen, style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.tinta, maxLines = 1)
@@ -299,7 +303,7 @@ private fun Tramo(origen: String, destino: String, centro: String, onCentro: () 
             modifier = Modifier
                 .heightIn(min = 48.dp)
                 .clip(Formas.ficha)
-                .clickable(role = Role.Button, onClickLabel = "Cambiar el modo de transporte", onClick = onCentro)
+                .clickable(role = Role.Button, onClickLabel = lengua()("Cambiar el modo de transporte", "Change the transport mode"), onClick = onCentro)
                 .padding(horizontal = 4.dp, vertical = 14.dp)
                 .testTag(EtiquetasBoleto.MODO),
         )

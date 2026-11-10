@@ -35,13 +35,17 @@ class BarraInferiorTest {
         }
         Pestana.entries.forEach { p ->
             val resultados = mutableListOf<TextLayoutResult>()
-            regla.onNodeWithText(p.etiqueta, useUnmergedTree = true)
+            regla.onNodeWithText(etiqueta(p), useUnmergedTree = true)
                 .fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action?.invoke(resultados)
             val texto = resultados.single()
-            assertEquals("${p.etiqueta} en una línea", 1, texto.lineCount)
-            assertTrue("${p.etiqueta} sin recorte", !texto.hasVisualOverflow)
+            assertEquals("${etiqueta(p)} en una línea", 1, texto.lineCount)
+            assertTrue("${etiqueta(p)} sin recorte (ancho=${texto.didOverflowWidth} alto=${texto.didOverflowHeight} tam=${texto.size} sp=${texto.layoutInput.style.fontSize})", !texto.hasVisualOverflow)
             // Nunca por debajo de 14 sp efectivos.
             assertTrue(texto.layoutInput.style.fontSize.value * 2f >= 14f)
         }
     }
+
+    /** El texto de la pestaña en el idioma del dispositivo de prueba. */
+    private fun etiqueta(p: Pestana): String =
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.getString(p.texto)
 }

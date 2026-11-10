@@ -88,11 +88,13 @@ fun AgendaRoot(
         LaunchedEffect(Unit) {
             if (escenarioFormulario.isNotBlank()) nav.navigate(RutaFormulario(escenario = escenarioFormulario))
         }
-        LaunchedEffect(raiz) {
+        val guardadoTexto = androidx.compose.ui.res.stringResource(com.dpinta.agenda.R.string.guardado)
+        val deshacerTexto = androidx.compose.ui.res.stringResource(com.dpinta.agenda.R.string.deshacer)
+        LaunchedEffect(raiz, guardadoTexto) {
             raiz.guardados.collect { g ->
                 val r = avisos.showSnackbar(
-                    message = "Guardado: ${g.titulo}",
-                    actionLabel = if (g.nueva) "Deshacer" else null,
+                    message = guardadoTexto.format(g.titulo),
+                    actionLabel = if (g.nueva) deshacerTexto else null,
                     duration = SnackbarDuration.Short,
                 )
                 if (r == SnackbarResult.ActionPerformed) raiz.deshacer(g)

@@ -1,5 +1,9 @@
 package com.dpinta.agenda.ui.ajustes
 
+import com.dpinta.agenda.ui.components.actividad
+import com.dpinta.agenda.R
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.flow.first
 import android.content.pm.ApplicationInfo
 import androidx.compose.foundation.background
@@ -81,7 +85,7 @@ class AjustesViewModel @Inject constructor(
      * «Exportar mis datos» (derecho a conocer, Ley 1581): las sesiones de seis meses atrás a seis meses adelante como
      * eventos .ics que abre cualquier calendario, con salón y lugar, y la asistencia en las clases pasadas.
      */
-    suspend fun exportarIcs(): String {
+    suspend fun exportarIcs(asististe: String, faltaste: String): String {
         val agenda = repositorio.agenda().first()
         val hoy = java.time.LocalDate.now()
         val marcas = repositorio.asistencias().first().associateBy { it.activityId to it.date }
@@ -90,8 +94,8 @@ class AjustesViewModel @Inject constructor(
             val lugar = act.lugarId?.let { agenda.lugares[it]?.nombre }
             val donde = listOfNotNull(act.salon.ifBlank { null }, lugar).joinToString(" · ").ifBlank { null }
             val asistencia = when (marcas[s.activityId to s.start.toLocalDate()]?.mark) {
-                com.dpinta.agenda.domain.AttendanceMark.ASISTI -> "Asististe"
-                com.dpinta.agenda.domain.AttendanceMark.FALTE -> "Faltaste"
+                com.dpinta.agenda.domain.AttendanceMark.ASISTI -> asististe
+                com.dpinta.agenda.domain.AttendanceMark.FALTE -> faltaste
                 null -> null
             }
             com.dpinta.agenda.domain.ics.IcsEvent(
@@ -104,6 +108,11 @@ class AjustesViewModel @Inject constructor(
             )
         }
         return com.dpinta.agenda.domain.ics.IcsWriter.write(eventos, java.time.ZoneId.systemDefault(), java.time.Instant.now())
+    }
+
+    /** Al cambiar el idioma se rehacen las alarmas: los avisos ya programados llevan su texto. */
+    fun idiomaCambiado() {
+        viewModelScope.launch { programador.reprogramar() }
     }
 
     /** Cambia el tema y vuelve a publicar el día: el reloj en «Como el teléfono» sigue este tema. */
@@ -129,17 +138,14 @@ class AjustesViewModel @Inject constructor(
     }
 }
 
-private val FORMATO = DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("es"))
-private fun LocalDate.corta() = FORMATO.format(this).replace(".", "")
-
-/** «del 3 ago al 28 nov · 5 días sin clase» (sin «→»: Atkinson no lo tiene, C2.2). */
+/** «del 3 ago al 28 nov · 5 días sin clase» (sin «→»: Atkinson no lo tiene, C2.2). En inglés, «Aug 3 to Nov 28 · …». */
+@Composable
 internal fun resumenSemestre(s: SemestreGuardado): String {
-    val dias = when (s.diasSinClase.size) {
-        0 -> "sin días libres"
-        1 -> "1 día sin clase"
-        else -> "${s.diasSinClase.size} días sin clase"
-    }
-    return "del ${s.inicio.corta()} al ${s.fin.corta()} · $dias"
+    val formato = com.dpinta.agenda.ui.components.formatoFecha(R.string.fmt_dia_mes)
+    fun LocalDate.corta() = formato.format(this).replace(".", "")
+    val dias = if (s.diasSinClase.isEmpty()) stringResource(R.string.semestre_sin_libres)
+    else pluralStringResource(R.plurals.semestre_dias_sin_clase, s.diasSinClase.size, s.diasSinClase.size)
+    return stringResource(R.string.semestre_rango, s.inicio.corta(), s.fin.corta(), dias)
 }
 
 @Composable
@@ -154,11 +160,13 @@ fun AjustesRuta(
     // «Exportar mis datos»: el selector de archivos del sistema (sin permisos); se escribe donde la persona elija.
     val contexto = LocalContext.current
     val alcance = androidx.compose.runtime.rememberCoroutineScope()
+    val asististe = stringResource(R.string.export_asististe)
+    val faltaste = stringResource(R.string.export_faltaste)
     val exportar = androidx.activity.compose.rememberLauncherForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.CreateDocument("text/calendar"),
     ) { uri ->
         if (uri != null) alcance.launch {
-            val texto = viewModel.exportarIcs()
+            val texto = viewModel.exportarIcs(asististe, faltaste)
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 contexto.contentResolver.openOutputStream(uri)?.use { it.write(texto.toByteArray(Charsets.UTF_8)) }
             }
@@ -168,9 +176,21 @@ fun AjustesRuta(
     val resumen by viewModel.resumen.collectAsStateWithLifecycle()
     val perfil by viewModel.perfil.collectAsStateWithLifecycle()
     val tema by viewModel.tema.collectAsStateWithLifecycle()
+    // Idioma: desde Android 13 el sistema recrea la actividad; antes, se recrea a mano.
+    var idioma by remember { mutableStateOf(com.dpinta.agenda.data.ajustes.Idioma.elegido(contexto)) }
+    val archivo = stringResource(R.string.ajustes_exportar_archivo)
     AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen,
         perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares, tema = tema, onTema = viewModel::tema, onPrivacidad = onPrivacidad,
-        onExportar = { exportar.launch("Agenda.ics") })
+        onExportar = { exportar.launch(archivo) },
+        idioma = idioma,
+        onIdioma = { nuevo ->
+            if (nuevo != idioma) {
+                idioma = nuevo
+                com.dpinta.agenda.data.ajustes.Idioma.guardar(contexto, nuevo)
+                viewModel.idiomaCambiado()
+                if (android.os.Build.VERSION.SDK_INT < 33) contexto.actividad()?.recreate()
+            }
+        })
 }
 
 /** Ajustes (anexo §7). Por ahora: Semestre. En compilaciones depurables enlaza la demostración de la banda. */
@@ -190,6 +210,8 @@ fun AjustesPantalla(
     onTema: (com.dpinta.agenda.data.ajustes.TemaApp) -> Unit = {},
     onPrivacidad: () -> Unit = {},
     onExportar: () -> Unit = {},
+    idioma: com.dpinta.agenda.data.ajustes.IdiomaApp = com.dpinta.agenda.data.ajustes.IdiomaApp.SISTEMA,
+    onIdioma: (com.dpinta.agenda.data.ajustes.IdiomaApp) -> Unit = {},
 ) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
@@ -198,51 +220,64 @@ fun AjustesPantalla(
     val depurable = remember(contexto) { (contexto.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0 }
     var confirmarBorrado by remember { mutableStateOf(false) }
     Column(modifier.fillMaxSize().background(c.papel)) {
-        Cabecera("Ajustes", onAtras = onAtras)
+        Cabecera(stringResource(R.string.ajustes_titulo), onAtras = onAtras)
         // PantallaAjustes del sistema: nota de privacidad arriba y grupos Perfil, Agenda, Avisos y Datos.
         Column(
             Modifier.verticalScroll(rememberScrollState()).padding(horizontal = m, vertical = AgendaSpacing.s8),
             verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s24),
         ) {
-            NotaPrivacidad("Tus datos permanecen en este dispositivo.", "No necesitas cuenta. Puedes borrar todo cuando quieras desde Datos.")
+            NotaPrivacidad(stringResource(R.string.ajustes_privacidad_titulo), stringResource(R.string.ajustes_privacidad_cuerpo))
             TuPerfil(perfil, onPerfil)
             // Apariencia (pedido del profesor): claro u oscuro a elección, con el Segmentado del sistema.
-            GrupoAjustes("Apariencia") {
+            GrupoAjustes(stringResource(R.string.ajustes_apariencia)) {
                 Column(Modifier.padding(16.dp)) {
                     com.dpinta.agenda.ui.components.Segmentado(
                         opciones = listOf(
-                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.CLARO, "Claro"),
-                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.OSCURO, "Oscuro"),
-                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA, "Como el sistema"),
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.CLARO, stringResource(R.string.tema_claro)),
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.OSCURO, stringResource(R.string.tema_oscuro)),
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA, stringResource(R.string.tema_sistema)),
                         ),
                         seleccion = tema,
                         onSeleccion = onTema,
                         etiquetaPrueba = "tema",
                     )
+                    Spacer(Modifier.height(16.dp))
+                    Text(stringResource(R.string.ajustes_idioma), style = t.cuerpoFuerte, color = c.tinta)
+                    Spacer(Modifier.height(8.dp))
+                    com.dpinta.agenda.ui.components.Segmentado(
+                        opciones = listOf(
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.IdiomaApp.ES, stringResource(R.string.idioma_es)),
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.IdiomaApp.EN, stringResource(R.string.idioma_en)),
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.IdiomaApp.SISTEMA, stringResource(R.string.tema_sistema)),
+                        ),
+                        seleccion = idioma,
+                        onSeleccion = onIdioma,
+                        etiquetaPrueba = "idioma",
+                    )
                 }
             }
-            GrupoAjustes("Agenda") {
+            GrupoAjustes(stringResource(R.string.ajustes_agenda)) {
                 when {
                     semestres == null -> Unit
-                    semestres.isEmpty() -> FilaAjuste("Semestre", "Sin semestre", ayuda = "Sin semestre, cada clase se repite 17 semanas y no se saltan festivos.") { onSemestre(null) }
+                    semestres.isEmpty() -> FilaAjuste(stringResource(R.string.ajustes_semestre), stringResource(R.string.ajustes_sin_semestre), ayuda = stringResource(R.string.ajustes_sin_semestre_ayuda)) { onSemestre(null) }
                     else -> semestres.forEachIndexed { i, s ->
                         if (i > 0) DivisorAjustes()
-                        FilaAjuste(if (semestres.size == 1) "Semestre" else s.nombre, if (semestres.size == 1) s.nombre else null, ayuda = resumenSemestre(s)) { onSemestre(s.id) }
+                        FilaAjuste(if (semestres.size == 1) stringResource(R.string.ajustes_semestre) else s.nombre, if (semestres.size == 1) s.nombre else null, ayuda = resumenSemestre(s)) { onSemestre(s.id) }
                     }
                 }
                 DivisorAjustes()
-                FilaAjuste("Añadir semestre") { onSemestre(null) }
+                FilaAjuste(stringResource(R.string.ajustes_anadir_semestre)) { onSemestre(null) }
                 DivisorAjustes()
-                FilaAjuste("Lugares y traslados", ayuda = "Minutos entre tus lugares guardados") { onLugares() }
+                FilaAjuste(stringResource(R.string.ajustes_lugares), ayuda = stringResource(R.string.ajustes_lugares_ayuda)) { onLugares() }
             }
             ResumenMatutino(resumen, onResumen)
-            GrupoAjustes("Datos") {
-                FilaAjuste("Exportar mis datos", ayuda = "Tu horario de un año en un archivo .ics que abre cualquier calendario") { onExportar() }
-                FilaAjuste("Política de privacidad", ayuda = "Versión ${com.dpinta.agenda.ui.privacidad.PoliticaPrivacidad.VERSION} · qué se guarda y tus derechos") { onPrivacidad() }
-                FilaAjuste("Borrar todos mis datos", ayuda = "Actividades, lugares, semestres, perfil y ajustes de este teléfono.", peligro = true) { confirmarBorrado = true }
+            GrupoAjustes(stringResource(R.string.ajustes_datos)) {
+                FilaAjuste(stringResource(R.string.ajustes_exportar), ayuda = stringResource(R.string.ajustes_exportar_ayuda)) { onExportar() }
+                FilaAjuste(stringResource(R.string.ajustes_politica), ayuda = stringResource(R.string.ajustes_politica_ayuda, com.dpinta.agenda.ui.privacidad.PoliticaPrivacidad.VERSION)) { onPrivacidad() }
+                FilaAjuste(stringResource(R.string.ajustes_borrar), ayuda = stringResource(R.string.ajustes_borrar_ayuda), peligro = true) { confirmarBorrado = true }
                 if (depurable) {
                     DivisorAjustes()
-                    FilaAjuste("Demostración de la banda", ayuda = "Solo en la compilación de prueba") { onDemoBanda() }
+                    FilaAjuste(stringResource(R.string.ajustes_demo_banda), ayuda = stringResource(R.string.ajustes_demo_banda_ayuda)) { onDemoBanda() }
                 }
             }
             Spacer(Modifier.height(AgendaSpacing.s24))
@@ -253,17 +288,17 @@ fun AjustesPantalla(
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { confirmarBorrado = false },
             containerColor = ds.superficie,
-            title = { Text("¿Borrar todos tus datos?", style = t.encabezado, color = ds.tinta) },
-            text = { Text("Se borran de este teléfono tus actividades, lugares, semestres, perfil y ajustes, y se quitan los avisos. No se puede deshacer. La app se cerrará.", style = t.cuerpo, color = ds.tinta) },
+            title = { Text(stringResource(R.string.ajustes_borrar_pregunta), style = t.encabezado, color = ds.tinta) },
+            text = { Text(stringResource(R.string.ajustes_borrar_detalle), style = t.cuerpo, color = ds.tinta) },
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = {
                     confirmarBorrado = false
                     // Derecho de supresión: Android borra todos los datos de la app (base cifrada, preferencias, alarmas).
                     contexto.getSystemService(android.app.ActivityManager::class.java).clearApplicationUserData()
-                }) { Text("Borrar todo", style = t.cuerpoFuerte, color = ds.critico) }
+                }) { Text(stringResource(R.string.ajustes_borrar_todo), style = t.cuerpoFuerte, color = ds.critico) }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar", style = t.cuerpoFuerte, color = ds.ruta) }
+                androidx.compose.material3.TextButton(onClick = { confirmarBorrado = false }) { Text(stringResource(R.string.cancelar), style = t.cuerpoFuerte, color = ds.ruta) }
             },
         )
     }
@@ -282,12 +317,12 @@ private fun TuPerfil(perfil: com.dpinta.agenda.data.perfil.Perfil, onCambio: (co
     var carrera by rememberSaveable { mutableStateOf(perfil.carrera) }
     var universidad by rememberSaveable { mutableStateOf(perfil.universidad) }
     fun guardar() = onCambio(com.dpinta.agenda.data.perfil.Perfil(nombre, carrera, universidad))
-    GrupoAjustes("Tu perfil") {
+    GrupoAjustes(stringResource(R.string.perfil_titulo)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(AgendaSpacing.s12)) {
-            Text("Cuenta local: se guarda solo en este teléfono, sin servidor ni copia en la nube.", style = t.meta, color = AgendaTheme.ds.tintaSuave)
-            CampoTexto("Tu nombre", nombre, { nombre = it; guardar() }, error = null, ayuda = "Diego")
-            CampoTexto("Carrera (opcional)", carrera, { carrera = it; guardar() }, error = null, ayuda = "Ingeniería de Software")
-            CampoTexto("Universidad (opcional)", universidad, { universidad = it; guardar() }, error = null)
+            Text(stringResource(R.string.perfil_cuenta_local), style = t.meta, color = AgendaTheme.ds.tintaSuave)
+            CampoTexto(stringResource(R.string.perfil_nombre), nombre, { nombre = it; guardar() }, error = null, ayuda = "Diego")
+            CampoTexto(stringResource(R.string.perfil_carrera), carrera, { carrera = it; guardar() }, error = null, ayuda = stringResource(R.string.perfil_carrera_ejemplo))
+            CampoTexto(stringResource(R.string.perfil_universidad), universidad, { universidad = it; guardar() }, error = null)
         }
     }
 }
@@ -302,22 +337,23 @@ private fun ResumenMatutino(ajuste: AjusteResumen, onCambio: (AjusteResumen) -> 
     // Sin clave de la hora: guardar mientras se escribe no debe reescribir el campo.
     var texto by rememberSaveable { mutableStateOf(formatearHora(ajuste.hora, es24h).enLinea) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
-    GrupoAjustes("Avisos") {
+    val errorHora = stringResource(R.string.error_hora)
+    GrupoAjustes(stringResource(R.string.avisos_titulo)) {
         FilaInterruptor(
-            "Resumen de la mañana",
-            if (ajuste.activo) "Todos los días a las ${formatearHora(ajuste.hora, es24h).enLinea}: lo del día y la primera salida" else "Apagado",
+            stringResource(R.string.resumen_manana),
+            if (ajuste.activo) stringResource(R.string.resumen_activo, formatearHora(ajuste.hora, es24h).enLinea) else stringResource(R.string.apagado),
             ajuste.activo,
         ) { onCambio(ajuste.copy(activo = it)) }
         if (ajuste.activo) {
             DivisorAjustes()
             Column(Modifier.padding(16.dp)) {
                 CampoTexto(
-                    etiqueta = "Hora del resumen",
+                    etiqueta = stringResource(R.string.resumen_hora),
                     valor = texto,
                     onCambio = { nuevo ->
                         texto = nuevo
                         val hora = Interprete.hora(nuevo)
-                        error = if (hora == null && nuevo.isNotBlank()) "Escribe la hora como 6 o 6:30" else null
+                        error = if (hora == null && nuevo.isNotBlank()) errorHora else null
                         if (hora != null) onCambio(ajuste.copy(hora = hora))
                     },
                     error = error,
@@ -336,7 +372,7 @@ private fun FilaSemestre(s: SemestreGuardado, onEditar: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .anilloFoco(interaccion, c.tinta)
-            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = "Editar", role = Role.Button, onClick = onEditar),
+            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = stringResource(R.string.editar), role = Role.Button, onClick = onEditar),
     ) {
         Column(Modifier.heightIn(min = AgendaSpacing.s64).padding(horizontal = AgendaTheme.reticula.margen, vertical = AgendaSpacing.s12)) {
             Text(s.nombre, style = AgendaTheme.tipo.cuerpo, color = c.tinta)

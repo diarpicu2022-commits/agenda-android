@@ -1,5 +1,6 @@
 package com.dpinta.agenda.ui.formulario
 
+import com.dpinta.agenda.ui.components.Lengua
 import androidx.compose.runtime.Immutable
 import com.dpinta.agenda.data.agenda.ActividadAGuardar
 import com.dpinta.agenda.data.agenda.Agenda
@@ -69,6 +70,10 @@ private val ESPANOL: Locale = Locale.forLanguageTag("es")
 private val FECHA_LARGA = DateTimeFormatter.ofPattern("d 'de' MMMM", ESPANOL)
 private val FECHA_LARGA_ANIO = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", ESPANOL)
 private val DIA_Y_FECHA = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ESPANOL)
+private val INGLES: Locale = Locale.forLanguageTag("en")
+private val FECHA_LARGA_EN = DateTimeFormatter.ofPattern("MMMM d", INGLES)
+private val FECHA_LARGA_ANIO_EN = DateTimeFormatter.ofPattern("MMMM d, yyyy", INGLES)
+private val DIA_Y_FECHA_EN = DateTimeFormatter.ofPattern("EEEE, MMMM d", INGLES)
 
 /** Así se escriben las fechas en los campos: 24/9/2026. */
 fun escribirFecha(fecha: LocalDate): String = "${fecha.dayOfMonth}/${fecha.monthValue}/${fecha.year}"
@@ -133,6 +138,21 @@ object Validador {
     const val MSG_MARGEN = "El margen va de 0 a 120 minutos."
     const val MSG_AVISO = "El aviso va de 0 a 240 minutos."
 
+    /** Los errores se guardan en español (las pruebas los comparan así) y se traducen al mostrarse. */
+    fun mensaje(msg: String, l: Lengua): String = if (l == Lengua.ES) msg else when (msg) {
+        MSG_TITULO -> "Write a name for the activity."
+        MSG_TITULO_LARGO -> "Maximum $TITULO_MAXIMO characters."
+        MSG_DIAS -> "Choose at least one day."
+        MSG_HORA -> "Write the time like this: 8:00."
+        MSG_FIN_ANTES -> "It has to end after it starts."
+        MSG_FECHA -> "Write the date like this: 24/9/2026 (day/month/year)."
+        MSG_HASTA_ANTES -> "The series has to end after it starts."
+        MSG_MARGEN -> "The buffer goes from 0 to 120 minutes."
+        MSG_AVISO -> "The reminder goes from 0 to 240 minutes."
+        "No se pudo guardar. Tus datos siguen aquí." -> "Couldn't save. Your data is still here."
+        else -> msg
+    }
+
     fun validar(f: Formulario, hoy: LocalDate, id: Long? = null): Validacion {
         val e = linkedMapOf<Campo, String>()
         val titulo = f.titulo.trim()
@@ -190,20 +210,21 @@ private val NOMBRE_DIA = mapOf(
     DayOfWeek.SUNDAY to "domingo",
 )
 
-fun nombreDia(d: DayOfWeek): String = NOMBRE_DIA.getValue(d)
+fun nombreDia(d: DayOfWeek, l: Lengua = Lengua.ES): String =
+    if (l == Lengua.EN) d.getDisplayName(java.time.format.TextStyle.FULL, INGLES) else NOMBRE_DIA.getValue(d)
 
-private fun enumerar(partes: List<String>): String = when (partes.size) {
+private fun enumerar(partes: List<String>, l: Lengua): String = when (partes.size) {
     0 -> ""
     1 -> partes[0]
-    else -> partes.dropLast(1).joinToString(", ") + " y " + partes.last()
+    else -> partes.dropLast(1).joinToString(", ") + l(" y ", " and ") + partes.last()
 }
 
-private fun dias(d: Set<DayOfWeek>): String {
+private fun dias(d: Set<DayOfWeek>, l: Lengua): String {
     val laborables = setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY)
     return when (d) {
-        DayOfWeek.entries.toSet() -> "todos los días"
-        laborables -> "de lunes a viernes"
-        else -> "cada " + enumerar(d.sorted().map { nombreDia(it) })
+        DayOfWeek.entries.toSet() -> l("todos los días", "every day")
+        laborables -> l("de lunes a viernes", "Monday to Friday")
+        else -> l("cada ", "every ") + enumerar(d.sorted().map { nombreDia(it, l) }, l)
     }
 }
 
@@ -212,12 +233,13 @@ private fun dias(d: Set<DayOfWeek>): String {
  * «Cálculo diferencial: cada lunes y miércoles, de 8:00 a 10:00, en B-204 · Campus, del 24 de
  * septiembre al 20 de enero de 2027.» Solo con un borrador ya válido.
  */
-fun resumen(a: ActividadAGuardar, es24h: Boolean): String {
+fun resumen(a: ActividadAGuardar, es24h: Boolean, l: Lengua = Lengua.ES): String {
+    if (l == Lengua.EN) return resumenEn(a, es24h)
     val donde = listOf(a.salon, a.lugar).filter { it.isNotBlank() }.joinToString(" · ").let { if (it.isEmpty()) "" else ", en $it" }
     val frase = when (val c = a.cuando) {
         is Cuando.Semanal -> {
             val hasta = if (c.hasta.year != c.desde.year) FECHA_LARGA_ANIO else FECHA_LARGA
-            "${a.titulo}: ${dias(c.dias)}, de ${formatearHora(c.inicio, es24h).enLinea} a ${formatearHora(c.fin, es24h).enLinea}$donde, " +
+            "${a.titulo}: ${dias(c.dias, l)}, de ${formatearHora(c.inicio, es24h).enLinea} a ${formatearHora(c.fin, es24h).enLinea}$donde, " +
                 "del ${FECHA_LARGA.format(c.desde)} al ${hasta.format(c.hasta)}"
         }
         is Cuando.Puntual ->
@@ -227,13 +249,30 @@ fun resumen(a: ActividadAGuardar, es24h: Boolean): String {
     return if (frase.endsWith(".")) frase else "$frase."
 }
 
+/** «Calculus: every Monday and Wednesday, from 8:00 AM to 10:00 AM, in B-204 · Campus, from September 24 to January 20, 2027.» */
+private fun resumenEn(a: ActividadAGuardar, es24h: Boolean): String {
+    val l = Lengua.EN
+    val donde = listOf(a.salon, a.lugar).filter { it.isNotBlank() }.joinToString(" · ").let { if (it.isEmpty()) "" else ", in $it" }
+    val horas = { i: java.time.LocalTime, f: java.time.LocalTime ->
+        "from ${formatearHora(i, es24h, l).enLinea} to ${formatearHora(f, es24h, l).enLinea}"
+    }
+    val frase = when (val c = a.cuando) {
+        is Cuando.Semanal -> {
+            val hasta = if (c.hasta.year != c.desde.year) FECHA_LARGA_ANIO_EN else FECHA_LARGA_EN
+            "${a.titulo}: ${dias(c.dias, l)}, ${horas(c.inicio, c.fin)}$donde, from ${FECHA_LARGA_EN.format(c.desde)} to ${hasta.format(c.hasta)}"
+        }
+        is Cuando.Puntual -> "${a.titulo}: ${DIA_Y_FECHA_EN.format(c.fecha)}, ${horas(c.inicio, c.fin)}$donde"
+    }
+    return if (frase.endsWith(".")) frase else "$frase."
+}
+
 /** Un conflicto del borrador con otra actividad, un día concreto. */
 data class AvisoConflicto(val fecha: LocalDate, val con: String, val conflicto: ConflictoFila)
 
 /** Texto de C10 con el día delante: «lunes: Se cruza con Física 9:00». */
-fun textoAviso(a: AvisoConflicto, es24h: Boolean): String = when (a.conflicto) {
-    is ConflictoFila.Cruce -> "${nombreDia(a.fecha.dayOfWeek)}: ${textoConflicto(a.conflicto, es24h)}"
-    is ConflictoFila.Traslado -> "${nombreDia(a.fecha.dayOfWeek)}, con ${a.con}: ${textoConflicto(a.conflicto, es24h)}"
+fun textoAviso(a: AvisoConflicto, es24h: Boolean, l: Lengua = Lengua.ES): String = when (a.conflicto) {
+    is ConflictoFila.Cruce -> "${nombreDia(a.fecha.dayOfWeek, l)}: ${textoConflicto(a.conflicto, es24h, l)}"
+    is ConflictoFila.Traslado -> "${nombreDia(a.fecha.dayOfWeek, l)}" + l(", con ", ", with ") + "${a.con}: ${textoConflicto(a.conflicto, es24h, l)}"
 }
 
 /** Id provisional del borrador mientras no existe. */

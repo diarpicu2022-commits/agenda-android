@@ -1,5 +1,8 @@
 package com.dpinta.agenda.ui.semana
 
+import com.dpinta.agenda.ui.components.Mensajes
+import com.dpinta.agenda.ui.components.Lengua
+import com.dpinta.agenda.ui.components.lengua
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.heading
@@ -97,11 +100,11 @@ fun SemanaPantalla(
     Column(modifier.fillMaxSize().background(c.papel)) {
         when (estado) {
             SemanaUiState.Cargando -> {
-                Cabecera("Semana")
-                EsqueletoCarga("Cargando la semana")
+                Cabecera(lengua()("Semana", "Week"))
+                EsqueletoCarga(lengua()("Cargando la semana", "Loading the week"))
             }
             SemanaUiState.PrimerUso -> {
-                Cabecera("Semana")
+                Cabecera(lengua()("Semana", "Week"))
                 EstadoPrimerUso(onAnadir = onCrear)
             }
             is SemanaUiState.Semana -> {
@@ -115,12 +118,12 @@ fun SemanaPantalla(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(titulo(estado), style = AgendaTheme.tipo.apoyo, color = ds.tintaSuave)
-                        Text("Semana", style = AgendaTheme.tipo.titulo, color = ds.tinta, modifier = Modifier.semantics { heading() })
+                        Text(titulo(estado, lengua()), style = AgendaTheme.tipo.apoyo, color = ds.tintaSuave)
+                        Text(lengua()("Semana", "Week"), style = AgendaTheme.tipo.titulo, color = ds.tinta, modifier = Modifier.semantics { heading() })
                     }
-                    BotonIcono(Icono.Atras, "Semana anterior", ds.tinta, onClick = onAnterior)
+                    BotonIcono(Icono.Atras, lengua()("Semana anterior", "Previous week"), ds.tinta, onClick = onAnterior)
                     // Sin glifo propio de «adelante»: la misma flecha, reflejada.
-                    BotonIcono(Icono.Atras, "Semana siguiente", ds.tinta, Modifier.graphicsLayer(scaleX = -1f), onClick = onSiguiente)
+                    BotonIcono(Icono.Atras, lengua()("Semana siguiente", "Next week"), ds.tinta, Modifier.graphicsLayer(scaleX = -1f), onClick = onSiguiente)
                 }
                 SemanaSistema(estado, onEditar, onEstaSemana)
             }
@@ -129,14 +132,16 @@ fun SemanaPantalla(
 }
 
 /** «Semana 8 · 21–27 sep» dentro de un semestre; «28 sep – 4 oct» fuera de él. */
-private fun titulo(s: SemanaUiState.Semana): String {
+private fun titulo(s: SemanaUiState.Semana, l: Lengua = Lengua.ES): String {
     val domingo = s.lunes.plusDays(6)
-    val mes = { d: java.time.LocalDate -> d.month.getDisplayName(TextStyle.SHORT, ESPANOL).removeSuffix(".") }
-    val rango = if (s.lunes.month == domingo.month) {
-        "${s.lunes.dayOfMonth}–${domingo.dayOfMonth} ${mes(domingo)}"
-    } else {
-        "${s.lunes.dayOfMonth} ${mes(s.lunes)} – ${domingo.dayOfMonth} ${mes(domingo)}"
+    val locale = Locale.forLanguageTag(l("es", "en"))
+    val mes = { d: java.time.LocalDate -> d.month.getDisplayName(TextStyle.SHORT, locale).removeSuffix(".") }
+    val rango = when {
+        l == Lengua.EN && s.lunes.month == domingo.month -> "${mes(domingo)} ${s.lunes.dayOfMonth}–${domingo.dayOfMonth}"
+        l == Lengua.EN -> "${mes(s.lunes)} ${s.lunes.dayOfMonth} – ${mes(domingo)} ${domingo.dayOfMonth}"
+        s.lunes.month == domingo.month -> "${s.lunes.dayOfMonth}–${domingo.dayOfMonth} ${mes(domingo)}"
+        else -> "${s.lunes.dayOfMonth} ${mes(s.lunes)} – ${domingo.dayOfMonth} ${mes(domingo)}"
     }
-    return s.numero?.let { "Semana $it · $rango" } ?: rango
+    return s.numero?.let { l("Semana $it · $rango", "Week $it · $rango") } ?: rango
 }
 

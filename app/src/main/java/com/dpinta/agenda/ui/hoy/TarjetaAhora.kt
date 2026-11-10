@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui.hoy
 
+import com.dpinta.agenda.ui.components.Lengua
+import com.dpinta.agenda.ui.components.lengua
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -31,7 +33,7 @@ import java.time.LocalTime
 
 private fun String.inseparable() = replace(' ', ' ')
 
-private fun cuenta(min: Long): String = when {
+internal fun cuenta(min: Long): String = when {
     min < 60 -> "$min min"
     min % 60 == 0L -> "${min / 60} h"
     else -> "${min / 60} h ${min % 60} min"
@@ -44,27 +46,28 @@ private fun cuenta(min: Long): String = when {
  */
 @Composable
 internal fun TarjetaAhora(e: EnCurso, ahora: LocalTime, onEditar: () -> Unit, modifier: Modifier = Modifier) {
+    val l = lengua()
     val ds = AgendaTheme.ds
     val t = AgendaTheme.tipo
     val es24h = rememberEs24h()
-    val inicio = formatearHora(e.inicio, es24h)
-    val fin = formatearHora(e.fin, es24h)
+    val inicio = formatearHora(e.inicio, es24h, l)
+    val fin = formatearHora(e.fin, es24h, l)
     val total = Duration.between(e.inicio, e.fin).toMinutes().coerceAtLeast(1)
     val queda = Duration.between(ahora, e.fin).toMinutes().coerceAtLeast(0)
     val avance = (1f - queda.toFloat() / total).coerceIn(0f, 1f)
     val tipo = when (e.tipo) {
-        TipoFila.Clase -> "Clase"
-        TipoFila.Trabajo -> "Trabajo"
-        TipoFila.Puntual -> "Entrega"
+        TipoFila.Clase -> l("Clase", "Class")
+        TipoFila.Trabajo -> l("Trabajo", "Work")
+        TipoFila.Puntual -> l("Entrega", "Due")
     }
     val despues = e.despues?.let { d ->
-        listOf("Después: " + formatearHora(d.hora, es24h).enLinea, d.titulo, d.salon).filter { it.isNotBlank() }.joinToString(" · ")
+        listOf(l("Después: ", "Next: ") + formatearHora(d.hora, es24h, l).enLinea, d.titulo, d.salon).filter { it.isNotBlank() }.joinToString(" · ")
     }
     val frase = buildString {
-        append("Ahora: ${e.titulo}, ${inicio.enLinea} a ${fin.enLinea}")
-        if (e.salon.isNotBlank()) append(", salón ${e.salon}")
+        append(l("Ahora: ${e.titulo}, ${inicio.enLinea} a ${fin.enLinea}", "Now: ${e.titulo}, ${inicio.enLinea} to ${fin.enLinea}"))
+        if (e.salon.isNotBlank()) append(l(", salón ", ", room ") + e.salon)
         if (e.lugar.isNotBlank()) append(", ${e.lugar}")
-        append(". Termina en ${cuenta(queda)}.")
+        append(l(". Termina en ${cuenta(queda)}.", ". Ends in ${cuenta(queda)}."))
         despues?.let { append(" $it.") }
     }
     Column(
@@ -72,17 +75,17 @@ internal fun TarjetaAhora(e: EnCurso, ahora: LocalTime, onEditar: () -> Unit, mo
             .fillMaxWidth()
             .clip(Formas.lamina)
             .background(ds.horaSuave)
-            .clickable(role = Role.Button, onClickLabel = "Editar", onClick = onEditar)
+            .clickable(role = Role.Button, onClickLabel = l("Editar", "Edit"), onClick = onEditar)
             .clearAndSetSemantics {
                 contentDescription = frase
                 role = Role.Button
-                onClick(label = "Editar") { onEditar(); true }
+                onClick(label = l("Editar", "Edit")) { onEditar(); true }
             }
             .padding(20.dp)
             .testTag("tarjeta-ahora"),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("AHORA", style = t.etiqueta, color = ds.sobreHora,
+            Text(l("AHORA", "NOW"), style = t.etiqueta, color = ds.sobreHora,
                 modifier = Modifier.clip(Formas.pastilla).background(ds.hora).padding(horizontal = 10.dp, vertical = 3.dp))
             Spacer(Modifier.weight(1f))
             Row(
@@ -101,7 +104,7 @@ internal fun TarjetaAhora(e: EnCurso, ahora: LocalTime, onEditar: () -> Unit, mo
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.Bottom) {
             Text(listOf(e.salon, e.lugar).filter { it.isNotBlank() }.joinToString(" · "), style = t.apoyo, color = ds.tintaSuave, modifier = Modifier.weight(1f))
-            Text("Termina en ${cuenta(queda)}", style = t.cuerpoFuerte, color = ds.tinta)
+            Text(l("Termina en ", "Ends in ") + cuenta(queda), style = t.cuerpoFuerte, color = ds.tinta)
         }
         Spacer(Modifier.height(10.dp))
         Box(Modifier.fillMaxWidth().height(6.dp).clip(Formas.pastilla).background(ds.superficie)) {

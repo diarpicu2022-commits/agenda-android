@@ -1,5 +1,9 @@
 package com.dpinta.agenda.ui.semana
 
+import com.dpinta.agenda.ui.components.localeApp
+import com.dpinta.agenda.ui.components.Mensajes
+import com.dpinta.agenda.ui.components.Lengua
+import com.dpinta.agenda.ui.components.lengua
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -108,7 +112,7 @@ internal fun SemanaSistema(s: SemanaUiState.Semana, onEditar: (Long) -> Unit, on
         if (hoy < 0) {
             item(key = "volver") {
                 Text(
-                    "Volver a esta semana", style = t.cuerpoFuerte, color = ds.ruta,
+                    lengua()("Volver a esta semana", "Back to this week"), style = t.cuerpoFuerte, color = ds.ruta,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .heightIn(min = 48.dp)
@@ -120,14 +124,14 @@ internal fun SemanaSistema(s: SemanaUiState.Semana, onEditar: (Long) -> Unit, on
         }
         item(key = "titulo-dia") {
             Text(
-                dia.fecha.dayOfWeek.getDisplayName(TextStyle.FULL, ES).replaceFirstChar { it.uppercase() } + " " + dia.fecha.dayOfMonth,
+                diaLargo(dia.fecha, lengua()),
                 style = t.encabezado, color = ds.tinta,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
             )
         }
         dia.sinClase?.let { motivo ->
             item(key = "sin-clase") {
-                Text(motivo, style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.ciruela,
+                Text(Mensajes.de(motivo, lengua()), style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.ciruela,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             }
         }
@@ -138,7 +142,7 @@ internal fun SemanaSistema(s: SemanaUiState.Semana, onEditar: (Long) -> Unit, on
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.Top) {
                     MedioCirculo(ds.aviso, Modifier.padding(top = 3.dp).size(14.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("${a.titulo} y ${b.titulo.replaceFirstChar { it.lowercase() }} se cruzan de $desde a $hasta.",
+                    Text(lengua()("${a.titulo} y ${b.titulo.replaceFirstChar { it.lowercase() }} se cruzan de $desde a $hasta.", "${a.titulo} and ${b.titulo} overlap from $desde to $hasta."),
                         style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.aviso)
                 }
             }
@@ -146,7 +150,7 @@ internal fun SemanaSistema(s: SemanaUiState.Semana, onEditar: (Long) -> Unit, on
         if (filas.isEmpty()) {
             item(key = "vacio") {
                 Text(
-                    if (dia.fecha.dayOfWeek.value >= 6) "Sin actividades fijas. Disfruta el día." else "No tienes actividades este día.",
+                    if (dia.fecha.dayOfWeek.value >= 6) lengua()("Sin actividades fijas. Disfruta el día.", "No fixed activities. Enjoy the day.") else lengua()("No tienes actividades este día.", "You have no activities this day."),
                     style = t.cuerpo, color = ds.tintaSuave, modifier = Modifier.padding(16.dp),
                 )
             }
@@ -169,9 +173,10 @@ internal fun SemanaSistema(s: SemanaUiState.Semana, onEditar: (Long) -> Unit, on
 /** Pastilla de día (selector de día del sistema): nombre corto, número y las estaciones del día. Hoy lleva anillo `hora`. */
 @Composable
 private fun PastillaDia(dia: DiaSemana, tipos: List<TipoFila>, elegido: Boolean, onClick: () -> Unit) {
+    val l = lengua()
     val ds = AgendaTheme.ds
     val t = AgendaTheme.tipo
-    val nombre = dia.fecha.dayOfWeek.getDisplayName(TextStyle.SHORT, ES).removeSuffix(".").replaceFirstChar { it.uppercase() }
+    val nombre = dia.fecha.dayOfWeek.getDisplayName(TextStyle.SHORT, localeApp()).removeSuffix(".").replaceFirstChar { it.uppercase() }
     val tinta = if (elegido) ds.sobreRuta else ds.tinta
     Column(
         Modifier
@@ -183,10 +188,10 @@ private fun PastillaDia(dia: DiaSemana, tipos: List<TipoFila>, elegido: Boolean,
             .selectable(selected = elegido, role = Role.Tab, onClick = onClick)
             .semantics {
                 contentDescription = buildString {
-                    append(dia.fecha.dayOfWeek.getDisplayName(TextStyle.FULL, ES)).append(" ").append(dia.fecha.dayOfMonth)
-                    if (dia.esHoy) append(", hoy")
-                    append(", ").append(if (tipos.isEmpty()) "sin actividades" else "${tipos.size} tipos de actividad")
-                    dia.sinClase?.let { append(", ").append(it) }
+                    append(diaLargo(dia.fecha, l))
+                    if (dia.esHoy) append(l(", hoy", ", today"))
+                    append(", ").append(if (tipos.isEmpty()) l("sin actividades", "no activities") else l("${tipos.size} tipos de actividad", "${tipos.size} activity types"))
+                    dia.sinClase?.let { append(", ").append(Mensajes.de(it, l)) }
                 }
             }
             .padding(horizontal = 10.dp, vertical = 8.dp)
@@ -223,3 +228,7 @@ private fun MedioCirculo(color: Color, modifier: Modifier) {
         drawArc(color, 90f, 180f, true, Offset(1.dp.toPx(), 1.dp.toPx()), Size(size.width - 2.dp.toPx(), size.height - 2.dp.toPx()))
     }
 }
+
+/** «Lunes 21» · «Monday 21». */
+private fun diaLargo(fecha: java.time.LocalDate, l: Lengua): String =
+    fecha.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.forLanguageTag(l("es", "en"))).replaceFirstChar { it.uppercase() } + " " + fecha.dayOfMonth

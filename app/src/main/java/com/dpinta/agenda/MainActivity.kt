@@ -24,9 +24,16 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var herramientas: HerramientasDepuracion
 
+    /** Android 10 a 12: el idioma elegido en Ajustes (desde Android 13 lo aplica el sistema). */
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.dpinta.agenda.data.ajustes.Idioma.contexto(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Los nombres de los canales siguen el idioma de la app (se rehacen al volver tras cambiarlo).
+        com.dpinta.agenda.avisos.Canal.registrar(this)
         val pestana = if (depurable()) aplicarExtrasDeDepuracion() else Pestana.Hoy
         val escenario = if (depurable()) intent.getStringExtra("formulario").orEmpty() else ""
         setContent { AgendaRoot(pestanaInicial = pestana, escenarioFormulario = escenario) }
