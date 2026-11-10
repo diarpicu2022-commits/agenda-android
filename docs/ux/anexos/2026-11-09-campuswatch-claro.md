@@ -112,6 +112,19 @@ Pasos: 1 tokens · 2 componente clave (Próxima con el anillo) · 3 el resto de 
 - **Hallazgo para Diego.** En claro la línea del aula y la hora («B-204 · 03:44», en `tinta-suave`) da 5,63:1. W5 pide AAA
   para el aula.
 
+- **Decisión de Diego (2026-11-09):** en claro la línea del aula y la hora va en tinta (`Reloj.aula`).
+
+### Paso 3 · El resto de las pantallas (hecho 2026-11-09)
+
+- `Reloj.aula` (tinta en claro, tinta suave en oscuro) en las líneas de aula de Próxima y En curso, y `Reloj.horaFila`
+  (tinta en claro, `hora` en oscuro) en la hora de la fila actual del horario.
+- `tools/verificacion/recorrido_temas_reloj.sh` (nuevo) recorre en los dos temas Próxima, Salir, Urgente, Parcial, la
+  sesión del día con Acciones, Hoy y Mañana, Vacío, Sin datos y la Confirmación (tocando «Ya voy»). Son 22 capturas
+  estables (`docs/capturas/cw-medida-p3-*`) y **0 fallos** de contraste AA, toques o círculo.
+- **Hallazgos para Diego**, del mismo tipo que el aula. En claro, las horas de la lista del horario que no son la actual
+  (00:45, 06:05, 13:35) dan 5,63:1, y «comienza en 12 min» en Es hora de salir también. `CLAUDE.md` pide AAA para las horas
+  de la lista. En oscuro dan 11,16:1.
+
 ## 6. Verificación prevista
 
 - Contraste medido sobre el render en cada tema que entre. La cifra, el aula y la hora de salida a nivel AAA, y el resto a AA.

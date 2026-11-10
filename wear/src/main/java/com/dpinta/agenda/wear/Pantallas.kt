@@ -75,7 +75,7 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
                 textDecoration = if (u == Urgency.MISSED) TextDecoration.LineThrough else null,
             )
             Text(listOf(s.room.ifBlank { s.place }, Formato.hora(s.start.toLocalTime())).filter { it.isNotBlank() }.joinToString(" · "),
-                style = Tipo.apoyo, color = Reloj.tintaSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                style = Tipo.apoyo, color = Reloj.aula, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -101,7 +101,7 @@ fun PantallaEnCurso(s: WatchSession, ahora: LocalDateTime, ambiente: Boolean) {
             Text("Termina en", style = Tipo.apoyo, color = Reloj.tintaSuave)
             Text(Formato.cuenta(queda), style = Tipo.hora, color = Reloj.tinta, maxLines = 1)
             Text(listOf(s.room.ifBlank { s.place }, "hasta " + Formato.hora(s.end.toLocalTime())).filter { it.isNotBlank() }.joinToString(" · "),
-                style = Tipo.apoyo, color = Reloj.tintaSuave, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                style = Tipo.apoyo, color = Reloj.aula, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -172,7 +172,7 @@ private fun FilaHorario(s: WatchSession, actual: Boolean, hecha: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(Formato.hora(s.start.toLocalTime()), style = Tipo.apoyo.copy(fontWeight = Tipo.titulo.fontWeight),
-            color = if (actual) Reloj.hora else Reloj.tintaSuave)
+            color = if (actual) Reloj.horaFila else Reloj.tintaSuave)
         Spacer(Modifier.width(8.dp))
         MarcaTipo(s, hecha, actual)
         Spacer(Modifier.width(8.dp))
