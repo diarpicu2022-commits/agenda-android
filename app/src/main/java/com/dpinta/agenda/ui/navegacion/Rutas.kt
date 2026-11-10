@@ -29,6 +29,7 @@ import kotlinx.serialization.Serializable
 
 /** Solo depuración: se enlaza desde Ajustes únicamente si la app es depurable. */
 @Serializable data object RutaDemoBanda
+@Serializable data object RutaPrivacidad
 
 /** Los tres destinos de la barra inferior (anexo §7). */
 enum class Pestana(val etiqueta: String, val icono: Icono, val ruta: Any) {

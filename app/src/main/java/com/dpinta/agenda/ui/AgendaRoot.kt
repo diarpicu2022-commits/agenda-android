@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -71,6 +73,16 @@ fun AgendaRoot(
         com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA -> androidx.compose.foundation.isSystemInDarkTheme()
     }
     AgendaTheme(oscuro = oscuro) {
+        // Consentimiento previo, expreso e informado (Ley 1581): sin aceptar la versión vigente no se entra.
+        val contextoApp = androidx.compose.ui.platform.LocalContext.current
+        var aceptado by remember { mutableStateOf(com.dpinta.agenda.ui.privacidad.Consentimiento.aceptado(contextoApp)) }
+        if (!aceptado) {
+            com.dpinta.agenda.ui.privacidad.ConsentimientoPantalla {
+                com.dpinta.agenda.ui.privacidad.Consentimiento.aceptar(contextoApp)
+                aceptado = true
+            }
+            return@AgendaTheme
+        }
         val nav = rememberNavController()
         val avisos = remember { SnackbarHostState() }
         LaunchedEffect(Unit) {
@@ -118,7 +130,11 @@ fun AgendaRoot(
                         onSemestre = { id -> nav.navigate(RutaSemestre(id ?: -1L)) },
                         onDemoBanda = { nav.navigate(RutaDemoBanda) },
                         onLugares = { nav.navigate(RutaActividades) },
+                        onPrivacidad = { nav.navigate(com.dpinta.agenda.ui.navegacion.RutaPrivacidad) },
                     )
+                }
+                composable<com.dpinta.agenda.ui.navegacion.RutaPrivacidad> {
+                    com.dpinta.agenda.ui.privacidad.PrivacidadPantalla(onAtras = { nav.popBackStack() })
                 }
                 composable<RutaSemestre> { SemestreRuta(onCerrar = { nav.popBackStack() }) }
                 composable<RutaFormulario> {

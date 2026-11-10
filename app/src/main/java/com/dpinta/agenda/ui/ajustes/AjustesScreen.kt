@@ -118,6 +118,7 @@ fun AjustesRuta(
     onAtras: () -> Unit,
     onSemestre: (Long?) -> Unit,
     onDemoBanda: () -> Unit,
+    onPrivacidad: () -> Unit = {},
     viewModel: AjustesViewModel = hiltViewModel(),
 ) {
     val semestres by viewModel.semestres.collectAsStateWithLifecycle()
@@ -125,7 +126,7 @@ fun AjustesRuta(
     val perfil by viewModel.perfil.collectAsStateWithLifecycle()
     val tema by viewModel.tema.collectAsStateWithLifecycle()
     AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen,
-        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares, tema = tema, onTema = viewModel::tema)
+        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares, tema = tema, onTema = viewModel::tema, onPrivacidad = onPrivacidad)
 }
 
 /** Ajustes (anexo §7). Por ahora: Semestre. En compilaciones depurables enlaza la demostración de la banda. */
@@ -143,6 +144,7 @@ fun AjustesPantalla(
     onLugares: () -> Unit = {},
     tema: com.dpinta.agenda.data.ajustes.TemaApp = com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA,
     onTema: (com.dpinta.agenda.data.ajustes.TemaApp) -> Unit = {},
+    onPrivacidad: () -> Unit = {},
 ) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
@@ -190,6 +192,7 @@ fun AjustesPantalla(
             }
             ResumenMatutino(resumen, onResumen)
             GrupoAjustes("Datos") {
+                FilaAjuste("Política de privacidad", ayuda = "Versión ${com.dpinta.agenda.ui.privacidad.PoliticaPrivacidad.VERSION} · qué se guarda y tus derechos") { onPrivacidad() }
                 FilaAjuste("Borrar todos mis datos", ayuda = "Actividades, lugares, semestres, perfil y ajustes de este teléfono.", peligro = true) { confirmarBorrado = true }
                 if (depurable) {
                     DivisorAjustes()
