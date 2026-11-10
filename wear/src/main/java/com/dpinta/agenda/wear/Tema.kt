@@ -98,7 +98,6 @@ object Tipo {
 }
 
 object Formato {
-    private val ES = Locale.forLanguageTag("es-CO")
 
     fun hora(t: LocalTime): String = "%02d:%02d".format(t.hour, t.minute)
 
@@ -110,8 +109,8 @@ object Formato {
 
     /** «Hoy · mié 7», «Mañana · jue 8». */
     fun dia(fecha: LocalDate, hoy: LocalDate): String {
-        val nombre = fecha.dayOfWeek.getDisplayName(EstiloFecha.SHORT, ES).trimEnd('.')
-        val cual = if (fecha == hoy) "Hoy" else if (fecha == hoy.plusDays(1)) "Mañana" else nombre.replaceFirstChar { it.uppercase() }
+        val nombre = fecha.dayOfWeek.getDisplayName(EstiloFecha.SHORT, IdiomaReloj.locale).trimEnd('.')
+        val cual = if (fecha == hoy) t("Hoy", "Today") else if (fecha == hoy.plusDays(1)) t("Mañana", "Tomorrow") else nombre.replaceFirstChar { it.uppercase() }
         return "$cual · $nombre ${fecha.dayOfMonth}"
     }
 }

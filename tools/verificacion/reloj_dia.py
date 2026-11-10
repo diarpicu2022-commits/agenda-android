@@ -1,5 +1,5 @@
 """Deja en el reloj (build de depuración) un día de prueba relativo a la hora del emulador, y abre CampusWatch.
-Uso: python tools/verificacion/reloj_dia.py <escenario> [claro|oscuro|telefono]   escenarios: proxima · salir · urgente · parcial · horario · vacio · asistencia · ritmo · ritmo-salir"""
+Uso: python tools/verificacion/reloj_dia.py <escenario> [claro|oscuro|telefono] [es|en]   escenarios: proxima · salir · urgente · parcial · horario · vacio · asistencia · ritmo · ritmo-salir"""
 import datetime as dt, os, subprocess, sys
 
 ADB = os.path.expandvars(r'%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe')
@@ -55,7 +55,9 @@ else:
     if p.returncode: print(p.stderr.decode())
 # Tema del reloj (anexo 2026-11-09-campuswatch-claro, W2), en su propio archivo de preferencias.
 if len(sys.argv) > 2:
-    xt = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <string name=\"tema\">" + sys.argv[2].upper() + "</string>\n</map>\n"
+    # Tercer argumento opcional: el idioma que «mandó» el teléfono (es | en), como lo guarda PreferenciaTema.
+    idioma = f'    <string name="telefono_idioma">{sys.argv[3]}</string>\n' if len(sys.argv) > 3 else ''
+    xt = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <string name=\"tema\">" + sys.argv[2].upper() + "</string>\n" + idioma + "</map>\n"
     subprocess.run([ADB, 'shell', 'run-as', PKG, 'sh', '-c', '"cat > shared_prefs/campuswatch_tema.xml"'], input=xt.encode('utf8'), capture_output=True)
 sh('am', 'start', '-n', f'{PKG}/com.dpinta.agenda.wear.CampusWatchActivity')
 print(esc, ahora.strftime('%H:%M'))

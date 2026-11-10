@@ -68,8 +68,8 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
             Modifier.padding(horizontal = 30.dp).semantics(mergeDescendants = true) {},
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (s.exam) Text("PARCIAL", style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else Reloj.ciruela)
-            else Text(if (u == Urgency.MISSED) "Empezó hace" else "Empieza en", style = Tipo.apoyo, color = Reloj.tintaSuave)
+            if (s.exam) Text(t("PARCIAL", "EXAM"), style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else Reloj.ciruela)
+            else Text(if (u == Urgency.MISSED) t("Empezó hace", "Started") else t("Empieza en", "Starts in"), style = Tipo.apoyo, color = Reloj.tintaSuave)
             Text(
                 Formato.cuenta(if (u == Urgency.MISSED) Duration.between(s.start, ahora) else restante),
                 style = Tipo.hora,
@@ -103,11 +103,11 @@ fun PantallaEnCurso(s: WatchSession, ahora: LocalDateTime, ambiente: Boolean) {
             Modifier.padding(horizontal = 30.dp).semantics(mergeDescendants = true) {},
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("AHORA", style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else Reloj.hora)
+            Text(t("AHORA", "NOW"), style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else Reloj.hora)
             Text(s.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("Termina en", style = Tipo.apoyo, color = Reloj.tintaSuave)
+            Text(t("Termina en", "Ends in"), style = Tipo.apoyo, color = Reloj.tintaSuave)
             Text(Formato.cuenta(queda), style = Tipo.hora, color = Reloj.tinta, maxLines = 1)
-            Text(listOf(s.room.ifBlank { s.place }, "hasta " + Formato.hora(s.end.toLocalTime())).filter { it.isNotBlank() }.joinToString(" · "),
+            Text(listOf(s.room.ifBlank { s.place }, t("hasta ", "until ") + Formato.hora(s.end.toLocalTime())).filter { it.isNotBlank() }.joinToString(" · "),
                 style = Tipo.apoyo, color = Reloj.aula, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -121,10 +121,10 @@ fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente:
     Box(Modifier.fillMaxSize().background(Reloj.fondo), contentAlignment = Alignment.Center) {
         AnilloCuenta(Duration.between(ahora, s.start), s.leaveAt?.let { Duration.between(it, s.start) }, color, Modifier.fillMaxSize(), ambiente)
         Column(Modifier.padding(horizontal = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(if (u == Urgency.URGENT) "SAL YA" else "ES HORA DE SALIR", style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else color,
+            Text(if (u == Urgency.URGENT) t("SAL YA", "LEAVE NOW") else t("ES HORA DE SALIR", "TIME TO LEAVE"), style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else color,
                 modifier = Modifier.semantics { heading() })
             Text(s.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("comienza en ${Formato.cuenta(Duration.between(ahora, s.start))}", style = Tipo.apoyo, color = Reloj.cifraApoyo)
+            Text(t("comienza en ", "starts in ") + Formato.cuenta(Duration.between(ahora, s.start)), style = Tipo.apoyo, color = Reloj.cifraApoyo)
             if (!ambiente) LineaRitmo(s, ritmo, conHora = false)
             Spacer(Modifier.height(10.dp))
             if (!ambiente) BotonReloj(Accion.YaVoy.etiqueta, principal = true, color = color) { onAccion(Accion.YaVoy) }
@@ -157,10 +157,10 @@ fun LineaRitmo(s: WatchSession, ritmo: WatchRhythm?, conHora: Boolean = true) {
     val r = ritmo ?: return
     val hora = Formato.hora(salida.minusMinutes(r.lateMinutes.toLong()).toLocalTime())
     // Dos líneas: en una sola se cortaba justo la hora («sal 0…»). En «Es hora de salir» la hora corregida ya pasó.
-    val texto = if (conHora) "Sueles salir ${r.lateMinutes} min tarde\nsal a las $hora" else "Sueles salir ${r.lateMinutes} min tarde"
+    val texto = t("Sueles salir ${r.lateMinutes} min tarde", "You usually leave ${r.lateMinutes} min late") + if (conHora) t("\nsal a las $hora", "\nleave at $hora") else ""
     Text(texto, style = Tipo.apoyo, color = Reloj.cifraApoyo, maxLines = 2, overflow = TextOverflow.Ellipsis,
         modifier = Modifier.semantics {
-            contentDescription = "Tu ritmo: sueles salir ${r.lateMinutes} minutos tarde." + if (conHora) " Sal a las $hora" else ""
+            contentDescription = t("Tu ritmo: sueles salir ${r.lateMinutes} minutos tarde.", "Your rhythm: you usually leave ${r.lateMinutes} minutes late.") + if (conHora) t(" Sal a las $hora", " Leave at $hora") else ""
         })
 }
 
@@ -194,11 +194,11 @@ fun PantallaFuiste(a: WatchAttendance, onRespuesta: (Boolean) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("¿Fuiste?", style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        Text(t("¿Fuiste?", "Did you go?"), style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
         Text(a.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(4.dp))
-        BotonReloj("Sí, fui", principal = true, color = Reloj.exito, ancho = 0.9f) { onRespuesta(true) }
-        BotonReloj("No fui", ancho = 0.9f) { onRespuesta(false) }
+        BotonReloj(t("Sí, fui", "Yes, I went"), principal = true, color = Reloj.exito, ancho = 0.9f) { onRespuesta(true) }
+        BotonReloj(t("No fui", "I didn't go"), ancho = 0.9f) { onRespuesta(false) }
     }
 }
 
@@ -213,13 +213,13 @@ fun PantallaAsistencia(lista: List<WatchAttendance>) {
         verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Asistencia", style = Tipo.apoyo, color = Reloj.ruta, modifier = Modifier.semantics { heading() })
+        Text(t("Asistencia", "Attendance"), style = Tipo.apoyo, color = Reloj.ruta, modifier = Modifier.semantics { heading() })
         if (lista.isEmpty()) {
-            Text("Todavía no hay clases que contar", style = Tipo.apoyo, color = Reloj.tintaSuave, textAlign = TextAlign.Center)
+            Text(t("Todavía no hay clases que contar", "No classes to count yet"), style = Tipo.apoyo, color = Reloj.tintaSuave, textAlign = TextAlign.Center)
         }
         for (a in lista.take(3)) {
-            val faltas = if (a.absences == 1) "1 falta" else "${a.absences} faltas"
-            val limite = a.maxAbsences?.let { " de $it" }.orEmpty()
+            val faltas = if (a.absences == 1) t("1 falta", "1 absence") else t("${a.absences} faltas", "${a.absences} absences")
+            val limite = a.maxAbsences?.let { t(" de $it", " of $it") }.orEmpty()
             val max = a.maxAbsences
             val color = when {
                 max != null && a.absences > max -> Reloj.critico
@@ -240,7 +240,7 @@ fun PantallaAsistencia(lista: List<WatchAttendance>) {
                 }
             }
         }
-        if (lista.size > 3) Text("y ${lista.size - 3} más", style = Tipo.apoyo, color = Reloj.tintaSuave)
+        if (lista.size > 3) Text(t("y ${lista.size - 3} más", "and ${lista.size - 3} more"), style = Tipo.apoyo, color = Reloj.tintaSuave)
     }
 }
 
@@ -256,8 +256,8 @@ fun PantallaTema(onElegir: (PreferenciaTema.Opcion) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Tema", style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
-        for ((o, texto) in listOf(PreferenciaTema.Opcion.CLARO to "Claro", PreferenciaTema.Opcion.OSCURO to "Oscuro", PreferenciaTema.Opcion.TELEFONO to "Como el teléfono")) {
+        Text(t("Tema", "Theme"), style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        for ((o, texto) in listOf(PreferenciaTema.Opcion.CLARO to t("Claro", "Light"), PreferenciaTema.Opcion.OSCURO to t("Oscuro", "Dark"), PreferenciaTema.Opcion.TELEFONO to t("Como el teléfono", "Same as phone"))) {
             // Mismo ancho para las tres: la elegida se distingue por el color, no cambia de tamaño (y «Como el teléfono» cabe).
             BotonReloj(texto, principal = o == elegida, color = Reloj.ruta, ancho = 0.9f) { onElegir(o) }
         }
@@ -277,10 +277,10 @@ fun PantallaHorario(dia: WatchDay, fecha: java.time.LocalDate, ahora: LocalDateT
         Text(Formato.dia(fecha, ahora.toLocalDate()), style = Tipo.apoyo.copy(fontWeight = Tipo.titulo.fontWeight), color = Reloj.ruta,
             modifier = Modifier.semantics { heading() })
         if (filas.isEmpty()) {
-            Text("Nada fijo", style = Tipo.titulo, color = Reloj.tintaSuave, modifier = Modifier.padding(vertical = 8.dp))
+            Text(t("Nada fijo", "Nothing fixed"), style = Tipo.titulo, color = Reloj.tintaSuave, modifier = Modifier.padding(vertical = 8.dp))
         }
         for (s in filas.take(4)) FilaHorario(s, s == actual, s.end.isBefore(ahora) || s.end == ahora)
-        if (filas.size > 4) Text("y ${filas.size - 4} más", style = Tipo.apoyo, color = Reloj.tintaSuave)
+        if (filas.size > 4) Text(t("y ${filas.size - 4} más", "and ${filas.size - 4} more"), style = Tipo.apoyo, color = Reloj.tintaSuave)
         Text(pieDatos(dia, ahora), style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.padding(top = 4.dp))
     }
 }
@@ -371,8 +371,8 @@ fun PantallaSinDatos() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Sin horario", style = Tipo.titulo, color = Reloj.tinta)
-        Text("Abre Agenda en el teléfono para traerlo.", style = Tipo.apoyo, color = Reloj.tintaSuave)
+        Text(t("Sin horario", "No schedule"), style = Tipo.titulo, color = Reloj.tinta)
+        Text(t("Abre Agenda en el teléfono para traerlo.", "Open Agenda on the phone to bring it."), style = Tipo.apoyo, color = Reloj.tintaSuave)
     }
 }
 
@@ -384,7 +384,7 @@ fun PantallaLibre(dia: WatchDay, ahora: LocalDateTime) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Nada fijo por ahora", style = Tipo.titulo, color = Reloj.tinta)
+        Text(t("Nada fijo por ahora", "Nothing fixed for now"), style = Tipo.titulo, color = Reloj.tinta)
         Text(pieDatos(dia, ahora), style = Tipo.apoyo, color = Reloj.tintaSuave)
     }
 }

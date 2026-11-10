@@ -51,6 +51,7 @@ private data class Resumen(val s: WatchSession, val u: Urgency, val referencia: 
 }
 
 private fun resumen(contexto: Context, ahora: LocalDateTime): Resumen? {
+    IdiomaReloj.cargar(contexto)
     val dia = AlmacenDia.dia(contexto).value ?: return null
     val foco = dia.focus(ahora) ?: return null
     val s = foco.session
@@ -99,7 +100,7 @@ class TarjetaProxima : TileService() {
         .build()
 
     private fun vacia(): LayoutElementBuilders.LayoutElement = Column.Builder()
-        .addContent(texto("Nada fijo por ahora", 17f, CW.tinta, true))
+        .addContent(texto(t("Nada fijo por ahora", "Nothing fixed for now"), 17f, CW.tinta, true))
         .addContent(texto("CampusWatch", 15f, CW.tintaSuave))
         .build()
 
@@ -124,7 +125,7 @@ class TarjetaProxima : TileService() {
                 .setThickness(dp(6f)).setColor(argbDe(color)).build())
             .build()
         val datos = Column.Builder()
-            .addContent(texto(if (r.enCurso) "AHORA" else if (r.s.exam) "PARCIAL" else "Próxima", 15f, if (r.enCurso) CW.hora else if (r.s.exam) CW.ciruela else CW.tintaSuave, r.enCurso || r.s.exam))
+            .addContent(texto(if (r.enCurso) t("AHORA", "NOW") else if (r.s.exam) t("PARCIAL", "EXAM") else t("Próxima", "Next"), 15f, if (r.enCurso) CW.hora else if (r.s.exam) CW.ciruela else CW.tintaSuave, r.enCurso || r.s.exam))
             .addContent(texto(r.s.title, 20f, CW.tinta, true))
             // Con trayecto: hora de inicio · aula (la grande es la salida). Sin trayecto la grande ya es el inicio: aula · lugar.
             .addContent(texto((if (r.salir) listOf(Formato.hora(r.s.start.toLocalTime()), r.s.room.ifBlank { r.s.place }) else listOf(r.s.room, r.s.place))
@@ -133,7 +134,7 @@ class TarjetaProxima : TileService() {
             .addContent(
                 Row.Builder()
                     .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
-                    .addContent(texto(if (r.enCurso) "Hasta " else if (r.salir) "Salir " else "Empieza ", 15f, CW.tintaSuave))
+                    .addContent(texto(if (r.enCurso) t("Hasta ", "Until ") else if (r.salir) t("Salir ", "Leave ") else t("Empieza ", "Starts "), 15f, CW.tintaSuave))
                     .addContent(texto(Formato.hora(r.referencia.toLocalTime()), 32f, CW.hora, true))
                     .build(),
             )
@@ -161,17 +162,17 @@ private fun colorUrgencia(u: Urgency, examen: Boolean): Long = when {
  * El sistema la tiñe y la recorta según la esfera.
  */
 class ComplicacionSalida : SuspendingComplicationDataSourceService() {
-    override fun getPreviewData(type: ComplicationType): ComplicationData? = datos(type, 18, "MAT", "Salir en 18 min")
+    override fun getPreviewData(type: ComplicationType): ComplicationData? = datos(type, 18, "MAT", t("Salir en 18 min", "Leave in 18 min"))
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         val ahora = LocalDateTime.now()
-        val r = resumen(this, ahora) ?: return datos(request.complicationType, null, "—", "Nada fijo por ahora")
+        val r = resumen(this, ahora) ?: return datos(request.complicationType, null, "—", t("Nada fijo por ahora", "Nothing fixed for now"))
         val min = Duration.between(ahora, r.referencia).toMinutes().coerceAtLeast(0).toInt()
         val corto = r.s.title.take(3).uppercase()
         val frase = when {
-            r.enCurso -> "${r.s.title}: termina en ${Formato.cuenta(Duration.ofMinutes(min.toLong()))}"
-            r.salir -> "Salir en ${Formato.cuenta(Duration.ofMinutes(min.toLong()))}"
-            else -> "${r.s.title} en ${Formato.cuenta(Duration.ofMinutes(min.toLong()))}"
+            r.enCurso -> "${r.s.title}: " + t("termina en ", "ends in ") + Formato.cuenta(Duration.ofMinutes(min.toLong()))
+            r.salir -> t("Salir en ", "Leave in ") + Formato.cuenta(Duration.ofMinutes(min.toLong()))
+            else -> "${r.s.title} " + t("en ", "in ") + Formato.cuenta(Duration.ofMinutes(min.toLong()))
         }
         return datos(request.complicationType, min, corto, frase)
     }

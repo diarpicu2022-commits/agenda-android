@@ -19,6 +19,7 @@ object Rutas {
     const val ACCION = "/campuswatch/accion"
     const val CLAVE_DIA = "dia"
     const val TEMA = "/campuswatch/tema"
+    const val CLAVE_IDIOMA = "idioma"
     const val CLAVE_OSCURO = "oscuro"
 }
 
@@ -55,7 +56,7 @@ object AlmacenDia {
             try {
                 for (item in items) {
                     if (item.uri.path == Rutas.DIA) DataMapItem.fromDataItem(item).dataMap.getString(Rutas.CLAVE_DIA)?.let { guardar(contexto, it) }
-                    if (item.uri.path == Rutas.TEMA) PreferenciaTema.guardarTelefono(contexto, DataMapItem.fromDataItem(item).dataMap.getBoolean(Rutas.CLAVE_OSCURO))
+                    if (item.uri.path == Rutas.TEMA) DataMapItem.fromDataItem(item).dataMap.let { PreferenciaTema.guardarTelefono(contexto, it.getBoolean(Rutas.CLAVE_OSCURO), it.getString(Rutas.CLAVE_IDIOMA)) }
                 }
             } finally {
                 items.release()
@@ -71,17 +72,20 @@ class ReceptorDia : WearableListenerService() {
                 DataMapItem.fromDataItem(e.dataItem).dataMap.getString(Rutas.CLAVE_DIA)?.let { AlmacenDia.guardar(this, it) }
             }
             if (e.type == DataEvent.TYPE_CHANGED && e.dataItem.uri.path == Rutas.TEMA) {
-                PreferenciaTema.guardarTelefono(this, DataMapItem.fromDataItem(e.dataItem).dataMap.getBoolean(Rutas.CLAVE_OSCURO))
+                DataMapItem.fromDataItem(e.dataItem).dataMap.let { PreferenciaTema.guardarTelefono(this, it.getBoolean(Rutas.CLAVE_OSCURO), it.getString(Rutas.CLAVE_IDIOMA)) }
             }
         }
     }
 }
 
 /** Acciones del reloj (02-urgencia.md · «Acciones de aviso»); el teléfono las ejecuta con su mismo receptor. */
-enum class Accion(val clave: String, val etiqueta: String) {
-    YaVoy("ya_voy", "Ya voy"),
-    Aplazar("aplazar", "Aplazar 5 min"),
-    Cancelar("cancelar", "Cancelar sesión de hoy"),
+enum class Accion(val clave: String, private val es: String, private val en: String) {
+    YaVoy("ya_voy", "Ya voy", "On my way"),
+    Aplazar("aplazar", "Aplazar 5 min", "Snooze 5 min"),
+    Cancelar("cancelar", "Cancelar sesión de hoy", "Cancel today's session"),
+    ;
+
+    val etiqueta: String get() = t(es, en)
 }
 
 object Telefono {
@@ -105,7 +109,7 @@ object Telefono {
 /** Pie de estado de los datos locales: «Actualizado 07:12» si es reciente; si no, «Datos locales · 07:12». */
 fun pieDatos(dia: WatchDay, ahora: LocalDateTime): String {
     val hora = Formato.hora(dia.computedAt.toLocalTime())
-    return if (java.time.Duration.between(dia.computedAt, ahora).toMinutes() <= 15) "Actualizado $hora" else "Datos locales · $hora"
+    return if (java.time.Duration.between(dia.computedAt, ahora).toMinutes() <= 15) t("Actualizado $hora", "Updated $hora") else t("Datos locales · $hora", "Local data · $hora")
 }
 
 /**
@@ -118,6 +122,7 @@ object PreferenciaTema {
     private const val CLAVE = "tema"
     /** Modo oscuro del teléfono, que publica la app (paso 4). Mientras no llegue, la app está en claro por defecto. */
     private const val TELEFONO_OSCURO = "telefono_oscuro"
+    private const val TELEFONO_IDIOMA = "telefono_idioma"
 
     fun opcion(c: Context): Opcion = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(CLAVE, null)
         ?.let { runCatching { Opcion.valueOf(it) }.getOrNull() } ?: Opcion.TELEFONO
@@ -131,10 +136,15 @@ object PreferenciaTema {
     }
 
     /** El teléfono avisa si está en modo oscuro (ruta /campuswatch/tema). */
-    fun guardarTelefono(c: Context, oscuro: Boolean) {
-        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(TELEFONO_OSCURO, oscuro).apply()
+    fun guardarTelefono(c: Context, oscuro: Boolean, idioma: String? = null) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(TELEFONO_OSCURO, oscuro)
+            .apply { if (idioma != null) putString(TELEFONO_IDIOMA, idioma) }.apply()
+        IdiomaReloj.cargar(c)
         cambio.value++
     }
+
+    /** Idioma que mandó el teléfono, o nulo si todavía no llega. */
+    fun idiomaTelefono(c: Context): String? = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(TELEFONO_IDIOMA, null)
 
     /** Tema de la pantalla activa según la opción. «Siempre activo» no pasa por aquí: siempre es oscuro (W3). */
     fun efectivo(c: Context): TemaReloj = when (opcion(c)) {

@@ -43,6 +43,9 @@ object RutasReloj {
     /** Modo oscuro del teléfono, para «Como el teléfono» en el reloj (anexo 2026-11-09-campuswatch-claro, W2). */
     const val TEMA = "/campuswatch/tema"
     const val CLAVE_OSCURO = "oscuro"
+
+    /** Idioma de Agenda («es» o «en»): CampusWatch lo sigue (anexo 2026-11-10-agenda-ingles). */
+    const val CLAVE_IDIOMA = "idioma"
     const val CLAVE_DIA = "dia"
 }
 
@@ -136,7 +139,9 @@ class PublicadorReloj @Inject constructor(
             Wearable.getDataClient(contexto).putDataItem(pedido.asPutDataRequest().setUrgent()).await()
             // «Como el teléfono» en el reloj sigue el tema de Agenda (Ajustes › Apariencia), no solo el del sistema.
             val oscuro = ajustesTema.oscuroEfectivo()
-            val tema = PutDataMapRequest.create(RutasReloj.TEMA).apply { dataMap.putBoolean(RutasReloj.CLAVE_OSCURO, oscuro) }
+            val tema = PutDataMapRequest.create(RutasReloj.TEMA).apply { dataMap.putBoolean(RutasReloj.CLAVE_OSCURO, oscuro)
+                dataMap.putString(RutasReloj.CLAVE_IDIOMA, com.dpinta.agenda.data.ajustes.Idioma.locale(contexto).language)
+            }
             Wearable.getDataClient(contexto).putDataItem(tema.asPutDataRequest().setUrgent()).await()
         }
     }

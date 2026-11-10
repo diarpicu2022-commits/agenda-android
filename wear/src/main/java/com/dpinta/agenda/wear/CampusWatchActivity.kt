@@ -48,6 +48,7 @@ class CampusWatchActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycle.addObserver(observador)
+        IdiomaReloj.cargar(this)
         lifecycleScope.launch { AlmacenDia.sincronizar(this@CampusWatchActivity) }
         setContent {
             // W2/W3: el tema elegido en pantalla activa; «siempre activo» siempre en el tema «reloj» (negro).
@@ -98,11 +99,11 @@ fun CampusWatch(ambiente: Boolean) {
                 val accion: (WatchSession, Accion) -> Unit = { s, a ->
                     alcance.launch {
                         val ok = Telefono.enviar(contexto, a, s)
-                        confirmacion = if (!ok) Confirmacion("Sin conexión", "No llegó al teléfono. Hazlo desde allá.", ok = false)
+                        confirmacion = if (!ok) Confirmacion(t("Sin conexión", "No connection"), t("No llegó al teléfono. Hazlo desde allá.", "It didn't reach the phone. Do it from there."), ok = false)
                         else when (a) {
-                            Accion.YaVoy -> Confirmacion("En camino", null)
-                            Accion.Aplazar -> Confirmacion("Aplazado", "Nueva hora ${Formato.hora(LocalDateTime.now().plusMinutes(5).toLocalTime())}")
-                            Accion.Cancelar -> Confirmacion("Cancelada solo hoy", "La serie se mantiene")
+                            Accion.YaVoy -> Confirmacion(t("En camino", "On the way"), null)
+                            Accion.Aplazar -> Confirmacion(t("Aplazado", "Snoozed"), t("Nueva hora ", "New time ") + Formato.hora(LocalDateTime.now().plusMinutes(5).toLocalTime()))
+                            Accion.Cancelar -> Confirmacion(t("Cancelada solo hoy", "Cancelled for today"), t("La serie se mantiene", "The series stays"))
                         }
                     }
                 }
@@ -127,8 +128,8 @@ fun CampusWatch(ambiente: Boolean) {
                             respondidas = respondidas + (pendiente.activityId to pendiente.pendingStart!!)
                             alcance.launch {
                                 val ok = Telefono.asistencia(contexto, pendiente.activityId, pendiente.pendingStart!!, fui)
-                                confirmacion = if (ok) Confirmacion(if (fui) "Asistencia anotada" else "Falta anotada", pendiente.title)
-                                else Confirmacion("Sin conexión", "No llegó al teléfono. Hazlo desde allá.", ok = false)
+                                confirmacion = if (ok) Confirmacion(if (fui) t("Asistencia anotada", "Attendance noted") else t("Falta anotada", "Absence noted"), pendiente.title)
+                                else Confirmacion(t("Sin conexión", "No connection"), t("No llegó al teléfono. Hazlo desde allá.", "It didn't reach the phone. Do it from there."), ok = false)
                             }
                         }
                     }
