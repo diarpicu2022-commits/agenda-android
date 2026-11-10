@@ -106,6 +106,7 @@ class AlarmaReceiver : BroadcastReceiver() {
             when (tipo) {
                 AlarmKind.SALIDA -> Canal.Salida to TextosAviso.salida(
                     plan.leaveAt.atZone(zona).toLocalTime(), act.titulo, act.salon, estimacion, act.margen, es24h, l,
+                    ritmoMinutos = com.dpinta.agenda.domain.PersonalRhythm.advice(repositorio.salidasReales().first(), act.lugarId, inicio.dayOfWeek)?.lateMinutes,
                 )
                 AlarmKind.SAL_YA -> Canal.SalYa to TextosAviso.salYa(empieza, act.titulo, act.salon, estimacion, act.margen, es24h, l)
                 else -> Canal.SalYa to TextosAviso.vasTarde(

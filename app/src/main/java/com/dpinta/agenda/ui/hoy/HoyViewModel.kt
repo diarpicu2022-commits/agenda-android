@@ -1,5 +1,6 @@
 package com.dpinta.agenda.ui.hoy
 
+import kotlinx.coroutines.flow.first
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dpinta.agenda.data.agenda.Agenda
@@ -189,7 +190,14 @@ class HoyViewModel @Inject constructor(
                 },
             )
         }
-        return HoyUiState.Dia(hoy, ahoraLocal.toLocalTime(), banda, filas, indiceAhora, proximo, enCurso)
+        // «Tu ritmo»: con la salida todavía por delante, cuánto suele tardar en salir hacia ese lugar ese día.
+        val ritmo = banda?.takeIf { it.hayTrayecto && (it.estado == com.dpinta.agenda.ui.components.banda.EstadoBanda.Espera || it.estado == com.dpinta.agenda.ui.components.banda.EstadoBanda.Preparate) }
+            ?.let { b ->
+                val act = agenda.actividades.getValue(siguiente!!.activityId)
+                com.dpinta.agenda.domain.PersonalRhythm.advice(repositorio.salidasReales().first(), act.lugarId, siguiente.start.dayOfWeek)
+                    ?.let { RitmoSalida(it.lateMinutes, b.horaSalida.minusMinutes(it.lateMinutes.toLong())) }
+            }
+        return HoyUiState.Dia(hoy, ahoraLocal.toLocalTime(), banda, filas, indiceAhora, proximo, enCurso, ritmo = ritmo)
     }
 
     private fun conflictoDe(s: Occurrence, conflictos: List<Conflict>, agenda: Agenda): ConflictoFila? =
