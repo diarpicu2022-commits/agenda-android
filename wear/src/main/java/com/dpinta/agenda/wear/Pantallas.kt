@@ -67,7 +67,7 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
             Text(
                 Formato.cuenta(if (u == Urgency.MISSED) Duration.between(s.start, ahora) else restante),
                 style = Tipo.hora,
-                color = if (u == Urgency.MISSED) Color(CW.urgPerdida) else Reloj.tinta,
+                color = if (u == Urgency.MISSED) Reloj.urgencia(Urgency.MISSED) else Reloj.tinta,
                 maxLines = 1,
             )
             Text(
@@ -222,7 +222,7 @@ fun PantallaConfirmacion(texto: String, detalle: String?, ok: Boolean = true, on
         Canvas(Modifier.size(56.dp)) {
             val w = size.width
             // Si no llegó al teléfono no hay check: un aviso (no se confirma lo que no pasó).
-            val color = if (ok) Reloj.exito else Color(CW.aviso)
+            val color = if (ok) Reloj.exito else Reloj.aviso
             drawCircle(color, w / 2, style = Stroke(3.dp.toPx()))
             val p = if (ok) Path().apply { moveTo(w * 0.28f, w * 0.52f); lineTo(w * 0.44f, w * 0.68f); lineTo(w * 0.74f, w * 0.36f) }
             else Path().apply { moveTo(w * 0.5f, w * 0.26f); lineTo(w * 0.5f, w * 0.58f) }

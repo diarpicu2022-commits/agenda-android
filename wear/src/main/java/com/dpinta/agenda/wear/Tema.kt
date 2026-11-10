@@ -2,6 +2,9 @@ package com.dpinta.agenda.wear
 
 import android.content.Context
 import android.provider.Settings
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -19,35 +22,43 @@ import java.time.LocalTime
 import java.time.format.TextStyle as EstiloFecha
 import java.util.Locale
 
-/** Tema «reloj» (03-campuswatch.md · «Esfera»): fondo casi negro con tinte ciruela, superficie solo detrás de botones. */
+/** Tema del reloj en pantalla activa (anexo 2026-11-09-campuswatch-claro, W1): OSCURO es el tema «reloj» de siempre
+ *  (03-campuswatch.md · «Esfera», casi negro con tinte ciruela); CLARO, el tema «claro» de la app. «Siempre activo», la
+ *  Tarjeta y la Complicación no pasan por aquí: usan CW (W3). */
+enum class TemaReloj { CLARO, OSCURO }
+
 object Reloj {
-    val fondo = Color(CW.fondo)
-    val superficie = Color(CW.superficie)
-    val superficieFuerte = Color(CW.superficieFuerte)
-    val linea = Color(CW.linea)
-    val tinta = Color(CW.tinta)
-    val tintaSuave = Color(CW.tintaSuave)
-    val ruta = Color(CW.ruta)
-    val hora = Color(CW.hora)
-    val horaSuave = Color(CW.horaSuave)
-    val sobreHora = Color(CW.sobreHora)
-    val ciruela = Color(CW.ciruela)
-    val exito = Color(CW.exito)
-    val critico = Color(CW.critico)
-    val trabajo = Color(CW.lineaTrabajo)
-    val personal = Color(CW.lineaPersonal)
-    val entrega = Color(CW.lineaEntrega)
+    /** Tema que se está mostrando. Es un estado de Compose: al cambiarlo se redibuja todo lo que lee estos colores. */
+    var tema by mutableStateOf(TemaReloj.OSCURO)
+    private fun c(oscuro: Long, claro: Long) = Color(if (tema == TemaReloj.CLARO) claro else oscuro)
+    val fondo: Color get() = c(CW.fondo, CWClaro.fondo)
+    val superficie: Color get() = c(CW.superficie, CWClaro.superficie)
+    val superficieFuerte: Color get() = c(CW.superficieFuerte, CWClaro.superficieFuerte)
+    val linea: Color get() = c(CW.linea, CWClaro.linea)
+    val tinta: Color get() = c(CW.tinta, CWClaro.tinta)
+    val tintaSuave: Color get() = c(CW.tintaSuave, CWClaro.tintaSuave)
+    val ruta: Color get() = c(CW.ruta, CWClaro.ruta)
+    val hora: Color get() = c(CW.hora, CWClaro.hora)
+    val horaSuave: Color get() = c(CW.horaSuave, CWClaro.horaSuave)
+    val sobreHora: Color get() = c(CW.sobreHora, CWClaro.sobreHora)
+    val ciruela: Color get() = c(CW.ciruela, CWClaro.ciruela)
+    val exito: Color get() = c(CW.exito, CWClaro.exito)
+    val critico: Color get() = c(CW.critico, CWClaro.critico)
+    val aviso: Color get() = c(CW.aviso, CWClaro.aviso)
+    val trabajo: Color get() = c(CW.lineaTrabajo, CWClaro.lineaTrabajo)
+    val personal: Color get() = c(CW.lineaPersonal, CWClaro.lineaPersonal)
+    val entrega: Color get() = c(CW.lineaEntrega, CWClaro.lineaEntrega)
 
     /** El color sigue el nivel de urgencia; un parcial usa ciruela hasta llegar a «Salir ahora». */
     fun urgencia(u: Urgency, examen: Boolean = false): Color = when {
         examen && u < Urgency.LEAVE_NOW && u != Urgency.MISSED -> ciruela
         else -> when (u) {
-            Urgency.CALM -> Color(CW.urgCalma)
-            Urgency.UPCOMING -> Color(CW.urgProxima)
-            Urgency.SOON -> Color(CW.urgPronto)
-            Urgency.LEAVE_NOW -> Color(CW.urgSalir)
-            Urgency.URGENT -> Color(CW.urgUrgente)
-            Urgency.MISSED -> Color(CW.urgPerdida)
+            Urgency.CALM -> c(CW.urgCalma, CWClaro.urgCalma)
+            Urgency.UPCOMING -> c(CW.urgProxima, CWClaro.urgProxima)
+            Urgency.SOON -> c(CW.urgPronto, CWClaro.urgPronto)
+            Urgency.LEAVE_NOW -> c(CW.urgSalir, CWClaro.urgSalir)
+            Urgency.URGENT -> c(CW.urgUrgente, CWClaro.urgUrgente)
+            Urgency.MISSED -> c(CW.urgPerdida, CWClaro.urgPerdida)
         }
     }
 
