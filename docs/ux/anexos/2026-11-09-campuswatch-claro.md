@@ -171,6 +171,18 @@ Diego pidió seguir toda la noche y dejar las decisiones juntas para el día sig
 - **Pendiente.** El emparejamiento real (los mensajes del reloj al teléfono no se pudieron probar entre emuladores) y una
   pantalla de asistencia en el teléfono.
 
+### Paso 6 · Estados y verificación final (hecho la noche del 2026-11-09)
+
+- `recorrido_temas_reloj.sh` con la app completa: las 22 pantallas de los dos temas pasan, en dos corridas seguidas, sin
+  fallos de contraste AA, toques ni círculo.
+- **Siempre activo con el tema claro elegido (W3).** Con el reloj dormido (`mWakefulness=Dozing`) CampusWatch pasa a
+  negro con contornos. Medido sobre la captura, la pantalla activa tiene el 78,9 % de los píxeles encendidos y una
+  luminancia media de 171/255, y la de ambiente el 8,7 % y 16,8/255 (`docs/capturas/cw-p6-{activa,ambiente}-claro.png`).
+- Tarjeta y Complicación no cambiaron: siguen leyendo `CW` (tema `reloj`).
+- `:wear:lintDebug` sin errores, `:core:domain:test` y `:app:testDebugUnitTest` en verde.
+- **Lo que no se pudo medir**: el emparejamiento real teléfono ↔ reloj, la Complicación sobre una esfera de verdad y
+  TalkBack con voz.
+
 ## 6. Verificación prevista
 
 - Contraste medido sobre el render en cada tema que entre. La cifra, el aula y la hora de salida a nivel AAA, y el resto a AA.
