@@ -28,7 +28,7 @@ import java.util.Locale
  * Los campos guardan el TEXTO que escribe Diego; la validación lo interpreta.
  */
 
-enum class Campo { TITULO, DIAS, INICIO, FIN, DESDE, HASTA, FECHA, MARGEN, AVISO }
+enum class Campo { TITULO, DIAS, INICIO, FIN, DESDE, HASTA, FECHA, MARGEN, AVISO, FALTAS }
 
 /** Valores por defecto (decisión del paso 5, sujeta a Diego): margen 10 min, aviso 15 min. */
 const val MARGEN_POR_DEFECTO = 10
@@ -55,6 +55,8 @@ data class Formulario(
     val modo: TransportMode = TransportMode.TRANSPORTE_PUBLICO,
     val margen: String = MARGEN_POR_DEFECTO.toString(),
     val aviso: String = AVISO_POR_DEFECTO.toString(),
+    /** Faltas permitidas (clases y exámenes). Vacío = sin límite. */
+    val faltas: String = "",
 ) {
     companion object {
         /** Nueva actividad: fechas del semestre (o 17 semanas) y la fecha de hoy ya escritas. */
@@ -137,6 +139,7 @@ object Validador {
     const val MSG_HASTA_ANTES = "La serie tiene que terminar después de empezar."
     const val MSG_MARGEN = "El margen va de 0 a 120 minutos."
     const val MSG_AVISO = "El aviso va de 0 a 240 minutos."
+    const val MSG_FALTAS = "Las faltas van de 0 a 99. Déjalo vacío si no hay límite."
 
     /** Los errores se guardan en español (las pruebas los comparan así) y se traducen al mostrarse. */
     fun mensaje(msg: String, l: Lengua): String = if (l == Lengua.ES) msg else when (msg) {
@@ -149,6 +152,7 @@ object Validador {
         MSG_HASTA_ANTES -> "The series has to end after it starts."
         MSG_MARGEN -> "The buffer goes from 0 to 120 minutes."
         MSG_AVISO -> "The reminder goes from 0 to 240 minutes."
+        MSG_FALTAS -> "Absences go from 0 to 99. Leave it empty if there is no limit."
         "No se pudo guardar. Tus datos siguen aquí." -> "Couldn't save. Your data is still here."
         else -> msg
     }
@@ -184,6 +188,9 @@ object Validador {
         val aviso = Interprete.minutos(f.aviso, 0..240)
         if (margen == null) e[Campo.MARGEN] = MSG_MARGEN
         if (aviso == null) e[Campo.AVISO] = MSG_AVISO
+        val conLimite = f.tipo == ActivityKind.CLASE || f.tipo == ActivityKind.EXAMEN
+        val faltas = if (conLimite && f.faltas.isNotBlank()) Interprete.minutos(f.faltas, 0..99) else null
+        if (conLimite && f.faltas.isNotBlank() && faltas == null) e[Campo.FALTAS] = MSG_FALTAS
 
         val aGuardar = if (e.isEmpty() && cuando != null) {
             ActividadAGuardar(
@@ -196,6 +203,7 @@ object Validador {
                 modo = f.modo,
                 margen = Duration.ofMinutes(margen!!.toLong()),
                 aviso = Duration.ofMinutes(aviso!!.toLong()),
+                faltasMax = faltas,
             )
         } else {
             null
@@ -331,6 +339,7 @@ fun formularioDe(agenda: Agenda, id: Long, hoy: LocalDate): Formulario? {
         modo = act.modo,
         margen = act.margen.toMinutes().toString(),
         aviso = act.aviso.toMinutes().toString(),
+        faltas = act.faltasMax?.toString().orEmpty(),
     )
     return when {
         regla != null -> base.copy(

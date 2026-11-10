@@ -43,7 +43,7 @@ class AgendaRoom @Inject constructor(private val dao: AgendaDao, private val rel
         val lugarDe = b.actividades.associate { it.id to it.lugarId }
         Agenda(
             actividades = b.actividades.associate {
-                it.id to Actividad(it.id, it.titulo, it.tipo, it.salon, it.lugarId, Duration.ofMinutes(it.margenMin.toLong()), it.modo, Duration.ofMinutes(it.avisoMin.toLong()))
+                it.id to Actividad(it.id, it.titulo, it.tipo, it.salon, it.lugarId, Duration.ofMinutes(it.margenMin.toLong()), it.modo, Duration.ofMinutes(it.avisoMin.toLong()), it.faltasMax)
             },
             lugares = b.lugares.associate { it.id to Lugar(it.id, it.nombre) },
             reglas = b.series.map { WeeklyRule(it.actividadId, it.dias, it.inicio, it.fin, it.desde, it.hasta) },
@@ -73,6 +73,7 @@ class AgendaRoom @Inject constructor(private val dao: AgendaDao, private val rel
             margenMin = actividad.margen.toMinutes().toInt(),
             modo = actividad.modo,
             avisoMin = actividad.aviso.toMinutes().toInt(),
+            faltasMax = actividad.faltasMax.takeIf { actividad.tipo == com.dpinta.agenda.domain.ActivityKind.CLASE || actividad.tipo == com.dpinta.agenda.domain.ActivityKind.EXAMEN },
         )
         val (serie, puntual) = when (val c = actividad.cuando) {
             is Cuando.Semanal -> SerieEntidad(actividadId = 0, dias = c.dias, inicio = c.inicio, fin = c.fin, desde = c.desde, hasta = c.hasta, zona = reloj.zone.id) to null

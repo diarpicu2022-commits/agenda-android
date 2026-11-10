@@ -34,7 +34,7 @@ class ResumenAsistencia @Inject constructor(private val repositorio: AgendaRepos
         return agenda.actividades.values.filter { it.tipo == ActivityKind.CLASE || it.tipo == ActivityKind.EXAMEN }.mapNotNull { act ->
             val propias = hubo.filter { it.activityId == act.id }
             if (propias.none { !it.start.isAfter(ahora) }) return@mapNotNull null
-            val r = Attendance.summary(act.id, propias, marcas, hoy, null)
+            val r = Attendance.summary(act.id, propias, marcas, hoy, act.faltasMax)
             val pendiente = propias.firstOrNull { it.start.toLocalDate() == hoy && !it.end.isAfter(ahora) &&
                 marcas.none { m -> m.activityId == act.id && m.date == hoy } }
             WatchAttendance(act.id, act.titulo, r.attended, r.absences, r.maxAbsences, pendiente?.start)

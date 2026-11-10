@@ -45,6 +45,8 @@ data class ActividadEntidad(
     @ColumnInfo(name = "margen_min") val margenMin: Int,
     val modo: TransportMode,
     @ColumnInfo(name = "aviso_min") val avisoMin: Int,
+    /** Faltas permitidas en la materia (solo clases y exámenes). Nulo = sin límite. v5. */
+    @ColumnInfo(name = "faltas_max") val faltasMax: Int? = null,
 )
 
 /** Serie semanal: mismos días y horas cada semana entre [desde] y [hasta], en la zona [zona]. */

@@ -179,6 +179,18 @@ fun FormularioPantalla(estado: FormularioUiState, acciones: AccionesFormulario, 
                 ayuda = l("Cálculo diferencial", "Calculus"),
                 teclado = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
             )
+            // Límite de faltas: solo donde se toma asistencia. Lo usan Actividades y el reloj (W6).
+            if (f.tipo == ActivityKind.CLASE || f.tipo == ActivityKind.EXAMEN) {
+                Spacer(Modifier.height(AgendaSpacing.s16))
+                CampoTexto(
+                    l("Faltas permitidas (opcional)", "Allowed absences (optional)"),
+                    f.faltas,
+                    { v -> acciones.onCambio { it.copy(faltas = v) } },
+                    e[Campo.FALTAS],
+                    ayuda = l("4 · vacío si no hay límite", "4 · empty if there is no limit"),
+                    teclado = numero,
+                )
+            }
 
             Seccion(l("Cuándo", "When"))
             Segmentado(
