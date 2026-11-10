@@ -58,7 +58,7 @@ La primera versión del destino era una casa. Para una clase se leía como «a c
 
 ## 5. Dirección A+ «Ruta y compañero» (decisión de Diego, 2026-11-10)
 
-Diego vio la dirección A todavía muy sencilla y eligió A+: la ruta de A con más vida en la pantalla principal y un
+Diego vio la dirección A todavía muy sencilla y eligió A+, que es la ruta de A con más vida en la pantalla principal y un
 compañero en las demás.
 
 ### Contrato
