@@ -115,8 +115,8 @@ fun CampusWatch(ambiente: Boolean) {
                         val u = siguiente.urgency(ahora, zona)
                         val salir = siguiente.leaveAt != null && (u == Urgency.LEAVE_NOW || u == Urgency.URGENT)
                         add {
-                            if (salir) PantallaSalir(siguiente, ahora, zona, ambiente) { accion(siguiente, it) }
-                            else PantallaProxima(siguiente, ahora, zona, ambiente)
+                            if (salir) PantallaSalir(siguiente, ahora, zona, ambiente, d.rhythmFor(siguiente)) { accion(siguiente, it) }
+                            else PantallaProxima(siguiente, ahora, zona, ambiente, d.rhythmFor(siguiente))
                         }
                         if (!ambiente && u != Urgency.MISSED) add { PantallaAcciones(siguiente, Reloj.urgencia(u, siguiente.exam)) { accion(siguiente, it) } }
                     }

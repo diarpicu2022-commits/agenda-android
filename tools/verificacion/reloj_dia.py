@@ -1,5 +1,5 @@
 """Deja en el reloj (build de depuración) un día de prueba relativo a la hora del emulador, y abre CampusWatch.
-Uso: python tools/verificacion/reloj_dia.py <escenario> [claro|oscuro|telefono]   escenarios: proxima · salir · urgente · parcial · horario · vacio · asistencia"""
+Uso: python tools/verificacion/reloj_dia.py <escenario> [claro|oscuro|telefono]   escenarios: proxima · salir · urgente · parcial · horario · vacio · asistencia · ritmo · ritmo-salir"""
 import datetime as dt, os, subprocess, sys
 
 ADB = os.path.expandvars(r'%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe')
@@ -36,6 +36,13 @@ if esc == 'asistencia':
               '\t'.join(['A', '6', 'Programación', '12', '0', '', '']),
               '\t'.join(['A', '9', 'Física mecánica', '7', '4', '4', ''])]
     version = 'cw2'
+# Escenario «ritmo» (anexo 2026-11-10-agenda-ia): la próxima con el consejo «sueles salir 6 min tarde» (cw3).
+if esc in ('ritmo', 'ritmo-salir'):
+    nueva = fila(3, 55, 145, 'Cálculo diferencial', 'B-204', 'Campus', 25, 'CLASE') if esc == 'ritmo' else siguiente['salir']
+    filas = base + [nueva]
+    c = nueva.split('\t')
+    filas.append('\t'.join(['R', c[0], c[1], '6', '9']))
+    version = 'cw3'
 texto = version + '\t' + t(-3) + '\n' + '\n'.join(filas) + '\n'
 
 xml_txt = texto.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\t', '&#9;').replace('\n', '&#10;')

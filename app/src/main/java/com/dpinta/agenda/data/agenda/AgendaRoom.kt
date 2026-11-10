@@ -1,5 +1,7 @@
 package com.dpinta.agenda.data.agenda
 
+import com.dpinta.agenda.data.db.SalidaRealEntidad
+import com.dpinta.agenda.domain.DepartureSample
 import kotlinx.coroutines.flow.map
 import com.dpinta.agenda.data.db.AsistenciaEntidad
 import com.dpinta.agenda.domain.AttendanceMark
@@ -147,5 +149,17 @@ class AgendaRoom @Inject constructor(private val dao: AgendaDao, private val rel
 
     override suspend fun marcarAsistencia(registro: AttendanceRecord) {
         dao.marcarAsistencia(AsistenciaEntidad(actividadId = registro.activityId, fecha = registro.date, marca = registro.mark.name))
+    }
+
+    override fun salidasReales(): Flow<List<DepartureSample>> = dao.salidasReales().map { filas ->
+        filas.map { f ->
+            val real = java.time.Instant.ofEpochMilli(f.realMs)
+            DepartureSample(f.actividadId, f.lugarId, real.atZone(reloj.zone).dayOfWeek, java.time.Instant.ofEpochMilli(f.planeadaMs), real)
+        }
+    }
+
+    override suspend fun guardarSalidaReal(salida: DepartureSample) {
+        dao.guardarSalidaReal(SalidaRealEntidad(actividadId = salida.activityId, lugarId = salida.placeId,
+            planeadaMs = salida.planned.toEpochMilli(), realMs = salida.actual.toEpochMilli()))
     }
 }

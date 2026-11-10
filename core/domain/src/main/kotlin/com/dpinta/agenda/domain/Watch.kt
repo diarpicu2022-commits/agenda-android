@@ -78,12 +78,19 @@ data class WatchAttendance(
     val pendingStart: LocalDateTime?,
 )
 
+/** «Tu ritmo» para una sesión (anexo 2026-11-10-agenda-ia): la persona suele salir [lateMinutes] tarde. */
+data class WatchRhythm(val activityId: Long, val start: LocalDateTime, val lateMinutes: Int, val samples: Int)
+
 /** Lo que el teléfono deja en el reloj: las sesiones de hoy y mañana, y cuándo se calculó (pie «Actualizado 07:12»). */
 data class WatchDay(
     val computedAt: LocalDateTime,
     val sessions: List<WatchSession>,
     val attendance: List<WatchAttendance> = emptyList(),
+    val rhythm: List<WatchRhythm> = emptyList(),
 ) {
+    /** El consejo de «Tu ritmo» para esta sesión, si hay. */
+    fun rhythmFor(s: WatchSession): WatchRhythm? = rhythm.firstOrNull { it.activityId == s.activityId && it.start == s.start }
+
 
     /** La siguiente sesión que todavía no ha empezado (igual que [DayPlanner.next] en el teléfono). */
     fun next(now: LocalDateTime): WatchSession? = sessions.sortedBy { it.start }.firstOrNull { it.start.isAfter(now) }
@@ -117,26 +124,34 @@ data class WatchDay(
             append(listOf(ATTENDANCE, a.activityId.toString(), a.title, a.attended.toString(), a.absences.toString(),
                 a.maxAbsences?.toString().orEmpty(), a.pendingStart?.toString().orEmpty()).joinToString("\t") { esc(it) }).append('\n')
         }
+        for (r in rhythm) {
+            append(listOf(RHYTHM, r.activityId.toString(), r.start.toString(), r.lateMinutes.toString(), r.samples.toString())
+                .joinToString("\t") { esc(it) }).append('\n')
+        }
     }
 
     companion object {
-        /** cw2 suma las líneas de asistencia («A»); el reloj sigue leyendo cw1 (sin asistencia). */
-        const val VERSION = "cw2"
-        private const val VERSION_1 = "cw1"
+        /** cw2 suma la asistencia («A») y cw3 «Tu ritmo» («R»); el reloj sigue leyendo cw1 y cw2. */
+        const val VERSION = "cw3"
+        private val ANTERIORES = setOf("cw1", "cw2")
         private const val ATTENDANCE = "A"
+        private const val RHYTHM = "R"
 
         fun decode(text: String): WatchDay? = runCatching {
             val lines = text.split('\n').filter { it.isNotEmpty() }
             val head = lines.first().split('\t')
-            require(head[0] == VERSION || head[0] == VERSION_1)
-            val (asis, ses) = lines.drop(1).map { line -> line.split('\t').map(::unesc) }.partition { it[0] == ATTENDANCE }
+            require(head[0] == VERSION || head[0] in ANTERIORES)
+            val todas = lines.drop(1).map { line -> line.split('\t').map(::unesc) }
+            val asis = todas.filter { it[0] == ATTENDANCE }
+            val ritmo = todas.filter { it[0] == RHYTHM }
+            val ses = todas.filter { it[0] != ATTENDANCE && it[0] != RHYTHM }
             WatchDay(LocalDateTime.parse(head[1]), ses.map { f ->
                 WatchSession(f[0].toLong(), LocalDateTime.parse(f[1]), LocalDateTime.parse(f[2]), f[3], f[4], f[5],
                     f[6].takeIf { it.isNotEmpty() }?.let(LocalDateTime::parse), WatchSession.Kind.valueOf(f[7]), f[8] == "1")
             }, asis.map { f ->
                 WatchAttendance(f[1].toLong(), f[2], f[3].toInt(), f[4].toInt(), f[5].takeIf { it.isNotEmpty() }?.toInt(),
                     f[6].takeIf { it.isNotEmpty() }?.let(LocalDateTime::parse))
-            })
+            }, ritmo.map { f -> WatchRhythm(f[1].toLong(), LocalDateTime.parse(f[2]), f[3].toInt(), f[4].toInt()) })
         }.getOrNull()
 
         private fun esc(s: String) = s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n")

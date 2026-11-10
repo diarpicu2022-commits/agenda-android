@@ -1,5 +1,7 @@
 package com.dpinta.agenda.reloj
 
+import com.dpinta.agenda.domain.PersonalRhythm
+import com.dpinta.agenda.domain.WatchRhythm
 import kotlinx.coroutines.flow.first
 import com.dpinta.agenda.avisos.AccionesAsistencia
 import com.dpinta.agenda.domain.SessionException
@@ -53,9 +55,10 @@ object MapeadorReloj {
         zona: ZoneId,
         trayecto: (Occurrence) -> TravelEstimate?,
         asistencia: List<WatchAttendance> = emptyList(),
+        ritmo: List<WatchRhythm> = emptyList(),
     ): WatchDay {
         val validas = sesiones.filter { it.activityId in agenda.actividades }.sortedBy { it.start }
-        return WatchDay(ahora, attendance = asistencia, sessions = validas.map { s ->
+        return WatchDay(ahora, attendance = asistencia, rhythm = ritmo, sessions = validas.map { s ->
             val act = agenda.actividades.getValue(s.activityId)
             val necesita = DayPlanner.needsTravel(DayPlanner.previous(validas, s), s)
             val salida = if (necesita) {
@@ -119,7 +122,13 @@ class PublicadorReloj @Inject constructor(
             val modo = agenda.actividades[s.activityId]?.modo ?: continue
             trayectos[s] = repositorio.trayectoHacia(agenda, lista, s, modo, reloj.instant())
         }
-        val dia = MapeadorReloj.dia(agenda, lista, ahora, reloj.zone, { trayectos[it] }, asistencia(agenda, sesiones, ahora))
+        // «Tu ritmo» (anexo 2026-11-10-agenda-ia): consejo por sesión con hora de salida, aprendido de las salidas reales.
+        val historial = repositorio.salidasReales().first()
+        val ritmo = lista.filter { trayectos[it] != null }.mapNotNull { s ->
+            val act = agenda.actividades[s.activityId] ?: return@mapNotNull null
+            PersonalRhythm.advice(historial, act.lugarId, s.start.dayOfWeek)?.let { WatchRhythm(s.activityId, s.start, it.lateMinutes, it.samples) }
+        }
+        val dia = MapeadorReloj.dia(agenda, lista, ahora, reloj.zone, { trayectos[it] }, asistencia(agenda, sesiones, ahora), ritmo)
         // Sin reloj emparejado o sin Play Services la app sigue igual: el reloj es un acompañante.
         runCatching {
             val pedido = PutDataMapRequest.create(RutasReloj.DIA).apply { dataMap.putString(RutasReloj.CLAVE_DIA, dia.encode()) }

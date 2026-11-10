@@ -1,5 +1,6 @@
 package com.dpinta.agenda.wear
 
+import com.dpinta.agenda.domain.WatchRhythm
 import androidx.compose.foundation.shape.CircleShape
 import com.dpinta.agenda.domain.WatchAttendance
 import androidx.compose.runtime.getValue
@@ -56,7 +57,7 @@ private val llegada = CubicBezierEasing(0.2f, 0.7f, 0.2f, 1f) // ease-llegada
 
 /** 1 · Próxima (WatchNextActivity): anillo, «Empieza en», cifra, nombre y aula. Nunca más de tres datos. */
 @Composable
-fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean) {
+fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean, ritmo: WatchRhythm? = null) {
     val u = s.urgency(ahora, zona)
     val color = Reloj.urgencia(u, s.exam)
     val restante = Duration.between(ahora, s.start)
@@ -80,6 +81,7 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
             )
             Text(listOf(s.room.ifBlank { s.place }, Formato.hora(s.start.toLocalTime())).filter { it.isNotBlank() }.joinToString(" · "),
                 style = Tipo.apoyo, color = Reloj.aula, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (!ambiente) LineaRitmo(s, ritmo)
         }
     }
 }
@@ -112,7 +114,7 @@ fun PantallaEnCurso(s: WatchSession, ahora: LocalDateTime, ambiente: Boolean) {
 
 /** 2 · Es hora de salir (WatchLeaveNow): rótulo, destino y cuenta; «Ya voy» debajo y el resto de acciones al bajar. */
 @Composable
-fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean, onAccion: (Accion) -> Unit) {
+fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente: Boolean, ritmo: WatchRhythm? = null, onAccion: (Accion) -> Unit) {
     val u = s.urgency(ahora, zona)
     val color = Reloj.urgencia(u, s.exam)
     Box(Modifier.fillMaxSize().background(Reloj.fondo), contentAlignment = Alignment.Center) {
@@ -122,6 +124,7 @@ fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente:
                 modifier = Modifier.semantics { heading() })
             Text(s.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("comienza en ${Formato.cuenta(Duration.between(ahora, s.start))}", style = Tipo.apoyo, color = Reloj.cifraApoyo)
+            if (!ambiente) LineaRitmo(s, ritmo, conHora = false)
             Spacer(Modifier.height(10.dp))
             if (!ambiente) BotonReloj(Accion.YaVoy.etiqueta, principal = true, color = color) { onAccion(Accion.YaVoy) }
         }
@@ -141,6 +144,23 @@ fun PantallaAcciones(s: WatchSession, color: Color, onAccion: (Accion) -> Unit) 
         BotonReloj(Accion.Aplazar.etiqueta) { onAccion(Accion.Aplazar) }
         BotonReloj(Accion.Cancelar.etiqueta) { onAccion(Accion.Cancelar) }
     }
+}
+
+/**
+ * «Tu ritmo» (anexo 2026-11-10-agenda-ia): lo que aprendió el teléfono de las salidas reales. Una línea de apoyo, con la
+ * hora corregida; va en `cifraApoyo` porque es una hora que se lee para decidir (tinta en claro, AAA).
+ */
+@Composable
+fun LineaRitmo(s: WatchSession, ritmo: WatchRhythm?, conHora: Boolean = true) {
+    val salida = s.leaveAt ?: return
+    val r = ritmo ?: return
+    val hora = Formato.hora(salida.minusMinutes(r.lateMinutes.toLong()).toLocalTime())
+    // Dos líneas: en una sola se cortaba justo la hora («sal 0…»). En «Es hora de salir» la hora corregida ya pasó.
+    val texto = if (conHora) "Sueles salir ${r.lateMinutes} min tarde\nsal a las $hora" else "Sueles salir ${r.lateMinutes} min tarde"
+    Text(texto, style = Tipo.apoyo, color = Reloj.cifraApoyo, maxLines = 2, overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.semantics {
+            contentDescription = "Tu ritmo: sueles salir ${r.lateMinutes} minutos tarde." + if (conHora) " Sal a las $hora" else ""
+        })
 }
 
 /** «¿Fuiste?» (W6): la clase de hoy ya terminó y no tiene marca. Repertorio de Acciones: dos botones de 48 dp. */

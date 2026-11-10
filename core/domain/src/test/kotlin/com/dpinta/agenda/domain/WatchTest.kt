@@ -87,4 +87,13 @@ class WatchTest {
         assertEquals(listOf(ses), WatchDay.decode(viejo)!!.sessions)
         assertEquals(emptyList<WatchAttendance>(), WatchDay.decode(viejo)!!.attendance)
     }
+
+    @Test fun `«Tu ritmo» viaja en el paquete cw3`() {
+        val t = LocalDateTime.of(2026, 11, 9, 7, 0)
+        val ses = WatchSession(4, t.plusHours(1), t.plusHours(3), "Cálculo", "B-204", "Campus", t, WatchSession.Kind.CLASE, false)
+        val dia = WatchDay(t, listOf(ses), rhythm = listOf(WatchRhythm(4, t.plusHours(1), 6, 9)))
+        val leido = WatchDay.decode(dia.encode())!!
+        assertEquals(dia, leido)
+        assertEquals(6, leido.rhythmFor(ses)!!.lateMinutes)
+    }
 }

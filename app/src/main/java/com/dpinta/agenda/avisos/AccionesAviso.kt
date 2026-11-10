@@ -1,5 +1,6 @@
 package com.dpinta.agenda.avisos
 
+import com.dpinta.agenda.domain.DepartureSample
 import kotlinx.coroutines.flow.first
 import com.dpinta.agenda.domain.ActivityKind
 import com.dpinta.agenda.domain.AttendanceRecord
@@ -76,6 +77,19 @@ class AccionAvisoReceiver : BroadcastReceiver() {
         }
     }
 
+    /**
+     * «Tu ritmo» (anexo 2026-11-10-agenda-ia): guarda cuándo se salió de verdad frente a la hora planeada
+     * (inicio − margen − trayecto, igual que DepartureCalculator). Sin trayecto no hay hora de salida y no se guarda.
+     */
+    private fun guardarSalida(id: Long, inicio: LocalDateTime) = enSegundoPlano {
+        val act = repositorio.agenda().first().actividades[id] ?: return@enSegundoPlano
+        val lugar = act.lugarId ?: return@enSegundoPlano
+        val estimacion = repositorio.estimacion(lugar, act.modo) ?: return@enSegundoPlano
+        val ahora = reloj.instant()
+        val planeada = inicio.atZone(reloj.zone).toInstant() - act.margen - estimacion.duration
+        repositorio.guardarSalidaReal(DepartureSample(id, lugar, ahora.atZone(reloj.zone).dayOfWeek, planeada, ahora))
+    }
+
     override fun onReceive(contexto: Context, intent: Intent) {
         if (intent.action == AccionesAsistencia.ASISTI || intent.action == AccionesAsistencia.FALTE) {
             val id = intent.getLongExtra(ProgramadorAvisos.EXTRA_ACTIVIDAD, -1)
@@ -94,6 +108,7 @@ class AccionAvisoReceiver : BroadcastReceiver() {
                 sesiones.salida.value = sesion to reloj.instant()
                 // Salir hacia una clase cuenta como asistencia (W6); se corrige desde el reloj si no fue así.
                 marcar(id, inicio, AttendanceMark.ASISTI)
+                guardarSalida(id, inicio)
             }
             AccionAviso.MasCinco -> {
                 val cuando = reloj.instant() + Duration.ofMinutes(5)

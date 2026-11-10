@@ -109,6 +109,20 @@ data class AsistenciaEntidad(
     val marca: String,
 )
 
+/** Una salida real para «Tu ritmo» (anexo 2026-11-10-agenda-ia): hora planeada y hora en que se tocó «Voy saliendo». */
+@Entity(
+    tableName = "salida_real",
+    foreignKeys = [ForeignKey(ActividadEntidad::class, ["id"], ["actividad_id"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index(value = ["actividad_id"])],
+)
+data class SalidaRealEntidad(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "actividad_id") val actividadId: Long,
+    @ColumnInfo(name = "lugar_id") val lugarId: Long?,
+    @ColumnInfo(name = "planeada_ms") val planeadaMs: Long,
+    @ColumnInfo(name = "real_ms") val realMs: Long,
+)
+
 @Entity(tableName = "semestre")
 data class SemestreEntidad(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

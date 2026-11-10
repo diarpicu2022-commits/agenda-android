@@ -82,4 +82,31 @@ class MigracionTest {
         assertEquals(0, db.agendaDao().asistencias().first().size)
         db.close()
     }
+
+    @Test fun deTresACuatroCreaLasSalidasReales() = runTest {
+        val contexto = ApplicationProvider.getApplicationContext<Application>()
+        val archivo = contexto.getDatabasePath("migracion4.db").apply { parentFile?.mkdirs(); delete() }
+        val esquema = JSONObject(File("schemas/com.dpinta.agenda.data.db.AgendaDatabase/3.json").readText()).getJSONObject("database")
+        SQLiteDatabase.openOrCreateDatabase(archivo, null).use { v3 ->
+            val tablas = esquema.getJSONArray("entities")
+            for (i in 0 until tablas.length()) {
+                val t = tablas.getJSONObject(i)
+                v3.execSQL(t.getString("createSql").replace("\${TABLE_NAME}", t.getString("tableName")))
+                val indices = t.optJSONArray("indices") ?: continue
+                for (j in 0 until indices.length()) {
+                    v3.execSQL(indices.getJSONObject(j).getString("createSql").replace("\${TABLE_NAME}", t.getString("tableName")))
+                }
+            }
+            val setup = esquema.getJSONArray("setupQueries")
+            for (i in 0 until setup.length()) v3.execSQL(setup.getString(i))
+            v3.version = 3
+        }
+        val db = Room.databaseBuilder(contexto, AgendaDatabase::class.java, archivo.absolutePath)
+            .addMigrations(*AgendaDatabase.MIGRACIONES)
+            .allowMainThreadQueries()
+            .build()
+        // Room valida el esquema al abrir: si el SQL de la migración no coincide con la entidad, falla aquí.
+        assertEquals(0, db.agendaDao().salidasReales().first().size)
+        db.close()
+    }
 }

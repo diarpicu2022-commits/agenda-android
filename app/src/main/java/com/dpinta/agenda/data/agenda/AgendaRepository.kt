@@ -1,5 +1,6 @@
 package com.dpinta.agenda.data.agenda
 
+import com.dpinta.agenda.domain.DepartureSample
 import kotlinx.coroutines.flow.flowOf
 import com.dpinta.agenda.domain.AttendanceRecord
 import com.dpinta.agenda.domain.ActivityKind
@@ -132,6 +133,11 @@ interface AgendaRepository {
 
     /** Guarda «asistí» o «falté» para una sesión; reemplaza la marca anterior de ese día. */
     suspend fun marcarAsistencia(registro: AttendanceRecord) {}
+
+    /** Salidas reales para «Tu ritmo» (anexo 2026-11-10-agenda-ia). Sin base real (pruebas), ninguna. */
+    fun salidasReales(): Flow<List<DepartureSample>> = flowOf(emptyList())
+
+    suspend fun guardarSalidaReal(salida: DepartureSample) {}
 }
 
 data class SemestreGuardado(
