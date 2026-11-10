@@ -82,6 +82,7 @@ fun CampusWatch(ambiente: Boolean) {
     val ahora = minutoActual()
     val zona = ZoneId.systemDefault()
     var confirmacion by remember { mutableStateOf<Confirmacion?>(null) }
+    var respondidas by remember { mutableStateOf(setOf<Pair<Long, LocalDateTime>>()) }
     val alcance = rememberCoroutineScope()
 
     Box(Modifier.fillMaxSize().background(Reloj.fondo)) {
@@ -119,9 +120,22 @@ fun CampusWatch(ambiente: Boolean) {
                         }
                         if (!ambiente && u != Urgency.MISSED) add { PantallaAcciones(siguiente, Reloj.urgencia(u, siguiente.exam)) { accion(siguiente, it) } }
                     }
+                    // «¿Fuiste?» (W6): una clase de hoy terminada sin marca. Se oculta al responder, hasta que el teléfono republique.
+                    val pendiente = d.attendance.firstOrNull { it.pendingStart != null && it.activityId to it.pendingStart !in respondidas }
+                    if (!ambiente && pendiente != null) add {
+                        PantallaFuiste(pendiente) { fui ->
+                            respondidas = respondidas + (pendiente.activityId to pendiente.pendingStart!!)
+                            alcance.launch {
+                                val ok = Telefono.asistencia(contexto, pendiente.activityId, pendiente.pendingStart!!, fui)
+                                confirmacion = if (ok) Confirmacion(if (fui) "Asistencia anotada" else "Falta anotada", pendiente.title)
+                                else Confirmacion("Sin conexión", "No llegó al teléfono. Hazlo desde allá.", ok = false)
+                            }
+                        }
+                    }
                     if (!ambiente) {
                         add { PantallaHorario(d, ahora.toLocalDate(), ahora, zona) }
                         add { PantallaHorario(d, ahora.toLocalDate().plusDays(1), ahora, zona) }
+                        add { PantallaAsistencia(d.attendance) }
                         add { PantallaTema { PreferenciaTema.guardar(contexto, it) } }
                     }
                 }

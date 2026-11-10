@@ -1,5 +1,7 @@
 package com.dpinta.agenda.data.agenda
 
+import kotlinx.coroutines.flow.flowOf
+import com.dpinta.agenda.domain.AttendanceRecord
 import com.dpinta.agenda.domain.ActivityKind
 import com.dpinta.agenda.domain.DayPlanner
 import com.dpinta.agenda.domain.Occurrence
@@ -124,6 +126,12 @@ interface AgendaRepository {
     suspend fun guardarEstimacion(lugarId: Long, estimacion: TravelEstimate)
 
     suspend fun guardarTraslado(desde: Long, hasta: Long, minutos: Long)
+
+    /** Marcas de asistencia guardadas (W6). Sin base real (pruebas), ninguna. */
+    fun asistencias(): Flow<List<AttendanceRecord>> = flowOf(emptyList())
+
+    /** Guarda «asistí» o «falté» para una sesión; reemplaza la marca anterior de ese día. */
+    suspend fun marcarAsistencia(registro: AttendanceRecord) {}
 }
 
 data class SemestreGuardado(

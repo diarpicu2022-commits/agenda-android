@@ -1,5 +1,9 @@
 package com.dpinta.agenda.data.agenda
 
+import kotlinx.coroutines.flow.map
+import com.dpinta.agenda.data.db.AsistenciaEntidad
+import com.dpinta.agenda.domain.AttendanceMark
+import com.dpinta.agenda.domain.AttendanceRecord
 import com.dpinta.agenda.data.db.ActividadEntidad
 import com.dpinta.agenda.data.db.AgendaDao
 import com.dpinta.agenda.data.db.ExcepcionEntidad
@@ -136,4 +140,12 @@ class AgendaRoom @Inject constructor(private val dao: AgendaDao, private val rel
         val dias: List<com.dpinta.agenda.data.db.DiaSinClaseEntidad>,
         val traslados: List<TrasladoEntidad>,
     )
+
+    override fun asistencias(): Flow<List<AttendanceRecord>> = dao.asistencias().map { filas ->
+        filas.mapNotNull { f -> runCatching { AttendanceRecord(f.actividadId, f.fecha, AttendanceMark.valueOf(f.marca)) }.getOrNull() }
+    }
+
+    override suspend fun marcarAsistencia(registro: AttendanceRecord) {
+        dao.marcarAsistencia(AsistenciaEntidad(actividadId = registro.activityId, fecha = registro.date, marca = registro.mark.name))
+    }
 }

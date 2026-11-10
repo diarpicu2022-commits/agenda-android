@@ -1,5 +1,11 @@
 package com.dpinta.agenda.reloj
 
+import kotlinx.coroutines.flow.first
+import com.dpinta.agenda.avisos.AccionesAsistencia
+import com.dpinta.agenda.domain.SessionException
+import com.dpinta.agenda.domain.AttendanceMark
+import com.dpinta.agenda.domain.Attendance
+import com.dpinta.agenda.domain.WatchAttendance
 import android.content.Context
 import android.content.Intent
 import com.dpinta.agenda.avisos.AccionAviso
@@ -46,9 +52,10 @@ object MapeadorReloj {
         ahora: LocalDateTime,
         zona: ZoneId,
         trayecto: (Occurrence) -> TravelEstimate?,
+        asistencia: List<WatchAttendance> = emptyList(),
     ): WatchDay {
         val validas = sesiones.filter { it.activityId in agenda.actividades }.sortedBy { it.start }
-        return WatchDay(ahora, validas.map { s ->
+        return WatchDay(ahora, attendance = asistencia, sessions = validas.map { s ->
             val act = agenda.actividades.getValue(s.activityId)
             val necesita = DayPlanner.needsTravel(DayPlanner.previous(validas, s), s)
             val salida = if (necesita) {
@@ -83,6 +90,27 @@ class PublicadorReloj @Inject constructor(
     private val repositorio: AgendaRepository,
     private val reloj: Clock,
 ) {
+    /**
+     * Asistencia por materia para el reloj (W6), con [Attendance.summary] desde el inicio del semestre (o 120 días) hasta
+     * hoy. «Hoy no voy» cancela la sesión; en una clase con marca «falté» esa sesión sí cuenta como sesión que hubo.
+     */
+    private suspend fun asistencia(agenda: Agenda, sesiones: (Agenda, LocalDate, LocalDate) -> List<Occurrence>, ahora: LocalDateTime): List<WatchAttendance> {
+        val hoy = ahora.toLocalDate()
+        val marcas = repositorio.asistencias().first()
+        val faltas = marcas.filter { it.mark == AttendanceMark.FALTE }.map { it.activityId to it.date }.toSet()
+        val sinMisFaltas = agenda.copy(excepciones = agenda.excepciones.filterNot { it is SessionException.Cancelled && (it.activityId to it.date) in faltas })
+        val desde = agenda.semestreEn(hoy)?.start ?: hoy.minusDays(120)
+        val hubo = sesiones(sinMisFaltas, desde, hoy)
+        return agenda.actividades.values.filter { it.tipo == ActivityKind.CLASE || it.tipo == ActivityKind.EXAMEN }.mapNotNull { act ->
+            val propias = hubo.filter { it.activityId == act.id }
+            if (propias.none { !it.start.isAfter(ahora) }) return@mapNotNull null
+            val r = Attendance.summary(act.id, propias, marcas, hoy, null)
+            val pendiente = propias.firstOrNull { it.start.toLocalDate() == hoy && !it.end.isAfter(ahora) &&
+                marcas.none { m -> m.activityId == act.id && m.date == hoy } }
+            WatchAttendance(act.id, act.titulo, r.attended, r.absences, r.maxAbsences, pendiente?.start)
+        }.sortedBy { it.title }
+    }
+
     suspend fun publicar(agenda: Agenda, sesiones: (Agenda, LocalDate, LocalDate) -> List<Occurrence>) {
         val ahora = LocalDateTime.now(reloj)
         val lista = sesiones(agenda, ahora.toLocalDate(), ahora.toLocalDate().plusDays(1))
@@ -91,7 +119,7 @@ class PublicadorReloj @Inject constructor(
             val modo = agenda.actividades[s.activityId]?.modo ?: continue
             trayectos[s] = repositorio.trayectoHacia(agenda, lista, s, modo, reloj.instant())
         }
-        val dia = MapeadorReloj.dia(agenda, lista, ahora, reloj.zone) { trayectos[it] }
+        val dia = MapeadorReloj.dia(agenda, lista, ahora, reloj.zone, { trayectos[it] }, asistencia(agenda, sesiones, ahora))
         // Sin reloj emparejado o sin Play Services la app sigue igual: el reloj es un acompañante.
         runCatching {
             val pedido = PutDataMapRequest.create(RutasReloj.DIA).apply { dataMap.putString(RutasReloj.CLAVE_DIA, dia.encode()) }
@@ -115,6 +143,16 @@ class ServicioReloj : WearableListenerService() {
         if (evento.path != RutasReloj.ACCION) return
         val partes = String(evento.data, Charsets.UTF_8).split('|')
         if (partes.size != 3) return
+        // Asistencia («¿Fuiste?» en el reloj): va al mismo receptor, con su propia acción.
+        if (partes[0] == "asisti" || partes[0] == "falte") {
+            sendBroadcast(
+                Intent(this, AccionAvisoReceiver::class.java)
+                    .setAction(if (partes[0] == "asisti") AccionesAsistencia.ASISTI else AccionesAsistencia.FALTE)
+                    .putExtra(ProgramadorAvisos.EXTRA_ACTIVIDAD, partes[1].toLongOrNull() ?: return)
+                    .putExtra(ProgramadorAvisos.EXTRA_INICIO, partes[2]),
+            )
+            return
+        }
         val accion = when (partes[0]) {
             "ya_voy" -> AccionAviso.VoySaliendo
             "aplazar" -> AccionAviso.MasCinco

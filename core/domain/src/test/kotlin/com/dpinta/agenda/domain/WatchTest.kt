@@ -72,4 +72,19 @@ class WatchTest {
         assertEquals(WatchDay.Focus(turno, false), day.focus(d.withHour(10)))
         assertNull(day.focus(d.withHour(19)))
     }
+
+    @Test fun `asistencia viaja en el paquete y el reloj sigue leyendo el formato cw1`() {
+        val t = LocalDateTime.of(2026, 11, 9, 7, 0)
+        val ses = WatchSession(4, t.plusHours(1), t.plusHours(3), "Cálculo\tII", "B-204", "Campus", t, WatchSession.Kind.CLASE, false)
+        val asis = listOf(
+            WatchAttendance(4, "Cálculo\tII", 10, 2, 4, t.minusHours(2)),
+            WatchAttendance(7, "Física", 3, 0, null, null),
+        )
+        val dia = WatchDay(t, listOf(ses), asis)
+        assertEquals(dia, WatchDay.decode(dia.encode()))
+        // Un paquete cw1 (sin asistencia) se sigue leyendo.
+        val viejo = dia.copy(attendance = emptyList()).encode().replaceFirst("cw2", "cw1")
+        assertEquals(listOf(ses), WatchDay.decode(viejo)!!.sessions)
+        assertEquals(emptyList<WatchAttendance>(), WatchDay.decode(viejo)!!.attendance)
+    }
 }

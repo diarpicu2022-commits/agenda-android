@@ -96,6 +96,19 @@ data class ExcepcionEntidad(
     }
 }
 
+/** Asistencia a una sesión de una materia (anexo 2026-11-09-campuswatch-claro, W6). `marca`: ASISTI o FALTE. */
+@Entity(
+    tableName = "asistencia",
+    foreignKeys = [ForeignKey(ActividadEntidad::class, ["id"], ["actividad_id"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index(value = ["actividad_id", "fecha"], unique = true)],
+)
+data class AsistenciaEntidad(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "actividad_id") val actividadId: Long,
+    val fecha: LocalDate,
+    val marca: String,
+)
+
 @Entity(tableName = "semestre")
 data class SemestreEntidad(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

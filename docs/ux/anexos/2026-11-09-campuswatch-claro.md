@@ -142,6 +142,35 @@ Pasos: 1 tokens · 2 componente clave (Próxima con el anillo) · 3 el resto de 
 - **Pendiente**: el emparejamiento real teléfono ↔ reloj (los emuladores no se emparejan sin Google Play). El teléfono
   publica su modo cuando reprograma los avisos, no en el instante en que se cambia el modo del sistema.
 
+### Paso 5 · Asistencia local (hecho la noche del 2026-11-09, con autorización de Diego para seguir sin parar)
+
+Diego pidió seguir toda la noche y dejar las decisiones juntas para el día siguiente. Las que tomé están marcadas con
+**[por confirmar]**.
+
+- **De dónde salen las marcas [por confirmar].** «Hoy no voy» solo cancelaba la sesión y no distinguía «no fui» de «no hubo
+  clase». Ahora hay una tabla `asistencia` (Room v3, migración 2 → 3 probada con Robolectric y esquema `3.json`). En una
+  clase o examen, «Voy saliendo» o «Ya voy» marcan **asistí** y «Hoy no voy» o «Cancelar» marcan **falté**. Al calcular,
+  la sesión cancelada con marca «falté» sí cuenta como sesión que hubo, porque si no la falta no contaría nunca.
+- **Dominio.** `WatchAttendance` y formato `cw2` con líneas de asistencia. El reloj sigue leyendo `cw1` (prueba de ida y
+  vuelta).
+- **Teléfono.** `PublicadorReloj` calcula con `Attendance.summary` desde el inicio del semestre (o 120 días) y publica la
+  asistencia junto con el día. `ServicioReloj` recibe «asisti» y «falte» y los pasa al mismo receptor, que guarda y vuelve
+  a publicar.
+- **Reloj.** Dos páginas con el repertorio de Acciones y Horario (W4):
+  - **¿Fuiste?** aparece después de la principal cuando una clase de hoy ya terminó y no tiene marca. Tiene «Sí, fui» y «No
+    fui», y se oculta al responder.
+  - **Asistencia**, antes de Tema, con un bloque centrado por materia: el nombre y debajo «2 faltas de 4».
+- **Límite de faltas [por confirmar].** Las materias todavía no tienen un campo de faltas permitidas, así que hoy se
+  muestra solo la cuenta («0 faltas»). Cuando exista el límite, cerca de él aparece un punto `aviso` y pasado de él un
+  punto `critico`. En claro la cifra sigue en tinta (misma regla que el aula), porque en `aviso` daba 5,42:1.
+- **Medido** en el emulador con el escenario nuevo `asistencia` de `reloj_dia.py`. ¿Fuiste? da de 5,63 a 15,55:1 en claro
+  y de 11,16 a 19,01:1 en oscuro. En Asistencia todas las cifras dan 14,00:1 en claro y 12,40 a 19,01:1 en oscuro. Sin
+  fallos (`docs/capturas/cw-medida-p5-*`).
+- **Fallos propios encontrados al mirar la captura.** La primera versión ponía nombre y faltas en una fila, cortaba los
+  nombres («Cálculo diferenc…») y los dejaba centrados dentro de su columna. Ahora es un bloque centrado por materia.
+- **Pendiente.** El emparejamiento real (los mensajes del reloj al teléfono no se pudieron probar entre emuladores) y una
+  pantalla de asistencia en el teléfono.
+
 ## 6. Verificación prevista
 
 - Contraste medido sobre el render en cada tema que entre. La cifra, el aula y la hora de salida a nivel AAA, y el resto a AA.

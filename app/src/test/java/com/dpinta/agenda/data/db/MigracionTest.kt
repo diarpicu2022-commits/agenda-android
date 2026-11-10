@@ -1,5 +1,6 @@
 package com.dpinta.agenda.data.db
 
+import kotlinx.coroutines.flow.first
 import android.app.Application
 import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
@@ -52,6 +53,33 @@ class MigracionTest {
         val trayecto = db.agendaDao().trayecto(1, TransportMode.TRANSPORTE_PUBLICO)!!
         assertEquals(23, trayecto.minutos)
         assertFalse(trayecto.manual)
+        db.close()
+    }
+
+    @Test fun deDosATresCreaLaAsistenciaYConservaLasActividades() = runTest {
+        val contexto = ApplicationProvider.getApplicationContext<Application>()
+        val archivo = contexto.getDatabasePath("migracion3.db").apply { parentFile?.mkdirs(); delete() }
+        val esquema = JSONObject(File("schemas/com.dpinta.agenda.data.db.AgendaDatabase/2.json").readText()).getJSONObject("database")
+        SQLiteDatabase.openOrCreateDatabase(archivo, null).use { v2 ->
+            val tablas = esquema.getJSONArray("entities")
+            for (i in 0 until tablas.length()) {
+                val t = tablas.getJSONObject(i)
+                v2.execSQL(t.getString("createSql").replace("\${TABLE_NAME}", t.getString("tableName")))
+                val indices = t.optJSONArray("indices") ?: continue
+                for (j in 0 until indices.length()) {
+                    v2.execSQL(indices.getJSONObject(j).getString("createSql").replace("\${TABLE_NAME}", t.getString("tableName")))
+                }
+            }
+            val setup = esquema.getJSONArray("setupQueries")
+            for (i in 0 until setup.length()) v2.execSQL(setup.getString(i))
+            v2.version = 2
+        }
+        val db = Room.databaseBuilder(contexto, AgendaDatabase::class.java, archivo.absolutePath)
+            .addMigrations(*AgendaDatabase.MIGRACIONES)
+            .allowMainThreadQueries()
+            .build()
+        // Room valida el esquema al abrir: si el SQL de la migración no coincide con la entidad, falla aquí.
+        assertEquals(0, db.agendaDao().asistencias().first().size)
         db.close()
     }
 }

@@ -92,6 +92,14 @@ object Telefono {
         for (n in nodos) Wearable.getMessageClient(contexto).sendMessage(n.id, Rutas.ACCION, datos).await()
         nodos.isNotEmpty()
     }.getOrDefault(false)
+
+    /** «¿Fuiste?» (W6): asistí o falté a la sesión que empezó en [inicio]. El teléfono la guarda y vuelve a publicar. */
+    suspend fun asistencia(contexto: Context, actividad: Long, inicio: java.time.LocalDateTime, fui: Boolean): Boolean = runCatching {
+        val nodos = Wearable.getNodeClient(contexto).connectedNodes.await()
+        val datos = "${if (fui) "asisti" else "falte"}|$actividad|$inicio".toByteArray(Charsets.UTF_8)
+        for (n in nodos) Wearable.getMessageClient(contexto).sendMessage(n.id, Rutas.ACCION, datos).await()
+        nodos.isNotEmpty()
+    }.getOrDefault(false)
 }
 
 /** Pie de estado de los datos locales: «Actualizado 07:12» si es reciente; si no, «Datos locales · 07:12». */

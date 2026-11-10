@@ -1,5 +1,7 @@
 package com.dpinta.agenda.wear
 
+import androidx.compose.foundation.shape.CircleShape
+import com.dpinta.agenda.domain.WatchAttendance
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.animation.core.Animatable
@@ -138,6 +140,64 @@ fun PantallaAcciones(s: WatchSession, color: Color, onAccion: (Accion) -> Unit) 
         BotonReloj(Accion.YaVoy.etiqueta, principal = true, color = color) { onAccion(Accion.YaVoy) }
         BotonReloj(Accion.Aplazar.etiqueta) { onAccion(Accion.Aplazar) }
         BotonReloj(Accion.Cancelar.etiqueta) { onAccion(Accion.Cancelar) }
+    }
+}
+
+/** «¿Fuiste?» (W6): la clase de hoy ya terminó y no tiene marca. Repertorio de Acciones: dos botones de 48 dp. */
+@Composable
+fun PantallaFuiste(a: WatchAttendance, onRespuesta: (Boolean) -> Unit) {
+    Column(
+        Modifier.fillMaxSize().background(Reloj.fondo).padding(horizontal = 26.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("¿Fuiste?", style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        Text(a.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(4.dp))
+        BotonReloj("Sí, fui", principal = true, color = Reloj.exito, ancho = 0.9f) { onRespuesta(true) }
+        BotonReloj("No fui", ancho = 0.9f) { onRespuesta(false) }
+    }
+}
+
+/**
+ * Asistencia (W6): faltas por materia, con el repertorio del Horario (una fila por materia). La cifra de faltas es lo que
+ * se lee para decidir: va en tinta; si la materia tiene límite y se está cerca o pasado, en `aviso` o `critico`.
+ */
+@Composable
+fun PantallaAsistencia(lista: List<WatchAttendance>) {
+    Column(
+        Modifier.fillMaxSize().background(Reloj.fondo).padding(horizontal = 30.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("Asistencia", style = Tipo.apoyo, color = Reloj.ruta, modifier = Modifier.semantics { heading() })
+        if (lista.isEmpty()) {
+            Text("Todavía no hay clases que contar", style = Tipo.apoyo, color = Reloj.tintaSuave, textAlign = TextAlign.Center)
+        }
+        for (a in lista.take(3)) {
+            val faltas = if (a.absences == 1) "1 falta" else "${a.absences} faltas"
+            val limite = a.maxAbsences?.let { " de $it" }.orEmpty()
+            val max = a.maxAbsences
+            val color = when {
+                max != null && a.absences > max -> Reloj.critico
+                max != null && max - a.absences <= 1 -> Reloj.aviso
+                else -> Reloj.tinta
+            }
+            // Un bloque centrado por materia (nombre y, debajo, las faltas): en la esfera redonda una fila de dos columnas
+            // cortaba los nombres.
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 2.dp)) {
+                Text(a.title, style = Tipo.apoyo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (color != Reloj.tinta) {
+                        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+                        Spacer(Modifier.width(5.dp))
+                    }
+                    Text(faltas + limite, style = Tipo.apoyo.copy(fontWeight = Tipo.titulo.fontWeight),
+                        color = if (Reloj.tema == TemaReloj.CLARO) Reloj.tinta else color)
+                }
+            }
+        }
+        if (lista.size > 3) Text("y ${lista.size - 3} más", style = Tipo.apoyo, color = Reloj.tintaSuave)
     }
 }
 
