@@ -84,6 +84,7 @@ object MapeadorReloj {
                     ActivityKind.OTRO -> WatchSession.Kind.PERSONAL
                 },
                 exam = act.tipo == ActivityKind.EXAMEN,
+                mode = act.modo,
             )
         })
     }

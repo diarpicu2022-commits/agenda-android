@@ -31,6 +31,10 @@ fun AnilloCuenta(
     color: Color,
     modifier: Modifier = Modifier,
     ambiente: Boolean = false,
+    kind: com.dpinta.agenda.domain.WatchSession.Kind = com.dpinta.agenda.domain.WatchSession.Kind.CLASE,
+    mode: com.dpinta.agenda.domain.TransportMode? = null,
+    urgente: Boolean = false,
+    cuadro: Int = 0,
 ) {
     val ventana = 60f
     val fraccion = (restante.toMinutes().toFloat() / ventana).coerceIn(0f, 1f)
@@ -62,45 +66,22 @@ fun AnilloCuenta(
                 size.width / 2 + (r * cos(Math.toRadians(grados))).toFloat(),
                 size.height / 2 + (r * sin(Math.toRadians(grados))).toFloat(),
             )
-            edificio(punto(-90.0), color)
-            if (fraccion > 0.04f) caminante(punto(-90.0 + 360.0 * fraccion), restante.toMinutes() % 2 == 0L)
+            // A+ (Ruta y compañero): el destino cambia con el tipo y el viajero con el modo y la urgencia.
+            destino(punto(-90.0), kind, color)
+            if (fraccion > 0.04f) {
+                if (VIAJERO_SOBRE_RIEL) {
+                    // Sobre la vía: el viajero va encima del riel, con un halo del fondo, y nunca toca el texto.
+                    val rr = tam.width / 2 - 5.dp.toPx()
+                    val a = Math.toRadians(-90.0 + 360.0 * fraccion)
+                    val q = Offset(size.width / 2 + (rr * cos(a)).toFloat(), size.height / 2 + (rr * sin(a)).toFloat())
+                    drawCircle(Reloj.fondo, 12.dp.toPx(), q)
+                    viajero(q + Offset(0f, 1.dp.toPx()), mode, urgente, cuadro)
+                } else {
+                    viajero(punto(-90.0 + 360.0 * fraccion), mode, urgente, cuadro)
+                }
+            }
         }
     }
-}
-
-/** El destino: la fachada del campus (frontón, tres columnas y escalinata), en el color de la urgencia (marca, no texto). */
-private fun DrawScope.edificio(c: Offset, color: Color) {
-    val u = 1.dp.toPx()
-    val ancho = 18 * u
-    val suelo = c.y + 7 * u
-    val izq = c.x - ancho / 2
-    // Escalinata y base.
-    drawRect(color, Offset(izq - u, suelo - 2 * u), Size(ancho + 2 * u, 2 * u))
-    // Tres columnas.
-    for (k in 0..2) drawRect(color, Offset(izq + 2 * u + k * 6 * u, suelo - 10 * u), Size(2.6f * u, 8 * u))
-    // Entablamento y frontón.
-    drawRect(color, Offset(izq, suelo - 12.5f * u), Size(ancho, 2.5f * u))
-    val fronton = Path().apply {
-        moveTo(izq - u, suelo - 12.5f * u)
-        lineTo(c.x, suelo - 18.5f * u)
-        lineTo(izq + ancho + u, suelo - 12.5f * u)
-        close()
-    }
-    drawPath(fronton, color)
-}
-
-/** La figura que camina: cabeza, tronco y piernas con trazo redondo en tinta. [paso] alterna la zancada cada minuto. */
-private fun DrawScope.caminante(p: Offset, paso: Boolean) {
-    val u = 1.dp.toPx()
-    val trazo = Stroke(2.6f * u, cap = StrokeCap.Round)
-    val cadera = p + Offset(0f, 2 * u)
-    val hombro = p + Offset(0.6f * u, -5 * u)
-    drawCircle(Reloj.tinta, 3.4f * u, p + Offset(1.2f * u, -10 * u))
-    drawLine(Reloj.tinta, hombro, cadera, trazo.width, StrokeCap.Round)
-    val z = if (paso) 1f else -1f
-    drawLine(Reloj.tinta, cadera, cadera + Offset(4 * u * z, 7 * u), trazo.width, StrokeCap.Round)
-    drawLine(Reloj.tinta, cadera, cadera + Offset(-3 * u * z, 7 * u), trazo.width, StrokeCap.Round)
-    drawLine(Reloj.tinta, hombro, hombro + Offset(-3.5f * u * z, 5 * u), trazo.width * 0.85f, StrokeCap.Round)
 }
 
 /** Anillo de la sesión en curso: fracción que queda de la sesión, en el color de su línea; en siempre activo, contorno. */
@@ -116,3 +97,6 @@ fun AnilloSesion(queda: Float, color: Color, modifier: Modifier = Modifier, ambi
         if (f > 0f) drawArc(if (ambiente) Reloj.tintaSuave else color, -90f, 360f * f, false, origen, tam, style = Stroke(grosor, cap = StrokeCap.Round))
     }
 }
+
+/** Dónde va el viajero: dentro del riel (dirección A aprobada) o encima de él. Encima, aprobado por Diego el 2026-11-10 (anexo campuswatch-vivo §5). */
+const val VIAJERO_SOBRE_RIEL = true

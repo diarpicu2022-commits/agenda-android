@@ -57,6 +57,8 @@ data class WatchSession(
     val leaveAt: LocalDateTime?,
     val kind: Kind,
     val exam: Boolean,
+    /** Cómo se llega (cw4): el reloj dibuja el viajero según el modo. Nulo en datos cw1 a cw3. */
+    val mode: TransportMode? = null,
 ) {
     enum class Kind { CLASE, TRABAJO, PERSONAL, ENTREGA }
 
@@ -118,7 +120,7 @@ data class WatchDay(
         append(VERSION).append('\t').append(computedAt).append('\n')
         for (s in sessions) {
             append(listOf(s.activityId.toString(), s.start.toString(), s.end.toString(), s.title, s.room, s.place,
-                s.leaveAt?.toString().orEmpty(), s.kind.name, if (s.exam) "1" else "0").joinToString("\t") { esc(it) }).append('\n')
+                s.leaveAt?.toString().orEmpty(), s.kind.name, if (s.exam) "1" else "0", s.mode?.name.orEmpty()).joinToString("\t") { esc(it) }).append('\n')
         }
         for (a in attendance) {
             append(listOf(ATTENDANCE, a.activityId.toString(), a.title, a.attended.toString(), a.absences.toString(),
@@ -131,9 +133,9 @@ data class WatchDay(
     }
 
     companion object {
-        /** cw2 suma la asistencia («A») y cw3 «Tu ritmo» («R»); el reloj sigue leyendo cw1 y cw2. */
-        const val VERSION = "cw3"
-        private val ANTERIORES = setOf("cw1", "cw2")
+        /** cw2 suma la asistencia («A»), cw3 «Tu ritmo» («R») y cw4 el modo de transporte; el reloj sigue leyendo las anteriores. */
+        const val VERSION = "cw4"
+        private val ANTERIORES = setOf("cw1", "cw2", "cw3")
         private const val ATTENDANCE = "A"
         private const val RHYTHM = "R"
 
@@ -147,7 +149,8 @@ data class WatchDay(
             val ses = todas.filter { it[0] != ATTENDANCE && it[0] != RHYTHM }
             WatchDay(LocalDateTime.parse(head[1]), ses.map { f ->
                 WatchSession(f[0].toLong(), LocalDateTime.parse(f[1]), LocalDateTime.parse(f[2]), f[3], f[4], f[5],
-                    f[6].takeIf { it.isNotEmpty() }?.let(LocalDateTime::parse), WatchSession.Kind.valueOf(f[7]), f[8] == "1")
+                    f[6].takeIf { it.isNotEmpty() }?.let(LocalDateTime::parse), WatchSession.Kind.valueOf(f[7]), f[8] == "1",
+                    f.getOrNull(9)?.takeIf { it.isNotEmpty() }?.let { m -> runCatching { TransportMode.valueOf(m) }.getOrNull() })
             }, asis.map { f ->
                 WatchAttendance(f[1].toLong(), f[2], f[3].toInt(), f[4].toInt(), f[5].takeIf { it.isNotEmpty() }?.toInt(),
                     f[6].takeIf { it.isNotEmpty() }?.let(LocalDateTime::parse))
