@@ -50,6 +50,8 @@ object Reloj {
     val entrega: Color get() = c(CW.lineaEntrega, CWClaro.lineaEntrega)
     /** Aula y hora bajo el nombre: en claro va en tinta para llegar a AAA (decisión de Diego, paso 2 del anexo 2026-11-09). */
     val aula: Color get() = if (tema == TemaReloj.CLARO) tinta else tintaSuave
+    /** Cifras de apoyo que se leen para decidir (horas de la lista, «comienza en»): en claro, tinta (decisión del paso 3). */
+    val cifraApoyo: Color get() = if (tema == TemaReloj.CLARO) tinta else tintaSuave
     /** Hora de la fila actual del horario: en claro va en tinta (13,24:1); `hora` daba 4,99:1 (decisión del paso 1). */
     val horaFila: Color get() = if (tema == TemaReloj.CLARO) tinta else hora
 

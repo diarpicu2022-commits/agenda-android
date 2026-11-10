@@ -32,6 +32,9 @@ import javax.inject.Singleton
 object RutasReloj {
     const val DIA = "/campuswatch/dia"
     const val ACCION = "/campuswatch/accion"
+    /** Modo oscuro del teléfono, para «Como el teléfono» en el reloj (anexo 2026-11-09-campuswatch-claro, W2). */
+    const val TEMA = "/campuswatch/tema"
+    const val CLAVE_OSCURO = "oscuro"
     const val CLAVE_DIA = "dia"
 }
 
@@ -93,6 +96,11 @@ class PublicadorReloj @Inject constructor(
         runCatching {
             val pedido = PutDataMapRequest.create(RutasReloj.DIA).apply { dataMap.putString(RutasReloj.CLAVE_DIA, dia.encode()) }
             Wearable.getDataClient(contexto).putDataItem(pedido.asPutDataRequest().setUrgent()).await()
+            // Mientras la app no tenga su propio selector de tema, «Como el teléfono» sigue el modo oscuro del sistema.
+            val oscuro = (contexto.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+            val tema = PutDataMapRequest.create(RutasReloj.TEMA).apply { dataMap.putBoolean(RutasReloj.CLAVE_OSCURO, oscuro) }
+            Wearable.getDataClient(contexto).putDataItem(tema.asPutDataRequest().setUrgent()).await()
         }
     }
 }

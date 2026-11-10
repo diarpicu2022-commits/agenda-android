@@ -18,6 +18,8 @@ object Rutas {
     const val DIA = "/campuswatch/dia"
     const val ACCION = "/campuswatch/accion"
     const val CLAVE_DIA = "dia"
+    const val TEMA = "/campuswatch/tema"
+    const val CLAVE_OSCURO = "oscuro"
 }
 
 /**
@@ -53,6 +55,7 @@ object AlmacenDia {
             try {
                 for (item in items) {
                     if (item.uri.path == Rutas.DIA) DataMapItem.fromDataItem(item).dataMap.getString(Rutas.CLAVE_DIA)?.let { guardar(contexto, it) }
+                    if (item.uri.path == Rutas.TEMA) PreferenciaTema.guardarTelefono(contexto, DataMapItem.fromDataItem(item).dataMap.getBoolean(Rutas.CLAVE_OSCURO))
                 }
             } finally {
                 items.release()
@@ -66,6 +69,9 @@ class ReceptorDia : WearableListenerService() {
         for (e in eventos) {
             if (e.type == DataEvent.TYPE_CHANGED && e.dataItem.uri.path == Rutas.DIA) {
                 DataMapItem.fromDataItem(e.dataItem).dataMap.getString(Rutas.CLAVE_DIA)?.let { AlmacenDia.guardar(this, it) }
+            }
+            if (e.type == DataEvent.TYPE_CHANGED && e.dataItem.uri.path == Rutas.TEMA) {
+                PreferenciaTema.guardarTelefono(this, DataMapItem.fromDataItem(e.dataItem).dataMap.getBoolean(Rutas.CLAVE_OSCURO))
             }
         }
     }
@@ -108,7 +114,19 @@ object PreferenciaTema {
     fun opcion(c: Context): Opcion = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(CLAVE, null)
         ?.let { runCatching { Opcion.valueOf(it) }.getOrNull() } ?: Opcion.TELEFONO
 
-    fun guardar(c: Context, o: Opcion) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(CLAVE, o.name).apply()
+    /** Sube cada vez que cambia la opción o el modo del teléfono: la pantalla vuelve a calcular el tema. */
+    val cambio = MutableStateFlow(0)
+
+    fun guardar(c: Context, o: Opcion) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(CLAVE, o.name).apply()
+        cambio.value++
+    }
+
+    /** El teléfono avisa si está en modo oscuro (ruta /campuswatch/tema). */
+    fun guardarTelefono(c: Context, oscuro: Boolean) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(TELEFONO_OSCURO, oscuro).apply()
+        cambio.value++
+    }
 
     /** Tema de la pantalla activa según la opción. «Siempre activo» no pasa por aquí: siempre es oscuro (W3). */
     fun efectivo(c: Context): TemaReloj = when (opcion(c)) {

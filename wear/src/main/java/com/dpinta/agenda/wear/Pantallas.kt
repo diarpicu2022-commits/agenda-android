@@ -1,5 +1,7 @@
 package com.dpinta.agenda.wear
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
@@ -117,7 +119,7 @@ fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente:
             Text(if (u == Urgency.URGENT) "SAL YA" else "ES HORA DE SALIR", style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else color,
                 modifier = Modifier.semantics { heading() })
             Text(s.title, style = Tipo.titulo, color = Reloj.tinta, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("comienza en ${Formato.cuenta(Duration.between(ahora, s.start))}", style = Tipo.apoyo, color = Reloj.tintaSuave)
+            Text("comienza en ${Formato.cuenta(Duration.between(ahora, s.start))}", style = Tipo.apoyo, color = Reloj.cifraApoyo)
             Spacer(Modifier.height(10.dp))
             if (!ambiente) BotonReloj(Accion.YaVoy.etiqueta, principal = true, color = color) { onAccion(Accion.YaVoy) }
         }
@@ -136,6 +138,26 @@ fun PantallaAcciones(s: WatchSession, color: Color, onAccion: (Accion) -> Unit) 
         BotonReloj(Accion.YaVoy.etiqueta, principal = true, color = color) { onAccion(Accion.YaVoy) }
         BotonReloj(Accion.Aplazar.etiqueta) { onAccion(Accion.Aplazar) }
         BotonReloj(Accion.Cancelar.etiqueta) { onAccion(Accion.Cancelar) }
+    }
+}
+
+/** Tema del reloj (anexo 2026-11-09-campuswatch-claro, W2): Claro · Oscuro · Como el teléfono, con el repertorio de
+ *  Acciones (un botón de 48 dp por fila); el elegido va como principal. */
+@Composable
+fun PantallaTema(onElegir: (PreferenciaTema.Opcion) -> Unit) {
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    val cambio by PreferenciaTema.cambio.collectAsState()
+    val elegida = remember(cambio) { PreferenciaTema.opcion(contexto) }
+    Column(
+        Modifier.fillMaxSize().background(Reloj.fondo).padding(horizontal = 26.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text("Tema", style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        for ((o, texto) in listOf(PreferenciaTema.Opcion.CLARO to "Claro", PreferenciaTema.Opcion.OSCURO to "Oscuro", PreferenciaTema.Opcion.TELEFONO to "Como el teléfono")) {
+            // Mismo ancho para las tres: la elegida se distingue por el color, no cambia de tamaño (y «Como el teléfono» cabe).
+            BotonReloj(texto, principal = o == elegida, color = Reloj.ruta, ancho = 0.9f) { onElegir(o) }
+        }
     }
 }
 
@@ -172,7 +194,7 @@ private fun FilaHorario(s: WatchSession, actual: Boolean, hecha: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(Formato.hora(s.start.toLocalTime()), style = Tipo.apoyo.copy(fontWeight = Tipo.titulo.fontWeight),
-            color = if (actual) Reloj.horaFila else Reloj.tintaSuave)
+            color = if (actual) Reloj.horaFila else Reloj.cifraApoyo)
         Spacer(Modifier.width(8.dp))
         MarcaTipo(s, hecha, actual)
         Spacer(Modifier.width(8.dp))
@@ -266,10 +288,10 @@ fun PantallaLibre(dia: WatchDay, ahora: LocalDateTime) {
 
 /** Botón del reloj: pastilla de 48 dp de alto. El principal lleva el color de la urgencia; los demás, superficie. */
 @Composable
-fun BotonReloj(texto: String, principal: Boolean = false, color: Color = Reloj.hora, onClick: () -> Unit) {
+fun BotonReloj(texto: String, principal: Boolean = false, color: Color = Reloj.hora, ancho: Float? = null, onClick: () -> Unit) {
     Box(
         Modifier
-            .fillMaxWidth(if (principal) 0.62f else 0.9f)
+            .fillMaxWidth(ancho ?: if (principal) 0.62f else 0.9f)
             .heightIn(min = Reloj.toque)
             .clip(RoundedCornerShape(50))
             .background(if (principal) color else Reloj.superficie)

@@ -124,6 +124,23 @@ Pasos: 1 tokens · 2 componente clave (Próxima con el anillo) · 3 el resto de 
 - **Hallazgos para Diego**, del mismo tipo que el aula. En claro, las horas de la lista del horario que no son la actual
   (00:45, 06:05, 13:35) dan 5,63:1, y «comienza en 12 min» en Es hora de salir también. `CLAUDE.md` pide AAA para las horas
   de la lista. En oscuro dan 11,16:1.
+- **Decisión de Diego (2026-11-09):** en claro, las horas de la lista y «comienza en» van en tinta (`Reloj.cifraApoyo`).
+  Medido después en claro: 14,00:1.
+
+### Paso 4 · Selector de tema (hecho 2026-11-09)
+
+- Página **Tema** al final del recorrido (después de Mañana) con Claro · Oscuro · Como el teléfono, con el repertorio de
+  Acciones. La opción elegida se distingue por el color (`ruta`) y no cambia de tamaño.
+- El teléfono publica su modo oscuro en `/campuswatch/tema` junto con el día (`PublicadorReloj`). El reloj lo recibe en
+  `ReceptorDia` y al abrir (`AlmacenDia.sincronizar`). El cambio se ve al momento (`PreferenciaTema.cambio`).
+- **Medido** en el emulador. Al tocar Oscuro todo pasa a oscuro y al tocar Como el teléfono vuelve a claro, y la
+  preferencia queda guardada. Con `telefono_oscuro = true` simulado, el reloj abre en oscuro. Contraste de la página
+  Tema en claro de 5,63 a 15,55:1 y en oscuro de 11,16 a 17,38:1, sin fallos.
+- **Fallo encontrado al mirar la captura.** «Como el teléfono» se cortaba en «Como el» en el botón elegido, que medía el
+  62 % del ancho. `medir_reloj.py` no lo ve porque el volcado trae el texto completo. Ahora las tres opciones miden el
+  90 % (`BotonReloj(ancho = …)`).
+- **Pendiente**: el emparejamiento real teléfono ↔ reloj (los emuladores no se emparejan sin Google Play). El teléfono
+  publica su modo cuando reprograma los avisos, no en el instante en que se cambia el modo del sistema.
 
 ## 6. Verificación prevista
 

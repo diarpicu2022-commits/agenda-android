@@ -51,7 +51,8 @@ class CampusWatchActivity : ComponentActivity() {
         lifecycleScope.launch { AlmacenDia.sincronizar(this@CampusWatchActivity) }
         setContent {
             // W2/W3: el tema elegido en pantalla activa; «siempre activo» siempre en el tema «reloj» (negro).
-            val elegido = remember { PreferenciaTema.efectivo(this@CampusWatchActivity) }
+            val cambio by PreferenciaTema.cambio.collectAsState()
+            val elegido = remember(cambio) { PreferenciaTema.efectivo(this@CampusWatchActivity) }
             val tema = if (ambiente) TemaReloj.OSCURO else elegido
             SideEffect { Reloj.tema = tema }
             CampusWatch(ambiente)
@@ -121,6 +122,7 @@ fun CampusWatch(ambiente: Boolean) {
                     if (!ambiente) {
                         add { PantallaHorario(d, ahora.toLocalDate(), ahora, zona) }
                         add { PantallaHorario(d, ahora.toLocalDate().plusDays(1), ahora, zona) }
+                        add { PantallaTema { PreferenciaTema.guardar(contexto, it) } }
                     }
                 }
                 val estado = rememberPagerState { paginas.size }
