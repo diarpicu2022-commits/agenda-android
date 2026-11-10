@@ -24,6 +24,11 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var herramientas: HerramientasDepuracion
 
+    /** Android 10 a 12: el idioma elegido en Ajustes (desde Android 13 lo aplica el sistema). */
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.dpinta.agenda.data.ajustes.Idioma.contexto(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
