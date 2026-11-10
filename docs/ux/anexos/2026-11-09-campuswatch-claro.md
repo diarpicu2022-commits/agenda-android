@@ -171,6 +171,9 @@ Diego pidió seguir toda la noche y dejar las decisiones juntas para el día sig
 - **Pendiente.** El emparejamiento real (los mensajes del reloj al teléfono no se pudieron probar entre emuladores) y una
   pantalla de asistencia en el teléfono.
 
+**Decisión de Diego (2026-11-10):** aprobado con mis recomendaciones. «Voy saliendo» marca asistí y «Hoy no voy» marca
+falté en clases. El límite de faltas se agrega a la materia cuando se haga su campo en el formulario.
+
 ### Paso 6 · Estados y verificación final (hecho la noche del 2026-11-09)
 
 - `recorrido_temas_reloj.sh` con la app completa: las 22 pantallas de los dos temas pasan, en dos corridas seguidas, sin

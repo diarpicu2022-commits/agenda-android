@@ -92,6 +92,7 @@ class PublicadorReloj @Inject constructor(
     @param:ApplicationContext private val contexto: Context,
     private val repositorio: AgendaRepository,
     private val reloj: Clock,
+    private val ajustesTema: com.dpinta.agenda.data.ajustes.AjustesTema,
 ) {
     /**
      * Asistencia por materia para el reloj (W6), con [Attendance.summary] desde el inicio del semestre (o 120 días) hasta
@@ -133,9 +134,8 @@ class PublicadorReloj @Inject constructor(
         runCatching {
             val pedido = PutDataMapRequest.create(RutasReloj.DIA).apply { dataMap.putString(RutasReloj.CLAVE_DIA, dia.encode()) }
             Wearable.getDataClient(contexto).putDataItem(pedido.asPutDataRequest().setUrgent()).await()
-            // Mientras la app no tenga su propio selector de tema, «Como el teléfono» sigue el modo oscuro del sistema.
-            val oscuro = (contexto.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
+            // «Como el teléfono» en el reloj sigue el tema de Agenda (Ajustes › Apariencia), no solo el del sistema.
+            val oscuro = ajustesTema.oscuroEfectivo()
             val tema = PutDataMapRequest.create(RutasReloj.TEMA).apply { dataMap.putBoolean(RutasReloj.CLAVE_OSCURO, oscuro) }
             Wearable.getDataClient(contexto).putDataItem(tema.asPutDataRequest().setUrgent()).await()
         }

@@ -85,3 +85,32 @@ Verificación: `assembleDebug`, `testDebugUnitTest` (**86 pruebas, 0 fallos**) y
 emulador del teléfono: `docs/capturas/sn-paso6-{ajustes,ajustes-2,formulario,formulario-2,semestre}.png`.
 Pendiente declarado: el diálogo de «Borrar todos mis datos» no se pulsó en la verificación (borra el emulador de
 demostración); queda probado por compilación, no por recorrido.
+
+## Paso 7 · Tema a elección (2026-11-10, pedido del profesor)
+
+- Ajustes › **Apariencia** con el `Segmentado` del sistema: Claro · Oscuro · Como el sistema (por defecto). Se guarda en
+  `AjustesTema` (preferencias, no es dato personal) y `AgendaRoot` lo aplica con `AgendaTheme(oscuro = …)`.
+- El reloj sigue este tema en «Como el teléfono»: `PublicadorReloj` publica `AjustesTema.oscuroEfectivo()` y cambiar el
+  tema vuelve a publicar.
+- **Medido** en el emulador `Agenda_Pixel` (`medir_reloj.py --rect`, nueva opción para pantallas rectangulares). Al
+  elegir Oscuro los textos pasan a 14,53:1 sobre el fondo de noche. La opción elegida va en `ruta` (6,29 a 6,57:1) y las
+  demás de 14,53 a 15,55:1. El único fallo de toque (363 × 19 dp) es la fila cortada por el borde inferior de la pantalla
+  (`[63,2349][1017,2400]`), un falso positivo conocido.
+
+## Paso 8 · Política de privacidad y consentimiento (2026-11-10)
+
+- Política **0.2** (`docs/legal/politica-privacidad.md`). Nombra la asistencia, las salidas reales de «Tu ritmo», el tema y
+  lo que recibe el reloj, y dice que «Borrar todos mis datos» ya existe. Es un borrador técnico que revisa un abogado.
+- **Dentro de la app**, Ajustes › Datos › Política de privacidad (`PrivacidadPantalla`), con el mismo texto
+  (`PoliticaPrivacidad`).
+- **Consentimiento previo** (Ley 1581). En el primer uso, y cada vez que cambie la versión, «Antes de empezar» muestra
+  la nota de privacidad del sistema, la política a un toque y «Acepto». Guarda la versión y la fecha (`Consentimiento`).
+  Con el repertorio del contrato: `NotaPrivacidad`, `BotonSubrayado` y `BotonRelleno`.
+- **Medido** en el emulador. Textos de 5,32 a 14,00:1 y recorrido completo (aceptar, abrir la política desde Ajustes). El
+  consentimiento quedó guardado con versión 0.2 y fecha 2026-11-10.
+- **Ojo** con los scripts de capturas de pasos anteriores (`capturas_paso4.sh` y `capturas_paso5.sh`). En una instalación
+  limpia ahora aparece primero el consentimiento y hay que aceptarlo antes de correrlos.
+- **Exportar mis datos** (hecho después, la misma noche). Ajustes › Datos abre el selector de archivos del sistema, sin
+  permisos, y guarda `Agenda.ics` con las sesiones de seis meses atrás a seis adelante, con salón, lugar y asistencia.
+  Probado en el emulador: 723 eventos, 150 KB.
+

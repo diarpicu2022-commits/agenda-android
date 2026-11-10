@@ -14,9 +14,13 @@ import javax.inject.Inject
 @HiltViewModel
 class RaizViewModel @Inject constructor(
     avisos: AvisosGuardado,
+    ajustesTema: com.dpinta.agenda.data.ajustes.AjustesTema,
     private val repositorio: AgendaRepository,
 ) : ViewModel() {
     val guardados: SharedFlow<Guardado> = avisos.avisos
+
+    /** Tema elegido en Ajustes (Claro · Oscuro · Como el sistema). */
+    val tema: kotlinx.coroutines.flow.StateFlow<com.dpinta.agenda.data.ajustes.TemaApp> = ajustesTema.tema
 
     /** Solo las nuevas se pueden deshacer (borrarlas); una edición no guarda la versión anterior. */
     fun deshacer(g: Guardado) {
