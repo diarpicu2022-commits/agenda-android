@@ -93,3 +93,27 @@ fun pieDatos(dia: WatchDay, ahora: LocalDateTime): String {
     val hora = Formato.hora(dia.computedAt.toLocalTime())
     return if (java.time.Duration.between(dia.computedAt, ahora).toMinutes() <= 15) "Actualizado $hora" else "Datos locales · $hora"
 }
+
+/**
+ * Tema elegido en el reloj (anexo 2026-11-09-campuswatch-claro, W2): Claro · Oscuro · Como el teléfono. Vive en su propio
+ * archivo para que el día que llega del teléfono no lo pise. No es un dato personal.
+ */
+object PreferenciaTema {
+    enum class Opcion { CLARO, OSCURO, TELEFONO }
+    private const val PREFS = "campuswatch_tema"
+    private const val CLAVE = "tema"
+    /** Modo oscuro del teléfono, que publica la app (paso 4). Mientras no llegue, la app está en claro por defecto. */
+    private const val TELEFONO_OSCURO = "telefono_oscuro"
+
+    fun opcion(c: Context): Opcion = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(CLAVE, null)
+        ?.let { runCatching { Opcion.valueOf(it) }.getOrNull() } ?: Opcion.TELEFONO
+
+    fun guardar(c: Context, o: Opcion) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(CLAVE, o.name).apply()
+
+    /** Tema de la pantalla activa según la opción. «Siempre activo» no pasa por aquí: siempre es oscuro (W3). */
+    fun efectivo(c: Context): TemaReloj = when (opcion(c)) {
+        Opcion.CLARO -> TemaReloj.CLARO
+        Opcion.OSCURO -> TemaReloj.OSCURO
+        Opcion.TELEFONO -> if (c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(TELEFONO_OSCURO, false)) TemaReloj.OSCURO else TemaReloj.CLARO
+    }
+}

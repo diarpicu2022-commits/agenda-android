@@ -88,6 +88,30 @@ dos temas en pantalla activa.
 Pasos: 1 tokens · 2 componente clave (Próxima con el anillo) · 3 el resto de pantallas · 4 selector · 5 asistencia ·
 6 estados y verificación. Cada paso se muestra y espera visto bueno.
 
+### Paso 1 · Tokens (hecho 2026-11-09, aprobado)
+
+- `tools/cw_recursos.py` genera también `CWClaro` (tema `claro` de la app, 35 colores con los mismos nombres que `CW`).
+  `Reloj` (Tema.kt) lee de la paleta activa, que es un estado de Compose.
+- `tools/verificacion/contraste_tokens_reloj.py` calcula 21 pares por tema. En oscuro pasan todos (el más bajo, 6,13:1).
+  En claro pasan 20.
+- **Decisiones de Diego (2026-11-09)**:
+  - «ES HORA DE SALIR», «SAL YA» y «AHORA» quedan en su color de urgencia en claro (5,27 a 6,37:1, AA). Son rótulos y la
+    cifra que se lee para decidir va en tinta. Enmienda a W5, que pedía AAA para la hora de salida.
+  - La hora de la fila actual del horario va en tinta en claro (13,24:1 sobre `horaSuave`), porque en `hora` daba 4,99:1.
+- Fallo propio: la primera corrida dio 32 fallas falsas porque el script leía el canal alfa (`0xFF…`) como parte del color.
+
+### Paso 2 · Componente clave, Próxima con el anillo (hecho 2026-11-09)
+
+- `PreferenciaTema` (Datos.kt) guarda Claro · Oscuro · Como el teléfono en su propio archivo (`campuswatch_tema`). Por
+  defecto, Como el teléfono. Mientras el teléfono no publique su modo, se toma claro, que es el de la app por defecto.
+- `CampusWatchActivity` aplica el tema elegido en pantalla activa y el oscuro en «siempre activo» (W3).
+- `reloj_dia.py` acepta el tema como segundo argumento, para las pruebas.
+- **Medido sobre el render** (`medir_reloj.py`, captura estable). En claro la cuenta «17 min» y el nombre dan 14,00:1 y el
+  anillo de «Pronto» 5,42:1 como marca (`docs/capturas/cw-medida-p2-proxima-claro.png`). En oscuro no cambió nada (19,01:1
+  y 11,16:1, `cw-medida-p2-proxima-oscuro.png`).
+- **Hallazgo para Diego.** En claro la línea del aula y la hora («B-204 · 03:44», en `tinta-suave`) da 5,63:1. W5 pide AAA
+  para el aula.
+
 ## 6. Verificación prevista
 
 - Contraste medido sobre el render en cada tema que entre. La cifra, el aula y la hora de salida a nivel AAA, y el resto a AA.

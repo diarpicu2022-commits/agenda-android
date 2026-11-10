@@ -1,5 +1,5 @@
 """Deja en el reloj (build de depuración) un día de prueba relativo a la hora del emulador, y abre CampusWatch.
-Uso: python tools/verificacion/reloj_dia.py <escenario>   escenarios: proxima · salir · urgente · parcial · horario · vacio"""
+Uso: python tools/verificacion/reloj_dia.py <escenario> [claro|oscuro|telefono]   escenarios: proxima · salir · urgente · parcial · horario · vacio"""
 import datetime as dt, os, subprocess, sys
 
 ADB = os.path.expandvars(r'%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe')
@@ -37,5 +37,9 @@ if esc == 'sin-datos':
 else:
     p = subprocess.run([ADB, 'shell', 'run-as', PKG, 'sh', '-c', '"mkdir -p shared_prefs && cat > shared_prefs/campuswatch.xml"'], input=xml.encode('utf8'), capture_output=True)
     if p.returncode: print(p.stderr.decode())
+# Tema del reloj (anexo 2026-11-09-campuswatch-claro, W2), en su propio archivo de preferencias.
+if len(sys.argv) > 2:
+    xt = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n    <string name=\"tema\">" + sys.argv[2].upper() + "</string>\n</map>\n"
+    subprocess.run([ADB, 'shell', 'run-as', PKG, 'sh', '-c', '"cat > shared_prefs/campuswatch_tema.xml"'], input=xt.encode('utf8'), capture_output=True)
 sh('am', 'start', '-n', f'{PKG}/com.dpinta.agenda.wear.CampusWatchActivity')
 print(esc, ahora.strftime('%H:%M'))

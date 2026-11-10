@@ -1,5 +1,6 @@
 package com.dpinta.agenda.wear
 
+import androidx.compose.runtime.SideEffect
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,7 +49,13 @@ class CampusWatchActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         lifecycle.addObserver(observador)
         lifecycleScope.launch { AlmacenDia.sincronizar(this@CampusWatchActivity) }
-        setContent { CampusWatch(ambiente) }
+        setContent {
+            // W2/W3: el tema elegido en pantalla activa; «siempre activo» siempre en el tema «reloj» (negro).
+            val elegido = remember { PreferenciaTema.efectivo(this@CampusWatchActivity) }
+            val tema = if (ambiente) TemaReloj.OSCURO else elegido
+            SideEffect { Reloj.tema = tema }
+            CampusWatch(ambiente)
+        }
     }
 }
 
