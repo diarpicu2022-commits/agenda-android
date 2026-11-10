@@ -2,7 +2,7 @@
 - contraste de cada texto: color de tinta (el más alejado del fondo dentro de su caja) frente al fondo (el más frecuente);
 - toques: todo nodo clicable ≥ 48 dp por lado (size-toque-reloj);
 - textos: que ninguno se salga del círculo de la esfera.
-Uso: python tools/verificacion/medir_reloj.py <nombre> (deja la captura en docs/capturas/cw-medida-<nombre>.png)"""
+Uso: python tools/verificacion/medir_reloj.py <nombre> [--rect] (deja la captura en docs/capturas/cw-medida-<nombre>.png)"""
 import io, math, os, re, subprocess, sys
 from collections import Counter
 from PIL import Image
@@ -13,6 +13,8 @@ def adb(*a, binario=False):
     return r.stdout if binario else r.stdout.decode('utf8', 'replace')
 
 nombre = sys.argv[1]
+# --rect: pantalla rectangular (el teléfono); no se mide la esfera, sí contraste y toques.
+rect = '--rect' in sys.argv
 # Dos volcados seguidos deben coincidir (la UI ya terminó de dibujarse).
 def volcado():
     adb('shell', 'uiautomator', 'dump', '/sdcard/u.xml')
@@ -52,7 +54,7 @@ for n in re.findall(r'<node [^>]*>', b):
     r = ratio(tinta, fondo)
     # Fuera de la esfera: alguna esquina interior del texto más allá del radio.
     cx, cy, R = W / 2, H / 2, W / 2
-    fuera = any(math.hypot(px_ - cx, py_ - cy) > R for px_, py_ in ((x1 + 4, (y1 + y2) / 2), (x2 - 4, (y1 + y2) / 2)))
+    fuera = not rect and any(math.hypot(px_ - cx, py_ - cy) > R for px_, py_ in ((x1 + 4, (y1 + y2) / 2), (x2 - 4, (y1 + y2) / 2)))
     filas.append(f'{r:5.2f}:1  {texto[:34]}' + ('  ← FUERA DE LA ESFERA' if fuera else ''))
     if r < 4.5:
         fallos.append(f'contraste {r:.2f}:1 en «{texto}»')

@@ -85,3 +85,14 @@ Verificación: `assembleDebug`, `testDebugUnitTest` (**86 pruebas, 0 fallos**) y
 emulador del teléfono: `docs/capturas/sn-paso6-{ajustes,ajustes-2,formulario,formulario-2,semestre}.png`.
 Pendiente declarado: el diálogo de «Borrar todos mis datos» no se pulsó en la verificación (borra el emulador de
 demostración); queda probado por compilación, no por recorrido.
+
+## Paso 7 · Tema a elección (2026-11-10, pedido del profesor)
+
+- Ajustes › **Apariencia** con el `Segmentado` del sistema: Claro · Oscuro · Como el sistema (por defecto). Se guarda en
+  `AjustesTema` (preferencias, no es dato personal) y `AgendaRoot` lo aplica con `AgendaTheme(oscuro = …)`.
+- El reloj sigue este tema en «Como el teléfono»: `PublicadorReloj` publica `AjustesTema.oscuroEfectivo()` y cambiar el
+  tema vuelve a publicar.
+- **Medido** en el emulador `Agenda_Pixel` (`medir_reloj.py --rect`, nueva opción para pantallas rectangulares). Al
+  elegir Oscuro los textos pasan a 14,53:1 sobre el fondo de noche. La opción elegida va en `ruta` (6,29 a 6,57:1) y las
+  demás de 14,53 a 15,55:1. El único fallo de toque (363 × 19 dp) es la fila cortada por el borde inferior de la pantalla
+  (`[63,2349][1017,2400]`), un falso positivo conocido.

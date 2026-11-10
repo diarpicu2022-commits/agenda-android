@@ -1,5 +1,6 @@
 package com.dpinta.agenda.ui
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
@@ -63,7 +64,13 @@ fun AgendaRoot(
     escenarioFormulario: String = "",
     raiz: RaizViewModel = hiltViewModel(),
 ) {
-    AgendaTheme {
+    val tema by raiz.tema.collectAsStateWithLifecycle()
+    val oscuro = when (tema) {
+        com.dpinta.agenda.data.ajustes.TemaApp.CLARO -> false
+        com.dpinta.agenda.data.ajustes.TemaApp.OSCURO -> true
+        com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA -> androidx.compose.foundation.isSystemInDarkTheme()
+    }
+    AgendaTheme(oscuro = oscuro) {
         val nav = rememberNavController()
         val avisos = remember { SnackbarHostState() }
         LaunchedEffect(Unit) {

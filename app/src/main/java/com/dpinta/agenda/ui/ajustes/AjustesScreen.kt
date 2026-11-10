@@ -72,7 +72,17 @@ class AjustesViewModel @Inject constructor(
     private val ajustes: AjustesAvisos,
     private val programador: ProgramadorAvisos,
     private val perfilLocal: com.dpinta.agenda.data.perfil.PerfilLocal,
+    private val ajustesTema: com.dpinta.agenda.data.ajustes.AjustesTema,
 ) : ViewModel() {
+    val tema: StateFlow<com.dpinta.agenda.data.ajustes.TemaApp> = ajustesTema.tema
+
+    /** Cambia el tema y vuelve a publicar el día: el reloj en «Como el teléfono» sigue este tema. */
+    fun tema(t: com.dpinta.agenda.data.ajustes.TemaApp) {
+        if (t == ajustesTema.tema.value) return
+        ajustesTema.guardar(t)
+        viewModelScope.launch { programador.reprogramar() }
+    }
+
     val perfil: StateFlow<com.dpinta.agenda.data.perfil.Perfil> = perfilLocal.perfil
 
     fun perfil(p: com.dpinta.agenda.data.perfil.Perfil) = perfilLocal.guardar(p)
@@ -113,8 +123,9 @@ fun AjustesRuta(
     val semestres by viewModel.semestres.collectAsStateWithLifecycle()
     val resumen by viewModel.resumen.collectAsStateWithLifecycle()
     val perfil by viewModel.perfil.collectAsStateWithLifecycle()
+    val tema by viewModel.tema.collectAsStateWithLifecycle()
     AjustesPantalla(semestres, onAtras, onSemestre, onDemoBanda, resumen = resumen, onResumen = viewModel::resumen,
-        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares)
+        perfil = perfil, onPerfil = viewModel::perfil, onLugares = onLugares, tema = tema, onTema = viewModel::tema)
 }
 
 /** Ajustes (anexo §7). Por ahora: Semestre. En compilaciones depurables enlaza la demostración de la banda. */
@@ -130,6 +141,8 @@ fun AjustesPantalla(
     perfil: com.dpinta.agenda.data.perfil.Perfil = com.dpinta.agenda.data.perfil.Perfil(),
     onPerfil: (com.dpinta.agenda.data.perfil.Perfil) -> Unit = {},
     onLugares: () -> Unit = {},
+    tema: com.dpinta.agenda.data.ajustes.TemaApp = com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA,
+    onTema: (com.dpinta.agenda.data.ajustes.TemaApp) -> Unit = {},
 ) {
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
@@ -146,6 +159,21 @@ fun AjustesPantalla(
         ) {
             NotaPrivacidad("Tus datos permanecen en este dispositivo.", "No necesitas cuenta. Puedes borrar todo cuando quieras desde Datos.")
             TuPerfil(perfil, onPerfil)
+            // Apariencia (pedido del profesor): claro u oscuro a elección, con el Segmentado del sistema.
+            GrupoAjustes("Apariencia") {
+                Column(Modifier.padding(16.dp)) {
+                    com.dpinta.agenda.ui.components.Segmentado(
+                        opciones = listOf(
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.CLARO, "Claro"),
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.OSCURO, "Oscuro"),
+                            com.dpinta.agenda.ui.components.Opcion(com.dpinta.agenda.data.ajustes.TemaApp.SISTEMA, "Como el sistema"),
+                        ),
+                        seleccion = tema,
+                        onSeleccion = onTema,
+                        etiquetaPrueba = "tema",
+                    )
+                }
+            }
             GrupoAjustes("Agenda") {
                 when {
                     semestres == null -> Unit

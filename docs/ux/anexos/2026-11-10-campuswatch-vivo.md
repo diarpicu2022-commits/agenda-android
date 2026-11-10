@@ -38,7 +38,12 @@ lo que ya dice el color.
 Como la escena de SISCAN: el fondo es un cielo que cambia con la hora (amanecer, día, tarde, noche) con el Galeras
 abajo. Muy atmosférico, pero en claro el texto pierde contraste sobre los degradados del cielo y gasta más batería.
 
-## 3. Decisiones para Diego
+## 3. Decisiones de Diego (2026-11-10)
+
+Eligió la dirección **A «El camino a clase»** con mis recomendaciones: la figura dentro del riel y el campus como destino
+para todos los tipos por ahora. PR #3 mergeado.
+
+## 3.1 Lo que se le preguntó
 
 1. ¿A, B o C? (A está hecha y se puede ver en la rama.)
 2. En A, ¿la figura camina por dentro del riel (como está) o encima del riel?
