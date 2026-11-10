@@ -1,5 +1,7 @@
 package com.dpinta.agenda.wear
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import com.dpinta.agenda.domain.WatchRhythm
 import androidx.compose.foundation.shape.CircleShape
 import com.dpinta.agenda.domain.WatchAttendance
@@ -62,8 +64,10 @@ fun PantallaProxima(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambient
     val color = Reloj.urgencia(u, s.exam)
     val restante = Duration.between(ahora, s.start)
     Box(Modifier.fillMaxSize().background(Reloj.fondo), contentAlignment = Alignment.Center) {
-        if (!ambiente) PaisajeGaleras(Modifier.fillMaxSize())
-        AnilloCuenta(restante, s.leaveAt?.let { Duration.between(it, s.start) }, color, Modifier.fillMaxSize(), ambiente)
+        if (!ambiente) PaisajeGaleras(Modifier.fillMaxSize(), ahora.hour)
+        val cuadro = cuadroDeCamino(ambiente, restante.toMinutes())
+        AnilloCuenta(restante, s.leaveAt?.let { Duration.between(it, s.start) }, color, Modifier.fillMaxSize(), ambiente,
+            kind = s.kind, mode = s.mode, urgente = u == Urgency.URGENT || u == Urgency.LEAVE_NOW || u == Urgency.MISSED, cuadro = cuadro)
         Column(
             Modifier.padding(horizontal = 30.dp).semantics(mergeDescendants = true) {},
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -119,7 +123,8 @@ fun PantallaSalir(s: WatchSession, ahora: LocalDateTime, zona: ZoneId, ambiente:
     val u = s.urgency(ahora, zona)
     val color = Reloj.urgencia(u, s.exam)
     Box(Modifier.fillMaxSize().background(Reloj.fondo), contentAlignment = Alignment.Center) {
-        AnilloCuenta(Duration.between(ahora, s.start), s.leaveAt?.let { Duration.between(it, s.start) }, color, Modifier.fillMaxSize(), ambiente)
+        AnilloCuenta(Duration.between(ahora, s.start), s.leaveAt?.let { Duration.between(it, s.start) }, color, Modifier.fillMaxSize(), ambiente,
+            kind = s.kind, mode = s.mode, urgente = true, cuadro = cuadroDeCamino(ambiente, Duration.between(ahora, s.start).toMinutes()))
         Column(Modifier.padding(horizontal = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (u == Urgency.URGENT) t("SAL YA", "LEAVE NOW") else t("ES HORA DE SALIR", "TIME TO LEAVE"), style = Tipo.rotulo, color = if (ambiente) Reloj.tinta else color,
                 modifier = Modifier.semantics { heading() })
@@ -169,8 +174,9 @@ fun LineaRitmo(s: WatchSession, ritmo: WatchRhythm?, conHora: Boolean = true) {
  * (apenas distinta del fondo, 1,11 a 1,24:1). Es paisaje, no información: el texto se mide sobre él.
  */
 @Composable
-fun PaisajeGaleras(modifier: Modifier = Modifier) {
+fun PaisajeGaleras(modifier: Modifier = Modifier, hora: Int = 12) {
     androidx.compose.foundation.Canvas(modifier) {
+        cielo(hora)
         val w = size.width; val h = size.height
         val volcan = androidx.compose.ui.graphics.Path().apply {
             moveTo(0f, h)
@@ -405,3 +411,26 @@ fun BotonReloj(texto: String, principal: Boolean = false, color: Color = Reloj.h
             modifier = Modifier.padding(horizontal = 12.dp), maxLines = 1)
     }
 }
+
+/**
+ * Fotograma del viajero (A+). Al encender la pantalla camina unos dos segundos (12 fotogramas de 160 ms) y se queda
+ * quieto: nada de animación continua, por la batería. En siempre activo o con las animaciones del sistema apagadas no
+ * se mueve; el fotograma de reposo alterna con los minutos, como antes.
+ */
+@Composable
+fun cuadroDeCamino(ambiente: Boolean, minutos: Long): Int {
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    val sinAnimacion = remember {
+        android.provider.Settings.Global.getFloat(contexto.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
+    var cuadro by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    var anda by remember { mutableStateOf(!ambiente && !sinAnimacion) }
+    LaunchedEffect(ambiente) {
+        if (ambiente || sinAnimacion) { anda = false; return@LaunchedEffect }
+        anda = true
+        repeat(12) { kotlinx.coroutines.delay(160); cuadro = (cuadro + 1) % 4 }
+        anda = false
+    }
+    return if (anda) cuadro else if (minutos % 2 == 0L) 0 else 2
+}
+

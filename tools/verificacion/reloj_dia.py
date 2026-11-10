@@ -43,6 +43,21 @@ if esc in ('ritmo', 'ritmo-salir'):
     c = nueva.split('\t')
     filas.append('\t'.join(['R', c[0], c[1], '6', '9']))
     version = 'cw3'
+# Modo de transporte (cw4, dirección A+): variable de entorno CW_MODO = TRANSPORTE_PUBLICO | A_PIE | CARRO | MOTO.
+# Tipo del destino: CW_TIPO = CLASE | TRABAJO | PERSONAL cambia el tipo de la sesión con salida.
+modo = os.environ.get('CW_MODO')
+tipo = os.environ.get('CW_TIPO')
+if modo or tipo:
+    nuevas = []
+    for f in filas:
+        c = f.split('\t')
+        if c[0] not in ('A', 'R'):
+            if tipo and c[6]:
+                c[7] = tipo
+            c = c[:9] + [modo or '']
+        nuevas.append('\t'.join(c))
+    filas = nuevas
+    version = 'cw4'
 texto = version + '\t' + t(-3) + '\n' + '\n'.join(filas) + '\n'
 
 xml_txt = texto.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\t', '&#9;').replace('\n', '&#10;')
