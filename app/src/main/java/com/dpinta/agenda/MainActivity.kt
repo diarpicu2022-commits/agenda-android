@@ -32,6 +32,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Los nombres de los canales siguen el idioma de la app (se rehacen al volver tras cambiarlo).
+        com.dpinta.agenda.avisos.Canal.registrar(this)
         val pestana = if (depurable()) aplicarExtrasDeDepuracion() else Pestana.Hoy
         val escenario = if (depurable()) intent.getStringExtra("formulario").orEmpty() else ""
         setContent { AgendaRoot(pestanaInicial = pestana, escenarioFormulario = escenario) }

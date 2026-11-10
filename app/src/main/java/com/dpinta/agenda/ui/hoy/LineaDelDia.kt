@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui.hoy
 
+import com.dpinta.agenda.ui.components.Lengua
+import com.dpinta.agenda.ui.components.lengua
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -73,24 +75,25 @@ internal fun EstacionDelDia(
     es24h: Boolean,
     onEditar: () -> Unit,
 ) {
+    val l = lengua()
     val ds = AgendaTheme.ds
     val t = AgendaTheme.tipo
-    val inicio = formatearHora(fila.inicio, es24h)
-    val fin = formatearHora(fila.fin, es24h)
-    val conflicto = fila.conflicto?.let { textoConflicto(it, es24h) }
+    val inicio = formatearHora(fila.inicio, es24h, l)
+    val fin = formatearHora(fila.fin, es24h, l)
+    val conflicto = fila.conflicto?.let { textoConflicto(it, es24h, l) }
     val color = ds.lineaDe(fila.tipo)
     val tipoHablado = when (fila.tipo) {
-        TipoFila.Clase -> "clase"
-        TipoFila.Trabajo -> "trabajo"
-        TipoFila.Puntual -> "entrega"
+        TipoFila.Clase -> l("clase", "class")
+        TipoFila.Trabajo -> l("trabajo", "work")
+        TipoFila.Puntual -> l("entrega", "due")
     }
     val frase = buildString {
-        if (enCurso) append("Ahora. ")
-        append("${inicio.enLinea} a ${fin.enLinea}, ${fila.titulo}, $tipoHablado")
-        if (fila.salon.isNotBlank()) append(", salón ${fila.salon}")
+        if (enCurso) append(l("Ahora. ", "Now. "))
+        append(l("${inicio.enLinea} a ${fin.enLinea}", "${inicio.enLinea} to ${fin.enLinea}") + ", ${fila.titulo}, $tipoHablado")
+        if (fila.salon.isNotBlank()) append(l(", salón ", ", room ") + fila.salon)
         if (fila.lugar.isNotBlank()) append(", ${fila.lugar}")
-        if (fila.pasada) append(", completada")
-        conflicto?.let { append(". Conflicto: $it") }
+        if (fila.pasada) append(l(", completada", ", completed"))
+        conflicto?.let { append(l(". Conflicto: ", ". Conflict: ") + it) }
     }
     val interaccion = remember { MutableInteractionSource() }
     Row(
@@ -99,11 +102,11 @@ internal fun EstacionDelDia(
             .height(IntrinsicSize.Min)
             .heightIn(min = 64.dp)
             .anilloFoco(interaccion, ds.ruta)
-            .clickable(interactionSource = interaccion, indication = ripple(color = ds.ruta), onClickLabel = "Editar", role = Role.Button, onClick = onEditar)
+            .clickable(interactionSource = interaccion, indication = ripple(color = ds.ruta), onClickLabel = l("Editar", "Edit"), role = Role.Button, onClick = onEditar)
             .clearAndSetSemantics {
                 contentDescription = frase
                 role = Role.Button
-                onClick(label = "Editar") { onEditar(); true }
+                onClick(label = l("Editar", "Edit")) { onEditar(); true }
             },
     ) {
         // Hora (hora-lg en tabulares; apagada si ya pasó).
@@ -150,16 +153,16 @@ internal fun EstacionDelDia(
                 .then(if (enCurso) Modifier.clip(Formas.bloque).background(ds.horaSuave).padding(horizontal = 14.dp, vertical = 10.dp) else Modifier.padding(top = 6.dp)),
         ) {
             if (enCurso) {
-                Text("AHORA", style = t.etiqueta, color = ds.sobreHora,
+                Text(l("AHORA", "NOW"), style = t.etiqueta, color = ds.sobreHora,
                     modifier = Modifier.clip(Formas.pastilla).background(ds.hora).padding(horizontal = 8.dp, vertical = 2.dp))
                 Spacer(Modifier.height(6.dp))
             } else if (fila.tipo != TipoFila.Clase) {
-                Text(if (fila.tipo == TipoFila.Trabajo) "TURNO" else "ENTREGA", style = t.etiqueta, color = color)
+                Text(if (fila.tipo == TipoFila.Trabajo) l("TURNO", "SHIFT") else l("ENTREGA", "DUE"), style = t.etiqueta, color = color)
             }
             Text(fila.titulo, style = t.cuerpoFuerte, color = if (fila.pasada) ds.tintaSuave else ds.tinta, maxLines = 2)
             val detalle = listOf("${inicio.enLinea} – ${fin.enLinea}", fila.salon, fila.lugar).filter { it.isNotBlank() }.joinToString(" · ")
             Text(detalle, style = t.apoyo, color = ds.tintaSuave)
-            if (fila.pasada) Text("✓ Completada", style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.tintaSuave)
+            if (fila.pasada) Text(l("✓ Completada", "✓ Completed"), style = t.apoyo.copy(fontWeight = t.cuerpoFuerte.fontWeight), color = ds.tintaSuave)
             conflicto?.let {
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -179,14 +182,15 @@ internal fun EstacionDelDia(
 /** Marcador Ahora (NowMarker): pastilla «● Ahora 09:12» en `hora` y una línea que cruza el día. */
 @Composable
 internal fun MarcadorAhora(ahora: LocalTime, es24h: Boolean) {
+    val l = lengua()
     val ds = AgendaTheme.ds
-    val hora = formatearHora(ahora, es24h)
+    val hora = formatearHora(ahora, es24h, l)
     Row(
         Modifier
             .fillMaxWidth()
             .height(36.dp)
             .testTag(EtiquetasHoy.AHORA)
-            .semantics { contentDescription = "Ahora, ${hora.enLinea}" },
+            .semantics { contentDescription = l("Ahora, ", "Now, ") + hora.enLinea },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
@@ -195,7 +199,7 @@ internal fun MarcadorAhora(ahora: LocalTime, es24h: Boolean) {
         ) {
             Box(Modifier.size(6.dp).background(ds.sobreHora, Formas.estacion))
             Spacer(Modifier.width(6.dp))
-            Text("Ahora ${hora.enLinea}", style = AgendaTheme.tipo.etiqueta.copy(letterSpacing = AgendaTheme.tipo.cuerpo.letterSpacing), color = ds.sobreHora)
+            Text(l("Ahora ", "Now ") + hora.enLinea, style = AgendaTheme.tipo.etiqueta.copy(letterSpacing = AgendaTheme.tipo.cuerpo.letterSpacing), color = ds.sobreHora)
         }
         Box(Modifier.weight(1f).height(2.dp).background(ds.hora))
     }

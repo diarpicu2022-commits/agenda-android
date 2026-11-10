@@ -93,6 +93,7 @@ class AlarmaReceiver : BroadcastReceiver() {
         // Una alarma atrasada (hora cambiada, teléfono dormido) no avisa de algo que ya empezó.
         if (!reloj.instant().isBefore(empiezaEn)) return
         val es24h = DateFormat.is24HourFormat(contexto)
+        val l = com.dpinta.agenda.data.ajustes.Idioma.lengua(contexto)
         val deSalida = tipo != AlarmKind.AVISO
         // Si ya tocó «Voy saliendo», no se le vuelve a apurar.
         if (deSalida && sesiones.salida.value?.first == SesionesEnCurso.Sesion(id, inicio)) return
@@ -104,9 +105,9 @@ class AlarmaReceiver : BroadcastReceiver() {
             val empieza = inicio.toLocalTime()
             when (tipo) {
                 AlarmKind.SALIDA -> Canal.Salida to TextosAviso.salida(
-                    plan.leaveAt.atZone(zona).toLocalTime(), act.titulo, act.salon, estimacion, act.margen, es24h,
+                    plan.leaveAt.atZone(zona).toLocalTime(), act.titulo, act.salon, estimacion, act.margen, es24h, l,
                 )
-                AlarmKind.SAL_YA -> Canal.SalYa to TextosAviso.salYa(empieza, act.titulo, act.salon, estimacion, act.margen, es24h)
+                AlarmKind.SAL_YA -> Canal.SalYa to TextosAviso.salYa(empieza, act.titulo, act.salon, estimacion, act.margen, es24h, l)
                 else -> Canal.SalYa to TextosAviso.vasTarde(
                     minutosTarde = Duration.between(plan.leaveAt, reloj.instant()).toMinutes(),
                     llegas = plan.arriveIfLeavingNow.atZone(zona).toLocalTime(),
@@ -114,10 +115,11 @@ class AlarmaReceiver : BroadcastReceiver() {
                     actividad = act.titulo,
                     salon = act.salon,
                     es24h = es24h,
+                    l = l,
                 )
             }
         } else {
-            Canal.Empieza to TextosAviso.empieza(act.titulo, act.salon)
+            Canal.Empieza to TextosAviso.empieza(act.titulo, act.salon, l)
         }
         val aviso = base(contexto, canal, texto)
             .setWhen(empiezaEn.toEpochMilli())
@@ -160,8 +162,9 @@ class AlarmaReceiver : BroadcastReceiver() {
             tasks = emptyList(),
         )
         val primera = resumen.firstDeparture?.atZone(zona)?.toLocalTime()
-        val texto = TextosAviso.resumen(resumen.sessions.size, primera, DateFormat.is24HourFormat(contexto))
-        val aviso = base(contexto, Canal.Resumen, texto).addAction(0, "Ver día", abrirApp(contexto))
+        val l = com.dpinta.agenda.data.ajustes.Idioma.lengua(contexto)
+        val texto = TextosAviso.resumen(resumen.sessions.size, primera, DateFormat.is24HourFormat(contexto), l)
+        val aviso = base(contexto, Canal.Resumen, texto).addAction(0, l("Ver día", "See day"), abrirApp(contexto))
         NotificationManagerCompat.from(contexto).notify(ProgramadorAvisos.CODIGO_RESUMEN, aviso.build())
     }
 

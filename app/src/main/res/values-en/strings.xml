@@ -78,4 +78,24 @@
     <string name="consent_leer">Read the full policy</string>
     <string name="consent_acepto">I accept</string>
     <string name="widget_siguiente">Next departure</string>
+    <string name="fmt_dia_largo">EEEE, MMMM d</string>
+    <string name="fmt_dia_semana">EEEE</string>
+    <string name="volver">Back</string>
+    <string name="primer_uso_titulo">Start with your class schedule</string>
+    <string name="primer_uso_cuerpo">Each class and each shift has its place and its room.</string>
+    <string name="anadir_turno">Add shift</string>
+    <string name="anadir_clase">Add class</string>
+    <string name="crear_actividad">Create activity</string>
+    <string name="pestana_hoy">Today</string>
+    <string name="pestana_semana">Week</string>
+    <string name="pestana_actividades">Activities</string>
+    <string name="permiso_explica">To tell you “Calculus starts in B-204” I need to send you notifications.</string>
+    <string name="ahora_no">Not now</string>
+    <string name="activar">Turn on</string>
+    <string name="permiso_ejemplo_desc">Example reminder: Calculus starts, B-204</string>
+    <string name="permiso_ejemplo_meta">Agenda · in 15 min</string>
+    <string name="permiso_ejemplo_texto">Calculus starts · B-204</string>
+    <string name="permiso_sin_avisos">Reminders off: you won\'t get anything</string>
+    <string name="guardado">Saved: %1$s</string>
+    <string name="deshacer">Undo</string>
 </resources>

@@ -32,8 +32,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object RutaPrivacidad
 
 /** Los tres destinos de la barra inferior (anexo §7). */
-enum class Pestana(val etiqueta: String, val icono: Icono, val ruta: Any) {
-    Hoy("Hoy", Icono.Hoy, RutaHoy),
-    Semana("Semana", Icono.Semana, RutaSemana),
-    Actividades("Actividades", Icono.Lista, RutaActividades),
+enum class Pestana(val etiqueta: String, @param:androidx.annotation.StringRes val texto: Int, val icono: Icono, val ruta: Any) {
+    Hoy("Hoy", com.dpinta.agenda.R.string.pestana_hoy, Icono.Hoy, RutaHoy),
+    Semana("Semana", com.dpinta.agenda.R.string.pestana_semana, Icono.Semana, RutaSemana),
+    Actividades("Actividades", com.dpinta.agenda.R.string.pestana_actividades, Icono.Lista, RutaActividades),
 }

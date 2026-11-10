@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui.navegacion
 
+import com.dpinta.agenda.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -106,12 +108,13 @@ private fun ItemBarra(p: Pestana, activa: Boolean, onClick: () -> Unit, modifier
             contentAlignment = Alignment.Center,
         ) { IconoAgenda(p.icono, tinta) }
         Spacer(Modifier.height(AgendaSpacing.s4))
-        EtiquetaAjustable(p.etiqueta, AgendaTheme.tipo.apoyo.copy(fontWeight = if (activa) AgendaTheme.tipo.cuerpoFuerte.fontWeight else AgendaTheme.tipo.apoyo.fontWeight), tinta)
+        EtiquetaAjustable(stringResource(p.texto), AgendaTheme.tipo.apoyo.copy(fontWeight = if (activa) AgendaTheme.tipo.cuerpoFuerte.fontWeight else AgendaTheme.tipo.apoyo.fontWeight), tinta)
     }
 }
 
 @Composable
 private fun BotonCrear(onCrear: () -> Unit) {
+    val crear = stringResource(R.string.crear_actividad)
     val ds = AgendaTheme.ds
     val interaccion = remember { MutableInteractionSource() }
     Box(
@@ -127,7 +130,7 @@ private fun BotonCrear(onCrear: () -> Unit) {
                 role = Role.Button,
                 onClick = onCrear,
             )
-            .semantics { contentDescription = "Crear actividad" }
+            .semantics { contentDescription = crear }
             .testTag(EtiquetasBarra.CREAR),
         contentAlignment = Alignment.Center,
     ) {

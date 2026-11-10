@@ -78,4 +78,24 @@
     <string name="consent_cuerpo">Para avisarte cuándo salir, Agenda guarda tu horario, tus lugares, tu asistencia y la hora real de tus salidas, cifrados en este teléfono. Lee la política y acepta para continuar.</string>
     <string name="consent_leer">Leer la política completa</string>
     <string name="consent_acepto">Acepto</string>
+    <string name="fmt_dia_largo">EEEE d \'de\' MMMM</string>
+    <string name="fmt_dia_semana">EEEE</string>
+    <string name="volver">Volver</string>
+    <string name="primer_uso_titulo">Empieza por tu horario de clases</string>
+    <string name="primer_uso_cuerpo">Cada clase y cada turno llevan su lugar y su salón.</string>
+    <string name="anadir_turno">Añadir turno</string>
+    <string name="anadir_clase">Añadir clase</string>
+    <string name="crear_actividad">Crear actividad</string>
+    <string name="pestana_hoy">Hoy</string>
+    <string name="pestana_semana">Semana</string>
+    <string name="pestana_actividades">Actividades</string>
+    <string name="permiso_explica">Para avisarte «Empieza Cálculo en B-204» necesito enviarte notificaciones.</string>
+    <string name="ahora_no">Ahora no</string>
+    <string name="activar">Activar</string>
+    <string name="permiso_ejemplo_desc">Ejemplo de aviso: Empieza Cálculo, B-204</string>
+    <string name="permiso_ejemplo_meta">Agenda · en 15 min</string>
+    <string name="permiso_ejemplo_texto">Empieza Cálculo · B-204</string>
+    <string name="permiso_sin_avisos">Sin avisos: no te llegará nada</string>
+    <string name="guardado">Guardado: %1$s</string>
+    <string name="deshacer">Deshacer</string>
 </resources>

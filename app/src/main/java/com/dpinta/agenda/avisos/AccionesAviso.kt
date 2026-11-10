@@ -23,10 +23,10 @@ import java.time.LocalDateTime
 import javax.inject.Inject
 
 /** Botones del canal Salida, en el orden del anexo: Voy saliendo · +5 min · Hoy no voy. */
-enum class AccionAviso(val etiqueta: String) {
-    VoySaliendo("Voy saliendo"),
-    MasCinco("+5 min"),
-    HoyNoVoy("Hoy no voy"),
+enum class AccionAviso(val etiqueta: String, val etiquetaEn: String) {
+    VoySaliendo("Voy saliendo", "Leaving now"),
+    MasCinco("+5 min", "+5 min"),
+    HoyNoVoy("Hoy no voy", "Not going today"),
     ;
 
     val accion: String get() = "com.dpinta.agenda.aviso.$name"
@@ -39,6 +39,7 @@ enum class AccionAviso(val etiqueta: String) {
             inicio: LocalDateTime,
             acciones: List<AccionAviso> = entries,
         ) {
+            val l = com.dpinta.agenda.data.ajustes.Idioma.lengua(contexto)
             for (a in acciones) {
                 val intent = Intent(contexto, AccionAvisoReceiver::class.java)
                     .setAction(a.accion)
@@ -48,7 +49,7 @@ enum class AccionAviso(val etiqueta: String) {
                 val pendiente = PendingIntent.getBroadcast(
                     contexto, codigo, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                 )
-                aviso.addAction(0, a.etiqueta, pendiente)
+                aviso.addAction(0, l(a.etiqueta, a.etiquetaEn), pendiente)
             }
         }
     }

@@ -32,3 +32,7 @@ tailrec fun Context.actividad(): Activity? = when (this) {
     is ContextWrapper -> baseContext.actividad()
     else -> null
 }
+
+/** El idioma de las frases armadas en código (ver [Lengua]). */
+@Composable
+fun lengua(): Lengua = Lengua.de(localeApp().language)

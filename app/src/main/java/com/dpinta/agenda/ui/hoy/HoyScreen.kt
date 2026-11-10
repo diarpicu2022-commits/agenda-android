@@ -1,5 +1,9 @@
 package com.dpinta.agenda.ui.hoy
 
+import com.dpinta.agenda.R
+import com.dpinta.agenda.ui.components.formatoFecha
+import com.dpinta.agenda.ui.components.Lengua
+import com.dpinta.agenda.ui.components.lengua
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.dp
@@ -77,9 +81,7 @@ object EtiquetasHoy {
     const val AHORA = "hoy-ahora"
 }
 
-private val ESPANOL: Locale = Locale.forLanguageTag("es")
-private val FORMATO_DIA = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", ESPANOL)
-private val FORMATO_DIA_CORTO = DateTimeFormatter.ofPattern("EEEE", ESPANOL)
+
 
 @Composable
 fun HoyRuta(onAjustes: () -> Unit, onCrear: () -> Unit, onEditar: (Long) -> Unit, viewModel: HoyViewModel = hiltViewModel()) {
@@ -121,11 +123,11 @@ fun HoyPantalla(
         if (franja) FranjaSinAvisos(onActivar = onActivarAvisos)
         when (estado) {
             HoyUiState.Cargando -> {
-                Cabecera("Hoy", accion = { BotonAjustes(onAjustes) })
+                Cabecera(lengua()("Hoy", "Today"), accion = { BotonAjustes(onAjustes) })
                 EsqueletoCarga()
             }
             HoyUiState.PrimerUso -> {
-                Cabecera("Hoy", accion = { BotonAjustes(onAjustes) })
+                Cabecera(lengua()("Hoy", "Today"), accion = { BotonAjustes(onAjustes) })
                 EstadoPrimerUso(onAnadir = onCrear)
             }
             is HoyUiState.Dia -> {
@@ -147,7 +149,7 @@ fun HoyPantalla(
 
 @Composable
 private fun BotonAjustes(onAjustes: () -> Unit) =
-    BotonIcono(Icono.Ajustes, "Ajustes", AgendaTheme.colores.tinta, onClick = onAjustes)
+    BotonIcono(Icono.Ajustes, lengua()("Ajustes", "Settings"), AgendaTheme.colores.tinta, onClick = onAjustes)
 
 @Composable
 private fun ListaDelDia(
@@ -157,6 +159,7 @@ private fun ListaDelDia(
     onAjustes: () -> Unit,
     boleto: @Composable () -> Unit,
 ) {
+    val l = lengua()
     val es24h = rememberEs24h()
     val ds = AgendaTheme.ds
     val t = AgendaTheme.tipo
@@ -172,15 +175,15 @@ private fun ListaDelDia(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(FORMATO_DIA.format(estado.fecha), style = t.apoyo, color = ds.tintaSuave)
-                    Text(saludo(estado.ahora) + (estado.nombre?.let { ", $it" } ?: ""), style = t.titulo, color = ds.tinta, modifier = Modifier.semantics { heading() })
+                    Text(formatoFecha(R.string.fmt_dia_largo).format(estado.fecha), style = t.apoyo, color = ds.tintaSuave)
+                    Text(saludo(estado.ahora, l) + (estado.nombre?.let { ", $it" } ?: ""), style = t.titulo, color = ds.tinta, modifier = Modifier.semantics { heading() })
                 }
                 BotonAjustes(onAjustes)
             }
         }
         item(key = "boleto") { boleto() }
         item(key = "tu-dia") {
-            Text("Tu día", style = t.encabezado, color = ds.tinta,
+            Text(l("Tu día", "Your day"), style = t.encabezado, color = ds.tinta,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp).semantics { heading() })
         }
         if (estado.filas.isEmpty()) {
@@ -207,10 +210,10 @@ private fun ListaDelDia(
 }
 
 /** Saludo según la hora (PantallaHoy: «Buenos días, Diego»); el nombre sale del perfil local de Ajustes. */
-private fun saludo(ahora: LocalTime): String = when (ahora.hour) {
-    in 5..11 -> "Buenos días"
-    in 12..18 -> "Buenas tardes"
-    else -> "Buenas noches"
+private fun saludo(ahora: LocalTime, l: Lengua): String = when (ahora.hour) {
+    in 5..11 -> l("Buenos días", "Good morning")
+    in 12..18 -> l("Buenas tardes", "Good afternoon")
+    else -> l("Buenas noches", "Good evening")
 }
 
 /**
@@ -219,36 +222,37 @@ private fun saludo(ahora: LocalTime): String = when (ahora.hour) {
  */
 @Composable
 private fun FilaDelDia(fila: FilaHoy, antesDeAhora: Boolean, es24h: Boolean, onEditar: () -> Unit) {
+    val l = lengua()
     val c = AgendaTheme.colores
     val t = AgendaTheme.tipo
     val m = AgendaTheme.reticula
     // Enmienda 2026-09-23: todo en tinta (AAA, C9.1); lo pasado lo dice la marca «✓» del hilo (C6).
     val tinta = c.tinta
-    val conflicto = fila.conflicto?.let { textoConflicto(it, es24h) }
-    val inicio = formatearHora(fila.inicio, es24h)
-    val fin = formatearHora(fila.fin, es24h)
+    val conflicto = fila.conflicto?.let { textoConflicto(it, es24h, l) }
+    val inicio = formatearHora(fila.inicio, es24h, l)
+    val fin = formatearHora(fila.fin, es24h, l)
     val tipoHablado = when (fila.tipo) {
-        TipoFila.Clase -> "clase"
-        TipoFila.Trabajo -> "trabajo"
-        TipoFila.Puntual -> "puntual"
+        TipoFila.Clase -> l("clase", "class")
+        TipoFila.Trabajo -> l("trabajo", "work")
+        TipoFila.Puntual -> l("puntual", "one-off")
     }
     val frase = buildString {
-        append("${inicio.enLinea} a ${fin.enLinea}, ${fila.titulo}, $tipoHablado")
-        if (fila.salon.isNotBlank()) append(", salón ${fila.salon}")
+        append(l("${inicio.enLinea} a ${fin.enLinea}", "${inicio.enLinea} to ${fin.enLinea}") + ", ${fila.titulo}, $tipoHablado")
+        if (fila.salon.isNotBlank()) append(l(", salón ", ", room ") + fila.salon)
         if (fila.lugar.isNotBlank()) append(", ${fila.lugar}")
-        if (fila.pasada) append(", terminada")
-        conflicto?.let { append(". Conflicto: $it") }
+        if (fila.pasada) append(l(", terminada", ", finished"))
+        conflicto?.let { append(l(". Conflicto: ", ". Conflict: ") + it) }
     }
     val interaccion = remember { MutableInteractionSource() }
     Column(
         Modifier
             .fillMaxWidth()
             .anilloFoco(interaccion, c.tinta)
-            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = "Editar", role = Role.Button, onClick = onEditar)
+            .clickable(interactionSource = interaccion, indication = ripple(color = c.tinta), onClickLabel = l("Editar", "Edit"), role = Role.Button, onClick = onEditar)
             .clearAndSetSemantics {
                 contentDescription = frase
                 role = Role.Button
-                onClick(label = "Editar") { onEditar(); true }
+                onClick(label = l("Editar", "Edit")) { onEditar(); true }
             },
     ) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).heightIn(min = AgendaSpacing.s64)) {
@@ -269,7 +273,7 @@ private fun FilaDelDia(fila: FilaHoy, antesDeAhora: Boolean, es24h: Boolean, onE
                         Text(fila.salon, style = t.filaHora, color = tinta)
                     }
                 }
-                val detalle = listOf("hasta ${fin.enLinea}", fila.lugar).filter { it.isNotBlank() }.joinToString(" · ")
+                val detalle = listOf(l("hasta ", "until ") + fin.enLinea, fila.lugar).filter { it.isNotBlank() }.joinToString(" · ")
                 // Lleva la hora de fin: en tinta, AAA (C9.1, enmienda 2026-09-23).
                 Text(detalle, style = t.meta, color = c.tinta)
                 conflicto?.let { texto ->
@@ -352,14 +356,15 @@ private fun hilo(scope: DrawScope, tramo: Tramo, tinta: Color, tinta2: Color) = 
 /** Línea de «ahora» (C6): punto de 8 dp sobre el hilo + hora escrita + filete de tinta. */
 @Composable
 private fun LineaAhora(ahora: LocalTime, es24h: Boolean) {
+    val l = lengua()
     val c = AgendaTheme.colores
-    val hora = formatearHora(ahora, es24h)
+    val hora = formatearHora(ahora, es24h, l)
     Row(
         Modifier
             .fillMaxWidth()
             .height(AgendaSpacing.s32)
             .testTag(EtiquetasHoy.AHORA)
-            .semantics { contentDescription = "Ahora, ${hora.enLinea}" },
+            .semantics { contentDescription = l("Ahora, ", "Now, ") + hora.enLinea },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -376,7 +381,7 @@ private fun LineaAhora(ahora: LocalTime, es24h: Boolean) {
                     .background(c.tinta, FormaPuntoAhora),
             )
         }
-        Text("ahora ${hora.enLinea}", style = AgendaTheme.tipo.filaHora, color = c.tinta)
+        Text(l("ahora ", "now ") + hora.enLinea, style = AgendaTheme.tipo.filaHora, color = c.tinta)
         Spacer(Modifier.width(AgendaSpacing.s8))
         HorizontalDivider(
             thickness = AgendaMedidas.filete,
@@ -403,21 +408,22 @@ internal fun MarcadorTipo(tipo: TipoFila) {
 /** C10 «día sin nada». */
 @Composable
 private fun DiaSinNada(siguiente: SiguienteDia?) {
+    val l = lengua()
     val c = AgendaTheme.colores
     val es24h = rememberEs24h()
     Column(Modifier.fillMaxWidth().padding(horizontal = AgendaTheme.reticula.margen, vertical = AgendaSpacing.s24)) {
-        Text("Hoy no tienes nada fijo.", style = AgendaTheme.tipo.cuerpo, color = c.tinta)
+        Text(l("Hoy no tienes nada fijo.", "Nothing fixed today."), style = AgendaTheme.tipo.cuerpo, color = c.tinta)
         siguiente?.let { s ->
-            val partes = listOf(FORMATO_DIA_CORTO.format(s.fecha), formatearHora(s.hora, es24h).enLinea, s.titulo, s.salon)
+            val partes = listOf(formatoFecha(R.string.fmt_dia_semana).format(s.fecha), formatearHora(s.hora, es24h, l).enLinea, s.titulo, s.salon)
                 .filter { it.isNotBlank() }
-            Text("Siguiente: ${partes.joinToString(" · ")}", style = AgendaTheme.tipo.cuerpo, color = c.tinta2)
+            Text(l("Siguiente: ", "Next: ") + partes.joinToString(" · "), style = AgendaTheme.tipo.cuerpo, color = c.tinta2)
         }
     }
 }
 
 /** C10 «cargando»: esqueleto de filas en `papel-2`, sin spinner ni brillo. */
 @Composable
-internal fun EsqueletoCarga(descripcion: String = "Cargando el día") {
+internal fun EsqueletoCarga(descripcion: String = lengua()("Cargando el día", "Loading your day")) {
     val c = AgendaTheme.colores
     Column(Modifier.fillMaxWidth().semantics { contentDescription = descripcion }) {
         repeat(4) {

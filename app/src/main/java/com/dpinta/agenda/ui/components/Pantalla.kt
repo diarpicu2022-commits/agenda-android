@@ -1,5 +1,7 @@
 package com.dpinta.agenda.ui.components
 
+import com.dpinta.agenda.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,7 +50,7 @@ internal fun Cabecera(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             onAtras?.let {
-                BotonIcono(Icono.Atras, "Volver", c.tinta, onClick = it)
+                BotonIcono(Icono.Atras, stringResource(R.string.volver), c.tinta, onClick = it)
                 Spacer(Modifier.width(AgendaSpacing.s8))
             }
             Text(
@@ -84,17 +86,17 @@ internal fun EstadoPrimerUso(onAnadir: () -> Unit, modifier: Modifier = Modifier
     val c = AgendaTheme.colores
     val m = AgendaTheme.reticula.margen
     Column(modifier.fillMaxWidth().padding(horizontal = m, vertical = AgendaSpacing.s32)) {
-        Text("Empieza por tu horario de clases", style = AgendaTheme.tipo.seccion, color = c.tinta)
+        Text(stringResource(R.string.primer_uso_titulo), style = AgendaTheme.tipo.seccion, color = c.tinta)
         Spacer(Modifier.height(AgendaSpacing.s8))
         Text(
-            "Cada clase y cada turno llevan su lugar y su salón.",
+            stringResource(R.string.primer_uso_cuerpo),
             style = AgendaTheme.tipo.cuerpo,
             color = c.tinta2,
         )
         Spacer(Modifier.height(AgendaSpacing.s24))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            BotonSubrayado("Añadir turno", tinta = c.tinta, onClick = onAnadir)
-            BotonRelleno("Añadir clase", relleno = c.tinta, tinta = c.papel, onClick = onAnadir)
+            BotonSubrayado(stringResource(R.string.anadir_turno), tinta = c.tinta, onClick = onAnadir)
+            BotonRelleno(stringResource(R.string.anadir_clase), relleno = c.tinta, tinta = c.papel, onClick = onAnadir)
         }
     }
 }

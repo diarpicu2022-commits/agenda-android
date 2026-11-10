@@ -1,5 +1,6 @@
 package com.dpinta.agenda.widget
 
+import com.dpinta.agenda.ui.components.Lengua
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -78,7 +79,7 @@ class WidgetSiguiente : AppWidgetProvider() {
             contexto, 0, Intent(contexto, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE,
         )
         v.setOnClickPendingIntent(R.id.widget_raiz, abrir)
-        val textos = WidgetTextos.de(m, LocalDate.now(reloj), es24h)
+        val textos = WidgetTextos.de(m, LocalDate.now(reloj), es24h, com.dpinta.agenda.data.ajustes.Idioma.lengua(contexto))
         fun poner(vista: Int, texto: String?) {
             v.setViewVisibility(vista, if (texto.isNullOrBlank()) View.GONE else View.VISIBLE)
             v.setTextViewText(vista, texto.orEmpty())
@@ -131,26 +132,25 @@ data class WidgetTextos(
     val hablado: String,
 ) {
     companion object {
-        private val ESPANOL = Locale.forLanguageTag("es")
-
-        fun de(m: WidgetModelo, hoy: LocalDate, es24h: Boolean): WidgetTextos = when (m) {
-            WidgetModelo.PrimerUso -> vacio("Empieza por tu horario de clases")
-            WidgetModelo.SinNada -> vacio("Nada fijo en los próximos días.")
-            is WidgetModelo.EnCurso -> enCurso(m, es24h)
+        fun de(m: WidgetModelo, hoy: LocalDate, es24h: Boolean, l: Lengua = Lengua.ES): WidgetTextos = when (m) {
+            WidgetModelo.PrimerUso -> vacio(l("Empieza por tu horario de clases", "Start with your class schedule"))
+            WidgetModelo.SinNada -> vacio(l("Nada fijo en los próximos días.", "Nothing fixed in the coming days."))
+            is WidgetModelo.EnCurso -> enCurso(m, es24h, l)
             is WidgetModelo.Siguiente -> {
-                val dia = m.dia?.let { if (it == hoy.plusDays(1)) "mañana" else it.dayOfWeek.getDisplayName(TextStyle.FULL, ESPANOL) }
+                val locale = Locale.forLanguageTag(l("es", "en"))
+                val dia = m.dia?.let { if (it == hoy.plusDays(1)) l("mañana", "tomorrow") else it.dayOfWeek.getDisplayName(TextStyle.FULL, locale) }
                 // Pasada la hora de salida ya no se repite «sal a las 7:30» (dato ya falso): se dice qué toca.
                 val estado = when {
-                    !m.salir -> "empieza"
-                    m.estado == com.dpinta.agenda.domain.DepartureState.SAL_YA -> "sal ya · a las"
-                    m.estado == com.dpinta.agenda.domain.DepartureState.VAS_TARDE -> "vas tarde · salida"
-                    else -> "sal a las"
+                    !m.salir -> l("empieza", "starts")
+                    m.estado == com.dpinta.agenda.domain.DepartureState.SAL_YA -> l("sal ya · a las", "leave now · at")
+                    m.estado == com.dpinta.agenda.domain.DepartureState.VAS_TARDE -> l("vas tarde · salida", "running late · departure")
+                    else -> l("sal a las", "leave at")
                 }
-                val hora = formatearHora(m.hora, es24h)
-                val nota = m.hace?.let { "hace ${antiguedad(it)}" }
-                val despues = m.despues?.let { d -> listOf("Después: ${formatearHora(d.hora, es24h).enLinea}", d.actividad, d.salon).filter { it.isNotBlank() }.joinToString(" · ") }
+                val hora = formatearHora(m.hora, es24h, l)
+                val nota = m.hace?.let { l("hace ${antiguedad(it, l)}", "${antiguedad(it, l)} ago") }
+                val despues = m.despues?.let { d -> listOf(l("Después: ", "Next: ") + formatearHora(d.hora, es24h, l).enLinea, d.actividad, d.salon).filter { it.isNotBlank() }.joinToString(" · ") }
                 WidgetTextos(
-                    rotulo = listOfNotNull(dia, estado).joinToString(", ").uppercase(ESPANOL),
+                    rotulo = listOfNotNull(dia, estado).joinToString(", ").uppercase(locale),
                     hora = hora.cifra,
                     sufijo = hora.sufijo12h,
                     salon = m.salon.ifBlank { null },
@@ -161,7 +161,7 @@ data class WidgetTextos(
                     hablado = listOfNotNull(
                         listOfNotNull(dia, estado).joinToString(", ") + " " + hora.enLinea,
                         m.actividad,
-                        m.salon.ifBlank { null }?.let { "salón $it" },
+                        m.salon.ifBlank { null }?.let { l("salón $it", "room $it") },
                         m.lugar.ifBlank { null },
                         nota,
                     ).joinToString(", ").replaceFirstChar { it.uppercase() },
@@ -169,11 +169,11 @@ data class WidgetTextos(
             }
         }
 
-        private fun enCurso(m: WidgetModelo.EnCurso, es24h: Boolean): WidgetTextos {
-            val fin = formatearHora(m.fin, es24h)
-            val despues = m.despues?.let { d -> listOf("Después: ${formatearHora(d.hora, es24h).enLinea}", d.actividad, d.salon).filter { it.isNotBlank() }.joinToString(" · ") }
+        private fun enCurso(m: WidgetModelo.EnCurso, es24h: Boolean, l: Lengua): WidgetTextos {
+            val fin = formatearHora(m.fin, es24h, l)
+            val despues = m.despues?.let { d -> listOf(l("Después: ", "Next: ") + formatearHora(d.hora, es24h, l).enLinea, d.actividad, d.salon).filter { it.isNotBlank() }.joinToString(" · ") }
             return WidgetTextos(
-                rotulo = "AHORA · HASTA",
+                rotulo = l("AHORA · HASTA", "NOW · UNTIL"),
                 hora = fin.cifra,
                 sufijo = fin.sufijo12h,
                 salon = m.salon.ifBlank { null },
@@ -181,8 +181,8 @@ data class WidgetTextos(
                 actividad = m.actividad,
                 lugar = m.lugar.ifBlank { null },
                 despues = despues,
-                hablado = listOfNotNull("Ahora: ${m.actividad}", m.salon.ifBlank { null }?.let { "salón $it" }, m.lugar.ifBlank { null },
-                    "hasta ${fin.enLinea}", despues).joinToString(", "),
+                hablado = listOfNotNull(l("Ahora: ", "Now: ") + m.actividad, m.salon.ifBlank { null }?.let { l("salón $it", "room $it") }, m.lugar.ifBlank { null },
+                    l("hasta ", "until ") + fin.enLinea, despues).joinToString(", "),
             )
         }
 

@@ -47,6 +47,10 @@ object Idioma {
         return Locale.forLanguageTag(etiqueta)
     }
 
+    /** El idioma de las frases armadas en código, para avisos y widget. */
+    fun lengua(c: Context): com.dpinta.agenda.ui.components.Lengua =
+        com.dpinta.agenda.ui.components.Lengua.de(locale(c).language)
+
     private fun sistemaEnIngles(): Boolean =
         android.content.res.Resources.getSystem().configuration.locales[0].language == "en"
 
