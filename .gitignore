@@ -9,3 +9,8 @@ captures/
 *.jks
 # Salida de compilación de la extensión Java de VS Code
 bin/
+
+# Clave de firma de release (la maneja Diego, nunca en git)
+key.properties
+*.jks
+*.keystore

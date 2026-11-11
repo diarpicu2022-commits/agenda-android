@@ -1,7 +1,18 @@
+import java.util.Properties
+
 // CampusWatch: el acompañante de Agenda en Wear OS (sistema de diseño, 03-campuswatch.md).
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+/*
+ * Firma de release. Si existe `key.properties` en la raíz (fuera de git, lo pone Diego con su clave), firma con esa
+ * clave; si no, firma el release con la clave de depuración de este equipo para poder instalarlo y probarlo. Teléfono y
+ * reloj usan la misma regla, porque la capa de datos de Wear OS solo une apps con el mismo paquete y la misma firma.
+ */
+val keyProps = Properties().apply {
+    rootProject.file("key.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
 android {
@@ -17,8 +28,20 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        if (keyProps.containsKey("storeFile")) {
+            create("release") {
+                storeFile = rootProject.file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
