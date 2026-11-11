@@ -326,3 +326,13 @@ Una demostración que se pueda usar en el reloj real sin teléfono emparejado y 
 3. App Android de NotaScan (proyecto nuevo, con propuesta de direcciones).
 4. Revisión de las políticas por un abogado (Agenda en español e inglés).
 
+
+## 14. 2026-11-11 · Merge del PR #11 y modo demo de CampusWatch
+
+- Se terminó el merge de `develop` en `feature/horas-y-resumen` (conflictos en `CONTINUAR.md` y el anexo, se conservaron
+  las dos partes) y se subió. El PR #11 sigue abierto y espera a Diego.
+- **Modo demo hecho** en la rama `feature/campuswatch-demo`, desde `develop`. El detalle está en la §6 del anexo
+  `2026-11-10-campuswatch-vivo.md`. «Ver demostración» en «Sin horario», día de ejemplo relativo a la hora, pie
+  «Demostración», página para salir y acciones que confirman sin teléfono. Medido en el emulador con 0 fallas.
+- **Siguiente:** visto bueno de Diego, PR hacia `develop` y prueba en el Galaxy Watch4 con la versión release. Falta
+  decidir si el reloj de SISCAN también lleva demo (punto 4 de la propuesta).

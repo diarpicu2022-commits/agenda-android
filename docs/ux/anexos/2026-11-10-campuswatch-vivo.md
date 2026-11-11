@@ -121,3 +121,28 @@ de noche, el inglés y el cuy se ven bien (`docs/capturas/cw-reloj-real-*`).
 
 El reloj es prestado y está emparejado con otro teléfono, así que el paso de datos desde el teléfono no se pudo probar
 en él. Se probó con días cargados en el reloj, con la versión de depuración.
+
+## 6. Modo demostración (2026-11-11)
+
+Diego lo pidió para la sustentación. El reloj es prestado, no está emparejado con su teléfono y lleva la versión
+release, así que no se pueden cargar días con `reloj_dia.py`. Aprobó la propuesta de la sección 13 de `CONTINUAR.md`.
+
+- **Entrada.** En «Sin horario», un botón secundario «Ver demostración» debajo del texto. La propuesta dejaba la entrada
+  en la página Tema, pero sin datos el reloj solo muestra «Sin horario» y Tema no se alcanza. Se prefirió un botón
+  visible a un toque largo escondido, porque en una presentación nadie adivina un gesto oculto.
+- **El día de ejemplo** (`WatchDemo.day`, en el dominio y con pruebas). Es relativo a la hora en que se abre la app:
+  Programación en 18 min a pie con «Tu ritmo» de 6 min, un turno en bus, una entrega, Cálculo ya terminada que pregunta
+  «¿Fuiste?», mañana Física y la asistencia con Cálculo cerca del límite y Física en el límite. Sale en el idioma del
+  reloj. Se vuelve a armar cada vez que se abre la app, para que siempre haya una clase a punto de empezar.
+- **Marca.** El pie de Horario dice «Demostración · datos de ejemplo». La pantalla principal no lleva marca porque el
+  contrato no deja nada que compita con la cifra. Al final del recorrido aparece la página «Demostración» con el botón
+  «Salir de la demo», con el mismo repertorio que Tema.
+- **Sin teléfono.** En la demo, «Ya voy», «Aplazar», «Cancelar» y «¿Fuiste?» confirman en el reloj sin enviar nada.
+- **Datos reales.** La demo no borra el día real, que vuelve al salir. Si llega del teléfono un día calculado después
+  de entrar en la demo, la reemplaza. Uno más viejo, como el que queda en la capa de datos, se guarda pero no la quita.
+
+Verificación en el emulador `Reloj_WearOS` (454 px), con una instalación limpia y en inglés.
+`WatchDemoTest` (3) en verde. `tools/verificacion/medir_demo.py` midió las 9 pantallas (sin datos y las 8 de la demo)
+y encontró 0 fallas (texto dentro de la esfera y toques de 48 dp). Se probaron también salir de la demo, que la demo
+siga al reabrir la app y que «¿Fuiste?» confirme sin teléfono. Capturas en `docs/capturas/cw-demo-recorrido.png` y
+`cw-demo-fuiste-sin-telefono.png`. Queda pendiente probarlo en el Galaxy Watch4 con la versión release y en español.

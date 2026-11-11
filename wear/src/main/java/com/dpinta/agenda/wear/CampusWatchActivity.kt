@@ -80,6 +80,7 @@ private data class Confirmacion(val texto: String, val detalle: String?, val ok:
 fun CampusWatch(ambiente: Boolean) {
     val contexto = LocalContext.current
     val dia by AlmacenDia.dia(contexto).collectAsState()
+    val demo by AlmacenDia.enDemo.collectAsState()
     val ahora = minutoActual()
     val zona = ZoneId.systemDefault()
     var confirmacion by remember { mutableStateOf<Confirmacion?>(null) }
@@ -91,14 +92,14 @@ fun CampusWatch(ambiente: Boolean) {
         val c = confirmacion
         when {
             c != null -> PantallaConfirmacion(c.texto, c.detalle, c.ok) { confirmacion = null }
-            d == null -> PantallaSinDatos()
+            d == null -> PantallaSinDatos { AlmacenDia.activarDemo(contexto) }
             else -> {
                 // La en curso se queda mientras dura; cambia a la siguiente cuando ya toca prepararse (DayFocus).
                 val enfoque = d.focus(ahora)
                 val siguiente = enfoque?.session
                 val accion: (WatchSession, Accion) -> Unit = { s, a ->
                     alcance.launch {
-                        val ok = Telefono.enviar(contexto, a, s)
+                        val ok = demo || Telefono.enviar(contexto, a, s)
                         confirmacion = if (!ok) Confirmacion(t("Sin conexión", "No connection"), t("No llegó al teléfono. Hazlo desde allá.", "It didn't reach the phone. Do it from there."), ok = false)
                         else when (a) {
                             Accion.YaVoy -> Confirmacion(t("En camino", "On the way"), null)
@@ -127,7 +128,7 @@ fun CampusWatch(ambiente: Boolean) {
                         PantallaFuiste(pendiente) { fui ->
                             respondidas = respondidas + (pendiente.activityId to pendiente.pendingStart!!)
                             alcance.launch {
-                                val ok = Telefono.asistencia(contexto, pendiente.activityId, pendiente.pendingStart!!, fui)
+                                val ok = demo || Telefono.asistencia(contexto, pendiente.activityId, pendiente.pendingStart!!, fui)
                                 confirmacion = if (ok) Confirmacion(if (fui) t("Asistencia anotada", "Attendance noted") else t("Falta anotada", "Absence noted"), pendiente.title)
                                 else Confirmacion(t("Sin conexión", "No connection"), t("No llegó al teléfono. Hazlo desde allá.", "It didn't reach the phone. Do it from there."), ok = false)
                             }
@@ -138,6 +139,7 @@ fun CampusWatch(ambiente: Boolean) {
                         add { PantallaHorario(d, ahora.toLocalDate().plusDays(1), ahora, zona) }
                         add { PantallaAsistencia(d.attendance) }
                         add { PantallaTema { PreferenciaTema.guardar(contexto, it) } }
+                        if (demo) add { PantallaDemo { AlmacenDia.salirDemo(contexto) } }
                     }
                 }
                 val estado = rememberPagerState { paginas.size }
