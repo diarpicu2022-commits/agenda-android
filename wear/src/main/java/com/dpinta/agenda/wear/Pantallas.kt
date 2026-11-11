@@ -366,18 +366,36 @@ fun PantallaConfirmacion(texto: String, detalle: String?, ok: Boolean = true, on
     }
 }
 
-/** Sin datos todavía: el reloj necesita que Agenda en el teléfono le pase el horario una vez. */
+/** Sin datos todavía: el reloj necesita que Agenda en el teléfono le pase el horario una vez. Mientras tanto se puede
+ *  ver la demostración (§6 del anexo 2026-11-10-campuswatch-vivo): botón secundario, porque no es la tarea principal. */
 @Composable
-fun PantallaSinDatos() {
+fun PantallaSinDatos(onDemo: () -> Unit) {
     Column(
         Modifier.fillMaxSize().background(Reloj.fondo).padding(horizontal = 26.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Cuy(PoseCuy.DORMIDO, Modifier.size(52.dp))
-        Spacer(Modifier.height(4.dp))
+        Cuy(PoseCuy.DORMIDO, Modifier.size(44.dp))
+        Spacer(Modifier.height(2.dp))
         Text(t("Sin horario", "No schedule"), style = Tipo.titulo, color = Reloj.tinta)
         Text(t("Abre Agenda en el teléfono para traerlo.", "Open Agenda on the phone to bring it."), style = Tipo.apoyo, color = Reloj.tintaSuave)
+        Spacer(Modifier.height(8.dp))
+        BotonReloj(t("Ver demostración", "See demo"), ancho = 0.8f, onClick = onDemo)
+    }
+}
+
+/** Última página mientras dura la demo: dice qué se está viendo y cómo salir. Mismo repertorio que Tema. */
+@Composable
+fun PantallaDemo(onSalir: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().background(Reloj.fondo).padding(horizontal = 26.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(t("Demostración", "Demo"), style = Tipo.apoyo, color = Reloj.tintaSuave, modifier = Modifier.semantics { heading() })
+        Text(t("Un día de ejemplo. No viene del teléfono.", "A sample day. It doesn't come from the phone."),
+            style = Tipo.apoyo, color = Reloj.tinta)
+        BotonReloj(t("Salir de la demo", "Exit demo"), principal = true, color = Reloj.ruta, ancho = 0.9f, onClick = onSalir)
     }
 }
 

@@ -2,6 +2,7 @@ package com.dpinta.agenda.wear
 
 import android.content.Context
 import com.dpinta.agenda.domain.WatchDay
+import com.dpinta.agenda.domain.WatchDemo
 import com.dpinta.agenda.domain.WatchSession
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -30,22 +31,56 @@ object Rutas {
 object AlmacenDia {
     private const val PREFS = "campuswatch"
     private const val CLAVE = "dia"
+    /** Desde cuándo está activa la demostración (§6 del anexo 2026-11-10-campuswatch-vivo). Sin clave, no hay demo. */
+    private const val CLAVE_DEMO = "demo_desde"
     private val estado = MutableStateFlow<WatchDay?>(null)
+    private val demo = MutableStateFlow(false)
     @Volatile private var cargado = false
+
+    /** Verdadero mientras el reloj muestra el día de ejemplo y no uno del teléfono. */
+    val enDemo: StateFlow<Boolean> get() = demo
+
+    private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private fun real(c: Context) = prefs(c).getString(CLAVE, null)?.let(WatchDay::decode)
 
     fun dia(contexto: Context): StateFlow<WatchDay?> {
         if (!cargado) {
-            estado.value = contexto.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(CLAVE, null)?.let(WatchDay::decode)
+            demo.value = prefs(contexto).contains(CLAVE_DEMO)
+            // La demo se arma otra vez con la hora actual: al abrir la app siempre hay una clase a punto de empezar.
+            estado.value = if (demo.value) WatchDemo.day(LocalDateTime.now(), IdiomaReloj.ingles) else real(contexto)
             cargado = true
         }
         return estado
     }
 
+    /** Un día que mandó el teléfono. Si llega uno más nuevo que el momento en que empezó la demo, la reemplaza. */
     fun guardar(contexto: Context, texto: String) {
         val dia = WatchDay.decode(texto) ?: return
-        contexto.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(CLAVE, texto).apply()
-        estado.value = dia
-        cargado = true
+        dia(contexto)
+        val desde = prefs(contexto).getString(CLAVE_DEMO, null)?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
+        val sigueDemo = demo.value && desde != null && !dia.computedAt.isAfter(desde)
+        prefs(contexto).edit().putString(CLAVE, texto).apply { if (!sigueDemo) remove(CLAVE_DEMO) }.apply()
+        if (!sigueDemo) {
+            demo.value = false
+            estado.value = dia
+        }
+        Superficies.actualizar(contexto)
+    }
+
+    /** Entra en la demostración: no borra el día real, que vuelve al salir. */
+    fun activarDemo(contexto: Context) {
+        dia(contexto)
+        val ahora = LocalDateTime.now()
+        prefs(contexto).edit().putString(CLAVE_DEMO, ahora.toString()).apply()
+        demo.value = true
+        estado.value = WatchDemo.day(ahora, IdiomaReloj.ingles)
+        Superficies.actualizar(contexto)
+    }
+
+    fun salirDemo(contexto: Context) {
+        prefs(contexto).edit().remove(CLAVE_DEMO).apply()
+        demo.value = false
+        estado.value = real(contexto)
         Superficies.actualizar(contexto)
     }
 
@@ -108,6 +143,7 @@ object Telefono {
 
 /** Pie de estado de los datos locales: «Actualizado 07:12» si es reciente; si no, «Datos locales · 07:12». */
 fun pieDatos(dia: WatchDay, ahora: LocalDateTime): String {
+    if (AlmacenDia.enDemo.value) return t("Demostración · datos de ejemplo", "Demo · sample data")
     val hora = Formato.hora(dia.computedAt.toLocalTime())
     return if (java.time.Duration.between(dia.computedAt, ahora).toMinutes() <= 15) t("Actualizado $hora", "Updated $hora") else t("Datos locales · $hora", "Local data · $hora")
 }
