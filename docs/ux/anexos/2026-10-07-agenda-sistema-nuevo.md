@@ -135,3 +135,22 @@ las 7:30») y el aviso «Cálculo diferencial · 1 de 2 · Cerca del límite». 
 min esta semana (lunes y martes de 5 h 35 min), 78 h 10 min en dos semanas y 55 h 50 min en la quincena, que cuadra con
 un turno diario de 12:25 a 18:00.
 
+
+## Paso 10 · Ícono «La línea del día» (2026-11-10)
+
+A Diego le dijeron que el ícono era feo (un glifo negro sobre ámbar, sin nada de la identidad). Generó tres conceptos
+(`Referencias Portafolio/Conceptos de Iconos para Agenda y Rutas.png`). Prefería el primero (calendario con reloj),
+pero eligió mi recomendación, el segundo corregido. El primero es el cliché de calendario con reloj, junta siete
+elementos y a 48 px se vuelve una mancha.
+
+- **Idea.** La línea del día enrollada, el mismo anillo de CampusWatch, con las tres estaciones del sistema encima
+  (círculo para clase, cuadrado para turno y triángulo para entrega) y el punto de salida en `hora` junto a la abertura
+  de arriba. Sin pin de mapa.
+- **Colores.** Papel `#F2EFE6` de fondo, riel en tinta (14,06:1), estaciones en ruta (6,81:1) y salida en hora
+  (5,30:1). Cada estación lleva un halo de papel que la recorta sobre el riel, como en un mapa de metro.
+- **Medidas.** Lienzo adaptable de 108 dp, todo dentro de 31 dp del centro (límite 33). El riel mide 3,8 px a 48 px.
+- **Monocromo** (íconos temáticos de Android 13 o más reciente). Solo la silueta: el anillo con tres cuentas.
+- Lo genera `tools/icono/icono_ruta.py`, para el teléfono y el reloj, junto con la vista previa a 48 px.
+
+Fallos propios en el camino. La primera versión era chica y a 48 px se veía débil. Al separar las estaciones del riel
+con huecos, el anillo se partió en trozos y parecía un círculo de «cargando». Por eso quedó el riel continuo con halos.
