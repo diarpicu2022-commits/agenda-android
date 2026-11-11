@@ -275,3 +275,54 @@ que pase a «Vas tarde» después de la hora de salida.
 3. ~~«Tu ritmo» y la asistencia en el teléfono~~ hecho en `feature/ritmo-asistencia-telefono` (dirección A, ver el anexo de la IA).
 4. ~~Límite de faltas por materia~~ hecho en `feature/limite-faltas` (base v5, ver el anexo de la IA).
 5. Revisión de la política por un abogado (ahora también la versión en inglés de `values-en/strings.xml`).
+
+## 13. 2026-11-10 (noche) · Prueba en el reloj real y lo que sigue
+
+**Estado al cerrar la sesión** (Diego cambia de cuenta; empezar por aquí):
+
+- Mergeados en `develop`: PR #10 (CampusWatch A+, ruta y cuy) y PR #13 (sprites escalados a la esfera, hallado en el
+  reloj real).
+- **Abiertos, esperando a Diego:**
+  - PR #11 · horas trabajadas, resumen de la mañana y avisos de asistencia en Hoy (grupo 1 del sistema).
+  - PR #12 · firma de release. Usa `key.properties` (fuera de git) si existe; si no, firma con la clave de depuración
+    del equipo, para poder instalar el release en dispositivos reales. Teléfono y reloj, misma regla.
+- APK de prueba en `Proyectos Personales/APKs/prueba-reloj-real/`. Agenda y CampusWatch en release con la clave de
+  depuración (`7795e041…`), y SISCAN teléfono y reloj en release con su clave (`1b3c9b33…`).
+
+**Dispositivos de la prueba:**
+
+- Teléfono de Diego: Samsung SM-S731B, Android 17, por USB (hay que apagar el **Bloqueador automático** de Samsung para
+  la depuración USB). Tiene Agenda y SISCAN actualizadas en release, con sus datos.
+- Reloj: Galaxy Watch4 SM-R860 (40 mm, 396 px, densidad 320, 198 dp), Android 16, por depuración inalámbrica.
+  **Es prestado y está emparejado con el teléfono de su dueño**, no con el de Diego. No tocar su cuenta ni su
+  emparejamiento. Tiene instalados CampusWatch (versión de **depuración**, para cargarle días con `reloj_dia.py`) y el
+  reloj de SISCAN. Antes de devolverlo, desinstalar si Diego lo pide:
+  `adb -s <reloj> uninstall com.dpinta.agenda` y `adb -s <reloj> uninstall co.gov.narino.cisna.siscan`.
+- Por eso el paso de datos teléfono → reloj no se probó en hardware. Para probarlo: emparejar un emulador de teléfono
+  con uno de reloj en Android Studio (ya instalado en el PC), o usar el teléfono del dueño si lo presta.
+- Android Studio generó `gradle/gradle-daemon-jvm.properties` (toolchain 25). Está sin subir, a propósito.
+- El reloj de SISCAN (0.2.0, release) abre en el reloj prestado sin cierres. Muestra «Humedad del grano 10,6 %»,
+  «Objetivo 10 – 12 %» y «Sin conexión · 5 nov», porque no encuentra su teléfono. No se comprobó de dónde sale el valor
+  del 5 de noviembre en una instalación nueva (quizá un valor de ejemplo sin datos). Revisarlo en `siscan_reloj`.
+
+**Pedido de Diego para la próxima sesión · modo demo de CampusWatch:**
+
+Una demostración que se pueda usar en el reloj real sin teléfono emparejado y en la versión release (sin `adb` ni
+`run-as`), para mostrar la app en la sustentación con un reloj prestado. Propuesta para revisar con él antes de hacerla:
+
+1. Una entrada «Demostración» en la página de Tema del reloj (o un toque largo en «Sin horario»).
+2. Carga un día de ejemplo relativo a la hora actual, como los escenarios de `tools/verificacion/reloj_dia.py`:
+   próxima clase en 18 min a pie, un turno con bus, una entrega, mañana una clase, asistencia con una materia en el
+   límite y «Tu ritmo» de 6 min. Así se ven la ruta, el viajero por modo, el cuy y todas las páginas.
+3. Se marca como demo en pantalla (por ejemplo «Demo» pequeño en el pie) y se sale desde la misma página. No se mezcla
+   con datos reales: cuando llegue un día del teléfono, reemplaza la demo.
+4. Lo mismo para el reloj de SISCAN si Diego lo quiere (hoy pide los datos al teléfono emparejado).
+
+**Lo demás que sigue, en orden:**
+
+1. Grupos 2 a 4 de lo que falta del sistema (sección 12): asistencia completa y «Solo hoy · Toda la serie» con
+   Profesor; No molestar y centro de avisos; tareas, notas e importar `.ics`.
+2. Traducir el panel web de SISCAN (repo de la tesis `secador-cafe`).
+3. App Android de NotaScan (proyecto nuevo, con propuesta de direcciones).
+4. Revisión de las políticas por un abogado (Agenda en español e inglés).
+
