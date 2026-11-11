@@ -301,6 +301,9 @@ que pase a «Vas tarde» después de la hora de salida.
 - Por eso el paso de datos teléfono → reloj no se probó en hardware. Para probarlo: emparejar un emulador de teléfono
   con uno de reloj en Android Studio (ya instalado en el PC), o usar el teléfono del dueño si lo presta.
 - Android Studio generó `gradle/gradle-daemon-jvm.properties` (toolchain 25). Está sin subir, a propósito.
+- El reloj de SISCAN (0.2.0, release) abre en el reloj prestado sin cierres. Muestra «Humedad del grano 10,6 %»,
+  «Objetivo 10 – 12 %» y «Sin conexión · 5 nov», porque no encuentra su teléfono. No se comprobó de dónde sale el valor
+  del 5 de noviembre en una instalación nueva (quizá un valor de ejemplo sin datos). Revisarlo en `siscan_reloj`.
 
 **Pedido de Diego para la próxima sesión · modo demo de CampusWatch:**
 
