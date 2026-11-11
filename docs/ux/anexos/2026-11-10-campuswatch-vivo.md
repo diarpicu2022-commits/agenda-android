@@ -110,3 +110,14 @@ el cuerpo.
 Verificación con `medir_reloj.py` en «¿Fuiste?» (claro) y en asistencia (oscuro, inglés), sin fallos de contraste,
 toques ni círculo. Los textos van de 6,30:1 («Sí, fui», blanco sobre `exito`) a 19,01:1.
 
+
+### Prueba en un reloj real (Galaxy Watch4 SM-R860, 2026-11-10)
+
+En el reloj real (396 px, densidad 320, 198 dp de diámetro) el bus pisaba la «l» de «Cálculo diferencial» en «Es hora
+de salir». El emulador mide 227 dp y ahí no pasaba: el texto no se achica con la esfera y los sprites sí ocupaban lo
+mismo. Ahora el destino, el viajero y su halo se escalan con la esfera (0,87 en este reloj, sin cambio en los grandes).
+Con el arreglo, `medir_reloj.py` no dio fallos en el reloj real («Es hora de salir» y «¿Fuiste?»), y la ruta, el cielo
+de noche, el inglés y el cuy se ven bien (`docs/capturas/cw-reloj-real-*`).
+
+El reloj es prestado y está emparejado con otro teléfono, así que el paso de datos desde el teléfono no se pudo probar
+en él. Se probó con días cargados en el reloj, con la versión de depuración.

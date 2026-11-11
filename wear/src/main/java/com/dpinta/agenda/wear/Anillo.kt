@@ -1,5 +1,6 @@
 package com.dpinta.agenda.wear
 
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.foundation.Canvas
@@ -67,17 +68,24 @@ fun AnilloCuenta(
                 size.height / 2 + (r * sin(Math.toRadians(grados))).toFloat(),
             )
             // A+ (Ruta y compañero): el destino cambia con el tipo y el viajero con el modo y la urgencia.
-            destino(punto(-90.0), kind, color)
+            // Los sprites se dibujaron para una esfera de 227 dp; en relojes más chicos (Galaxy Watch4 de 40 mm, 198 dp) se
+            // reducen en proporción, porque el texto no se achica y el bus llegaba a pisar el título (prueba en reloj real).
+            val escala = (size.minDimension / 227.dp.toPx()).coerceAtMost(1f)
+            val c0 = punto(-90.0)
+            scale(escala, escala, pivot = c0) { destino(c0, kind, color) }
             if (fraccion > 0.04f) {
                 if (VIAJERO_SOBRE_RIEL) {
                     // Sobre la vía: el viajero va encima del riel, con un halo del fondo, y nunca toca el texto.
-                    val rr = tam.width / 2 - 5.dp.toPx()
+                    val rr = tam.width / 2 - 5.dp.toPx() * escala
                     val a = Math.toRadians(-90.0 + 360.0 * fraccion)
                     val q = Offset(size.width / 2 + (rr * cos(a)).toFloat(), size.height / 2 + (rr * sin(a)).toFloat())
-                    drawCircle(Reloj.fondo, 12.dp.toPx(), q)
-                    viajero(q + Offset(0f, 1.dp.toPx()), mode, urgente, cuadro)
+                    scale(escala, escala, pivot = q) {
+                        drawCircle(Reloj.fondo, 12.dp.toPx(), q)
+                        viajero(q + Offset(0f, 1.dp.toPx()), mode, urgente, cuadro)
+                    }
                 } else {
-                    viajero(punto(-90.0 + 360.0 * fraccion), mode, urgente, cuadro)
+                    val q = punto(-90.0 + 360.0 * fraccion)
+                    scale(escala, escala, pivot = q) { viajero(q, mode, urgente, cuadro) }
                 }
             }
         }
