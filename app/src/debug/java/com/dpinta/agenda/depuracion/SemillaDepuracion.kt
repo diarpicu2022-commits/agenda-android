@@ -60,6 +60,8 @@ class SemillaDepuracion @Inject constructor(
                 )
             }
             repositorio.marcarAsistencia(com.dpinta.agenda.domain.AttendanceRecord(calculo.id, hoy, com.dpinta.agenda.domain.AttendanceMark.FALTE))
+            // Límite de 2 faltas en Cálculo: con la falta de hoy queda «cerca del límite» (avisos de Hoy).
+            repositorio.guardar(serie(calculo.id, "Cálculo diferencial", ActivityKind.CLASE, "B-204", "Campus", 7, hoy, LocalTime.of(8, 0), LocalTime.of(10, 0)).copy(faltasMax = 2))
         }
     }
 

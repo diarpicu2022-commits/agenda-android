@@ -114,6 +114,27 @@ demostración); queda probado por compilación, no por recorrido.
   permisos, y guarda `Agenda.ics` con las sesiones de seis meses atrás a seis adelante, con salón, lugar y asistencia.
   Probado en el emulador: 723 eventos, 150 KB.
 
+## Paso 9 · Lo que faltaba del sistema, grupo 1 (2026-11-10)
+
+Diego pidió poner en la app las opciones del sistema que todavía no estaban (comparación de `04-patrones.md` con el
+código). Se hacen en cuatro grupos, cada uno con su PR, siguiendo los componentes del sistema y sin diseño nuevo. Este
+es el primero.
+
+- **Horas trabajadas** (`WorkHoursSummary`), en Ajustes › Agenda. «Esta semana» en `hora-hero`, «Últimas 2 semanas» y
+  «Turnos completados» al lado, «Esta quincena» (quincena colombiana, del 1 al 15 y del 16 al fin de mes), barras por
+  día en `linea-trabajo` y la nota «Los turnos cancelados no cuentan». Solo cuenta lo ya trabajado.
+- **Resumen de la mañana en Hoy** (`MorningSummary`). Lámina en `superficie-fuerte` con «Hoy tienes N actividades», un
+  bloque con la primera clase y otro con «Debes salir a las» en `hora`, y «También tienes». Sale antes de la primera
+  actividad y desaparece cuando empieza.
+- **Avisos en Hoy** (punto 6 del patrón de Hoy, con la forma de `ConflictNotice`). Las materias a una falta del límite
+  o en él, con «Cerca del límite» o «Llegaste al límite». Usa el mismo cálculo que Actividades y el reloj.
+
+Verificación. `CalculoHorasTest` (3) prueba lo ya trabajado, que las clases no cuentan, dos semanas y quincena. En el
+emulador, con `ejemplo=ritmo`, a las 7:00 salió el resumen («4 actividades», «8:00 Cálculo diferencial», «Debes salir a
+las 7:30») y el aviso «Cálculo diferencial · 1 de 2 · Cerca del límite». A las 19:00 la pantalla de horas dio 11 h 10
+min esta semana (lunes y martes de 5 h 35 min), 78 h 10 min en dos semanas y 55 h 50 min en la quincena, que cuadra con
+un turno diario de 12:25 a 18:00.
+
 
 ## Paso 10 · Ícono «La línea del día» (2026-11-10)
 

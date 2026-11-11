@@ -276,6 +276,17 @@ que pase a «Vas tarde» después de la hora de salida.
 4. ~~Límite de faltas por materia~~ hecho en `feature/limite-faltas` (base v5, ver el anexo de la IA).
 5. Revisión de la política por un abogado (ahora también la versión en inglés de `values-en/strings.xml`).
 
+## 12. 2026-11-10 · Lo que faltaba del sistema de diseño y CampusWatch A+
+
+- CampusWatch A+ «Ruta y compañero» hecho y mergeado (PR #10): destino por tipo, viajero por modo, cielo y el cuy
+  estudiante. Anexo `2026-11-10-campuswatch-vivo.md` §5.
+- Opciones del sistema que faltaban en la app, en cuatro grupos (anexo `2026-10-07-agenda-sistema-nuevo.md`, paso 9):
+  1. ~~Horas trabajadas, resumen de la mañana y avisos en Hoy~~ (rama `feature/horas-y-resumen`).
+  2. Asistencia completa (porcentaje, «Cerca del límite», falta justificada), «Solo hoy · Toda la serie» al editar y
+     campo Profesor.
+  3. No molestar durante clases y turnos, y centro de avisos.
+  4. Tareas, exámenes y notas rápidas en Hoy, e importar `.ics` con vista previa.
+- Después: traducir el panel web de SISCAN (repo de la tesis) y la app Android de NotaScan.
 ## 13. 2026-11-10 (noche) · Prueba en el reloj real y lo que sigue
 
 **Estado al cerrar la sesión** (Diego cambia de cuenta; empezar por aquí):

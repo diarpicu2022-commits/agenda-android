@@ -78,6 +78,10 @@ sealed interface HoyUiState {
         val nombre: String? = null,
         /** «Tu ritmo» para la salida del boleto: solo antes de la hora de salida y con historial suficiente. */
         val ritmo: RitmoSalida? = null,
+        /** `MorningSummary`: solo antes de que empiece la primera actividad del día. */
+        val resumen: ResumenManana? = null,
+        /** Avisos de Hoy (04-patrones · Hoy, punto 6): materias cerca del límite de faltas o en él. */
+        val avisosAsistencia: List<com.dpinta.agenda.domain.WatchAttendance> = emptyList(),
     ) : HoyUiState
 }
 
@@ -97,4 +101,15 @@ data class EnCurso(
 /** Consejo de «Tu ritmo» (anexo 2026-11-10-agenda-ia): sueles salir [minutos] tarde, así que conviene salir a [salirA]. */
 @Immutable
 data class RitmoSalida(val minutos: Int, val salirA: LocalTime)
+
+/** Resumen de la mañana: cuántas cosas hay, la primera (clase si hay) y la hora de salida si hay traslado. */
+@Immutable
+data class ResumenManana(
+    val cantidad: Int,
+    val primeraHora: LocalTime,
+    val primeraTitulo: String,
+    val salirA: LocalTime?,
+    /** Lo demás del día: «Turno 12:25», «Entrega informe 21:00». Máximo tres. */
+    val demas: List<Pair<String, LocalTime>>,
+)
 

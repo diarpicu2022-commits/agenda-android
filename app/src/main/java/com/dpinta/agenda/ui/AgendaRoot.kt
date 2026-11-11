@@ -133,7 +133,11 @@ fun AgendaRoot(
                         onDemoBanda = { nav.navigate(RutaDemoBanda) },
                         onLugares = { nav.navigate(RutaActividades) },
                         onPrivacidad = { nav.navigate(com.dpinta.agenda.ui.navegacion.RutaPrivacidad) },
+                        onHoras = { nav.navigate(com.dpinta.agenda.ui.navegacion.RutaHoras) },
                     )
+                }
+                composable<com.dpinta.agenda.ui.navegacion.RutaHoras> {
+                    com.dpinta.agenda.ui.horas.HorasRuta(onAtras = { nav.popBackStack() })
                 }
                 composable<com.dpinta.agenda.ui.navegacion.RutaPrivacidad> {
                     com.dpinta.agenda.ui.privacidad.PrivacidadPantalla(onAtras = { nav.popBackStack() })

@@ -181,6 +181,7 @@ private fun ListaDelDia(
                 BotonAjustes(onAjustes)
             }
         }
+        estado.resumen?.let { r -> item(key = "resumen") { TarjetaResumen(r, Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)) } }
         item(key = "boleto") { boleto() }
         item(key = "tu-dia") {
             Text(l("Tu día", "Your day"), style = t.encabezado, color = ds.tinta,
@@ -204,6 +205,9 @@ private fun ListaDelDia(
         }
         if (enCurso < 0 && estado.filas.isNotEmpty() && estado.indiceAhora >= estado.filas.size) {
             item(key = "ahora-final") { MarcadorAhora(estado.ahora, es24h) }
+        }
+        if (estado.avisosAsistencia.isNotEmpty()) {
+            item(key = "avisos") { AvisosAsistencia(estado.avisosAsistencia, Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp)) }
         }
         item(key = "pie") { Spacer(Modifier.height(AgendaSpacing.s24 * 3)) }
     }

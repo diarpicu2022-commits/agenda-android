@@ -201,7 +201,25 @@ class HoyViewModel @Inject constructor(
                 com.dpinta.agenda.domain.PersonalRhythm.advice(repositorio.salidasReales().first(), act.lugarId, siguiente.start.dayOfWeek)
                     ?.let { RitmoSalida(it.lateMinutes, b.horaSalida.minusMinutes(it.lateMinutes.toLong())) }
             }
-        return HoyUiState.Dia(hoy, ahoraLocal.toLocalTime(), banda, filas, indiceAhora, proximo, enCurso, ritmo = ritmo)
+        // Resumen de la mañana: antes de la primera actividad. La primera es la primera clase si hay; si no, la primera.
+        val resumen = deHoy.firstOrNull()?.takeIf { ahoraLocal.isBefore(it.start) }?.let { primeraDelDia ->
+            val esClase = { s: Occurrence -> agenda.actividades[s.activityId]?.tipo.let { it == ActivityKind.CLASE || it == ActivityKind.EXAMEN } }
+            val primera = deHoy.firstOrNull(esClase) ?: primeraDelDia
+            ResumenManana(
+                cantidad = deHoy.size,
+                primeraHora = primera.start.toLocalTime(),
+                primeraTitulo = agenda.actividades.getValue(primera.activityId).titulo,
+                salirA = banda?.takeIf { it.hayTrayecto && siguiente == primeraDelDia }?.horaSalida,
+                demas = deHoy.filter { it != primera }.take(3).map { agenda.actividades.getValue(it.activityId).titulo to it.start.toLocalTime() },
+            )
+        }
+        // Avisos: materias a una falta del límite o ya en él (mismo cálculo que Actividades y el reloj).
+        val avisosAsistencia = com.dpinta.agenda.data.agenda.ResumenAsistencia(repositorio).porMateria(agenda, { a, d, h ->
+            ScheduleExpander.expand(a.reglas, a.puntuales, { a.actividades[it]?.lugarId }, d, h, a.semestreEn(d), a.excepciones)
+                .filter { it.activityId in a.actividades }
+        }, ahoraLocal).filter { it.maxAbsences != null && it.maxAbsences!! > 0 && it.absences >= it.maxAbsences!! - 1 }
+        return HoyUiState.Dia(hoy, ahoraLocal.toLocalTime(), banda, filas, indiceAhora, proximo, enCurso, ritmo = ritmo,
+            resumen = resumen, avisosAsistencia = avisosAsistencia)
     }
 
     private fun conflictoDe(s: Occurrence, conflictos: List<Conflict>, agenda: Agenda): ConflictoFila? =
